@@ -1,10 +1,14 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Search, TrendingUp, Clock, UserPlus } from "lucide-react";
+import {
+  MagnifyingGlassIcon,
+  TrendUpIcon,
+  ClockIcon,
+  UserListIcon,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { ClientListItem } from "@/types/client";
-// ✅ Importation du dialogue selon ton schéma mémorisé
 import { CreateClientDialog } from "../create-client-dialog";
 
 interface ClientExplorerProps {
@@ -14,6 +18,15 @@ interface ClientExplorerProps {
 }
 
 type TensionFilter = "ALL" | "LATENCY" | "HIGH_VALUE" | "INACTIVE";
+
+const SectionHeader = ({ title, icon: Icon }: { title: string; icon: any }) => (
+  <div className="flex items-center gap-2 px-4 mb-3 shrink-0">
+    <Icon size={14} weight="bold" className="text-indigo-600" />
+    <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-slate-900">
+      {title}
+    </span>
+  </div>
+);
 
 export function ClientExplorer({
   clients,
@@ -27,7 +40,6 @@ export function ClientExplorer({
     return clients.filter((c) => {
       const matchesSearch = c.name.toLowerCase().includes(search.toLowerCase());
       if (!matchesSearch) return false;
-
       switch (filter) {
         case "LATENCY":
           return c.quoteCount > 0 && c.totalSpent < 100000;
@@ -42,170 +54,155 @@ export function ClientExplorer({
   }, [clients, search, filter]);
 
   return (
-    <div className="flex flex-col h-full bg-slate-50/50">
-      <div className="p-4 bg-white border-b border-slate-200 space-y-3">
-        {/* EN-TÊTE D'ACTION : RADAR + BOUTON CRÉATION */}
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-950">
-            Radar_Clients
+    <div className="flex flex-col h-full bg-white border-r border-slate-200 w-[320px] overflow-hidden rounded-none shadow-none">
+      {/* 00. HEADER : SYNC H-15 */}
+      <header className="h-15 shrink-0 flex items-center px-4 justify-between border-b border-slate-200 bg-white z-10">
+        <div className="flex flex-col">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">
+            Base_Actifs
           </span>
-          <CreateClientDialog />
+          <span className="text-[14px] font-bold text-indigo-600 tracking-tight">
+            Radar_Contacts
+          </span>
         </div>
+        <CreateClientDialog />
+      </header>
 
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="SCANNER_CONTACTS..."
-            className="w-full pl-10 pr-4 h-9 bg-slate-100 border-none text-[10px] font-black uppercase tracking-widest outline-none focus:ring-1 ring-indigo-600 transition-all placeholder:text-slate-400"
-          />
-        </div>
+      <div className="flex-1 overflow-y-auto scrollbar-none flex flex-col min-h-0">
+        {/* MODULE 01 : RECHERCHE & FILTRES DE TENSION */}
+        <section className="py-5 border-b border-slate-100 bg-slate-50/30">
+          <SectionHeader title="Scan_Database" icon={UserListIcon} />
+          <div className="px-4 space-y-3">
+            <div className="relative group">
+              <MagnifyingGlassIcon
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors"
+                size={14}
+              />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="RECHERCHE RAPIDE..."
+                className="w-full bg-white border border-slate-200 pl-9 pr-3 h-9 text-[11px] font-bold uppercase outline-none focus:border-indigo-600 transition-all placeholder:text-slate-200"
+              />
+            </div>
 
-        <div className="flex gap-1">
-          <TensionButton
-            active={filter === "ALL"}
-            onClick={() => setFilter("ALL")}
-            label="Tous"
-          />
-          <TensionButton
-            active={filter === "LATENCY"}
-            onClick={() => setFilter("LATENCY")}
-            label="Retard"
-            icon={Clock}
-            variant="warning"
-          />
-          <TensionButton
-            active={filter === "HIGH_VALUE"}
-            onClick={() => setFilter("HIGH_VALUE")}
-            label="VIP"
-            icon={TrendingUp}
-            variant="success"
-          />
-        </div>
-      </div>
+            <div className="flex divide-x divide-slate-200 border border-slate-200">
+              <TensionButton
+                active={filter === "ALL"}
+                onClick={() => setFilter("ALL")}
+                label="ALL"
+              />
+              <TensionButton
+                active={filter === "LATENCY"}
+                onClick={() => setFilter("LATENCY")}
+                label="LAT"
+                icon={ClockIcon}
+              />
+              <TensionButton
+                active={filter === "HIGH_VALUE"}
+                onClick={() => setFilter("HIGH_VALUE")}
+                label="VIP"
+                icon={TrendUpIcon}
+              />
+            </div>
+          </div>
+        </section>
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar">
-        {filteredClients.length > 0 ? (
-          filteredClients.map((client) => (
-            <button
-              key={client.id}
-              onClick={() => onSelect(client.id)}
-              className={cn(
-                "w-full p-4 flex items-center justify-between border-b border-slate-200 transition-none group relative overflow-hidden",
-                activeId === client.id ? "bg-white" : "hover:bg-slate-100/80"
-              )}
-            >
-              {activeId === client.id && (
-                <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-600" />
-              )}
+        {/* MODULE 02 : FEED DE PRODUCTION */}
+        <section className="flex-1 flex flex-col min-h-0">
+          <div className="flex-1 overflow-y-auto scrollbar-none">
+            {filteredClients.length > 0 ? (
+              filteredClients.map((client) => (
+                <button
+                  key={client.id}
+                  onClick={() => onSelect(client.id)}
+                  className={cn(
+                    "w-full p-4 flex flex-col items-start gap-1.5 border-b border-slate-100 transition-none group relative text-left",
+                    activeId === client.id ? "bg-white" : "hover:bg-slate-50/50"
+                  )}
+                >
+                  {activeId === client.id && (
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-600" />
+                  )}
 
-              <div className="flex flex-col items-start gap-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span
-                    className={cn(
-                      "text-[11px] font-black uppercase tracking-tight truncate",
-                      activeId === client.id
-                        ? "text-slate-950"
-                        : "text-slate-600"
-                    )}
-                  >
-                    {client.name}
-                  </span>
-                  <FlashIndicator
-                    status={client.totalSpent > 0 ? "STABLE" : "ZERO"}
-                  />
-                </div>
-                <span className="text-[9px] font-mono font-bold text-slate-400 truncate leading-none">
-                  LTV:{" "}
-                  {new Intl.NumberFormat("fr-CI").format(client.totalSpent)} CFA
+                  <div className="w-full flex items-center justify-between">
+                    <span
+                      className={cn(
+                        "text-[12px] font-bold uppercase tracking-tight truncate",
+                        activeId === client.id
+                          ? "text-slate-900"
+                          : "text-slate-500"
+                      )}
+                    >
+                      {client.name}
+                    </span>
+                    <div
+                      className={cn(
+                        "w-1.5 h-1.5",
+                        client.totalSpent > 0
+                          ? "bg-emerald-500"
+                          : "bg-slate-200"
+                      )}
+                    />
+                  </div>
+
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">
+                      LTV_MONITOR
+                    </span>
+                    <span className="text-[13px] font-mono font-bold text-slate-900">
+                      {new Intl.NumberFormat("fr-CI").format(client.totalSpent)}
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-400">
+                      CFA
+                    </span>
+                  </div>
+                </button>
+              ))
+            ) : (
+              <div className="p-12 text-center opacity-20">
+                <span className="text-[10px] font-black uppercase tracking-widest">
+                  Zero_Result
                 </span>
               </div>
-              <ChevronRightIcon active={activeId === client.id} />
-            </button>
-          ))
-        ) : (
-          <div className="p-10 text-center opacity-20">
-            <span className="text-[10px] font-black uppercase tracking-widest">
-              Aucun_Résultat
+            )}
+          </div>
+        </section>
+      </div>
+
+      {/* FOOTER SYNC AVEC SOURCE VÉRITÉ */}
+      <footer className="mt-auto border-t border-slate-900 bg-white p-5 shrink-0">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            Flux_Actif
+          </span>
+          <div className="flex items-center gap-2 text-emerald-600">
+            <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" />
+            <span className="text-[10px] font-mono font-bold uppercase">
+              Ready
             </span>
           </div>
-        )}
-      </div>
+        </div>
+      </footer>
     </div>
   );
 }
 
-// --- SOUS-COMPOSANTS TYPÉS (Gardés à l'identique pour ne pas casser la structure) ---
-
-interface TensionButtonProps {
-  active: boolean;
-  onClick: () => void;
-  label: string;
-  icon?: React.ElementType;
-  variant?: "success" | "warning" | "neutral";
-}
-
-function TensionButton({
-  active,
-  onClick,
-  label,
-  icon: Icon,
-  variant = "neutral",
-}: TensionButtonProps) {
+function TensionButton({ active, onClick, label, icon: Icon }: any) {
   return (
     <button
       onClick={onClick}
       className={cn(
-        "flex-1 h-7 flex items-center justify-center gap-1.5 px-2 transition-none border",
+        "flex-1 h-8 flex items-center justify-center gap-1.5 px-1 transition-none",
         active
-          ? "bg-slate-950 border-slate-950 text-white"
-          : "bg-white border-slate-200 text-slate-400 hover:border-slate-400"
+          ? "bg-slate-900 text-white"
+          : "bg-white text-slate-400 hover:text-slate-900"
       )}
     >
-      {Icon && (
-        <Icon
-          size={10}
-          className={cn(
-            active
-              ? "text-indigo-400"
-              : variant === "warning"
-              ? "text-amber-500"
-              : variant === "success"
-              ? "text-emerald-500"
-              : "text-slate-400"
-          )}
-        />
-      )}
+      {Icon && <Icon size={10} weight="bold" />}
       <span className="text-[8px] font-black uppercase tracking-tighter">
         {label}
       </span>
     </button>
-  );
-}
-
-function FlashIndicator({ status }: { status: "STABLE" | "ZERO" }) {
-  return (
-    <div
-      className={cn(
-        "w-1.5 h-1.5 rounded-full",
-        status === "STABLE"
-          ? "bg-emerald-500 shadow-[0_0_4px_rgba(16,185,129,0.5)]"
-          : "bg-slate-300"
-      )}
-    />
-  );
-}
-
-function ChevronRightIcon({ active }: { active: boolean }) {
-  return (
-    <div
-      className={cn(
-        "transition-all duration-200",
-        active ? "translate-x-0 opacity-100" : "-translate-x-2 opacity-0"
-      )}
-    >
-      <div className="w-1 h-1 border-t border-r border-indigo-600 rotate-45" />
-    </div>
   );
 }

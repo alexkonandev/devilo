@@ -26,7 +26,6 @@ export const QuoteEditorLayout = ({
   const [scrollPos, setScrollPos] = useState({ left: 0, top: 0 });
 
   const handleMouseDown = (e: MouseEvent<HTMLDivElement>) => {
-    // Permet de cliquer sur le fond pour drag, mais pas sur la feuille elle-même
     if (e.target !== e.currentTarget) return;
     setIsDragging(true);
     setStartPos({ x: e.pageX, y: e.pageY });
@@ -46,19 +45,21 @@ export const QuoteEditorLayout = ({
   };
 
   return (
-    <div className="flex h-full w-full bg-white overflow-hidden font-sans text-[13px] antialiased select-none">
-      {/* SIDEBAR GAUCHE (CLIENT + ITEMS + CATALOGUE) : 320px */}
+    <div className="flex h-full w-full bg-white overflow-hidden font-sans text-[13px] antialiased select-none rounded-none">
+      {/* SIDEBAR GAUCHE : 320px (PRODUCTION INPUTS) */}
       <aside
         className={cn(
-          "bg-white border-r border-slate-200 z-20 transition-all duration-300 overflow-hidden shrink-0",
+          "bg-white border-r border-slate-200 z-20 transition-all duration-150 overflow-hidden shrink-0",
           leftSidebar ? "w-[320px]" : "w-0"
         )}
       >
-        <div className="h-full w-[320px]">{leftSidebar}</div>
+        <div className="h-full w-[320px] overflow-y-auto scrollbar-none">
+          {leftSidebar}
+        </div>
       </aside>
 
-      {/* CANVAS CENTRAL */}
-      <main className="flex-1 relative flex flex-col min-w-0 bg-slate-50">
+      <main className="flex-1 relative flex flex-col min-w-0 bg-slate-50 overflow-hidden">
+        {/* LE CONTENEUR DE SCROLL : On utilise overflow-auto mais on cache la barre visuelle */}
         <div
           ref={scrollContainerRef}
           onMouseDown={handleMouseDown}
@@ -66,40 +67,54 @@ export const QuoteEditorLayout = ({
           onMouseUp={() => setIsDragging(false)}
           onMouseLeave={() => setIsDragging(false)}
           className={cn(
-            "flex-1 overflow-auto flex justify-center items-start pt-12 pb-32 transition-colors duration-300 scrollbar-none",
+            "flex-1 overflow-auto scrollbar-none flex flex-col items-center pt-8 pb-40 transition-colors",
             isDragging ? "cursor-grabbing" : "cursor-grab",
-            viewMode === "preview" ? "bg-slate-200" : "bg-slate-50"
+            viewMode === "preview" ? "bg-slate-200" : "bg-slate-100/50"
           )}
         >
-          {/* FEUILLE A4 UNIQUE */}
+          {/* WRAPPER DE TRANSFORMATION : 
+            Crucial pour que le zoom ne casse pas le layout parent.
+            Le scale s'applique ici pour éviter que la div fixe "printable-content" 
+            ne pousse les murs du layout flex.
+          */}
           <div
-            id="printable-content"
-            className={cn(
-              "bg-white border border-slate-200 shadow-sm transition-transform duration-200 origin-top",
-              viewMode === "preview" && "shadow-2xl border-none scale-100"
-            )}
-            style={{
-              transform: viewMode === "studio" ? `scale(${zoom})` : undefined,
-            }}
+            className="transition-transform duration-200 origin-top shrink-0 shadow-2xl"
+            style={{ transform: `scale(${zoom})` }}
           >
-            {children}
+            <div
+              id="printable-content"
+              className={cn(
+                "bg-white border border-slate-200 rounded-none",
+                "print:border-0 print:shadow-none print:m-0"
+              )}
+              style={{
+                width: "210mm",
+                minHeight: "297mm",
+              }}
+            >
+              {children}
+            </div>
           </div>
         </div>
 
-        {/* TOOLBAR FLOTTANTE */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50">
-          {bottomToolbar}
+        {/* 03. TOOLBAR FLOTTANTE (FIXED POSITIONING) */}
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
+          <div className=" pointer-events-auto">
+            {bottomToolbar}
+          </div>
         </div>
       </main>
 
-      {/* SIDEBAR DROITE (STYLE + PROFIT) : 280px */}
+      {/* SIDEBAR DROITE : 280px (CALCUL ENGINE) */}
       <aside
         className={cn(
-          "bg-white border-l border-slate-200 z-20 transition-all duration-300 overflow-hidden shrink-0",
-          rightSidebar ? "w-[280px]" : "w-0"
+          "bg-white border-l border-slate-200 z-20 transition-all duration-150 overflow-hidden shrink-0",
+          rightSidebar ? "w-[300px]" : "w-0"
         )}
       >
-        <div className="h-full w-[280px]">{rightSidebar}</div>
+        <div className="h-full w-[300px] overflow-y-auto scrollbar-none">
+          {rightSidebar}
+        </div>
       </aside>
     </div>
   );

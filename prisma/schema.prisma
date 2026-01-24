@@ -46,24 +46,39 @@ model User {
   profession      Profession?
   businessModel   BusinessModel?
   isOnboarded     Boolean   @default(false)
+
+  // IDENTITÉ LÉGALE & BRANDING
   companyName     String?
+  companyLogo     String?   // URL de l'image (Cloudinary/Uploadthing)
+  taxId           String?   // Le numéro (ex: 21B01234)
+  taxIdLabel      String?   @default("SIRET") // Pour afficher "RCCM", "NIF", "SIRET" etc.
+  
+  // COORDONNÉES DE CONTACT
   companyEmail    String?
   companyPhone    String?
   companyAddress  String?
-  companySiret    String?
   companyWebsite  String?
+
+  // CONFIGURATION FINANCIÈRE (Le "Cash-Flow")
+  currency        String    @default("EUR") // EUR, CFA, USD, etc.
+  paymentDetails  String?   // Instructions de paiement (RIB, IBAN, Mobile Money)
+  defaultVatRate  Float     @default(20.0)
+  
+  // LOGISTIQUE DE FACTURATION
   quotePrefix     String    @default("INV-")
   nextQuoteNumber Int       @default(1)
-  currency        String    @default("EUR")
-  defaultVatRate  Float     @default(20.0)
-  defaultTerms    String?
+  defaultTerms    String?   // Mentions légales et clauses de retard
+  
+  // RELATIONS
   clients         Client[]
   quotes          Quote[]
   userServices    UserService[]
   catalogOffers   CatalogOffer[] 
   subscription    Subscription?
+  
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+
   @@map("users")
 }
 model UserApiLimit {

@@ -1,23 +1,22 @@
-// @/features/quotes/components/quote-inspector.tsx
 "use client";
 
 import React from "react";
 import {
-  FileEdit,
-  Calendar,
+  CalendarBlank,
   User,
   Hash,
   ArrowRight,
-  History,
+  ClockCounterClockwise,
   Info,
-} from "lucide-react";
+  FileCode,
+  Money,
+  CaretRight,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { QuoteListItem, QuoteStatus } from "@/types/quote";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import { Icon } from "@phosphor-icons/react";
 
 interface QuoteInspectorProps {
   quote?: QuoteListItem;
@@ -28,213 +27,218 @@ export function QuoteInspector({ quote }: QuoteInspectorProps) {
 
   if (!quote) return <InspectorPlaceholder />;
 
-  // Simulation des calculs financiers (sera remplacé par les données réelles des lines)
-  const amountHT = quote.totalAmount / 1.2;
+  const amountHT = quote.totalAmount / 1.18; // Exemple TVA 18% (Standard CI)
   const vatAmount = quote.totalAmount - amountHT;
 
   return (
-    <div className="flex flex-col h-full bg-white animate-in fade-in duration-300">
-      {/* 1. HEADER IDENTITAIRE */}
-      <header className="p-8 border-b border-slate-100 space-y-6">
-        <div className="flex justify-between items-start">
+    <div className="flex flex-col h-full bg-white antialiased overflow-hidden">
+      {/* 1. HEADER : IDENTITÉ SYSTÈME H-20 */}
+      <header className="h-24 shrink-0 border-b border-slate-200 flex items-center justify-between px-8 bg-white">
+        <div className="flex items-center gap-6">
+          <div className="w-14 h-14 border border-slate-200 bg-slate-50 flex items-center justify-center">
+            <FileCode size={24} className="text-slate-400" />
+          </div>
           <div className="space-y-1">
-            <div className="flex items-center gap-2 text-indigo-600">
-              <Hash size={14} className="stroke-[3]" />
-              <span className="text-[11px] font-black uppercase tracking-widest">
-                Dossier_{quote.number}
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em]">
+                DOSSIER_ID: {quote.number}
               </span>
+              <StatusBadge status={quote.status} />
             </div>
-            <h2 className="text-[32px] font-black text-slate-950 uppercase tracking-tighter italic leading-none">
+            <h2 className="text-[24px] font-black text-slate-950 uppercase tracking-tighter leading-none">
               {quote.clientName}
             </h2>
           </div>
-
-          <Button
-            onClick={() => router.push(`/quotes/editor/${quote.id}`)}
-            className="bg-slate-950 hover:bg-indigo-600 text-white rounded-none h-12 px-6 text-[11px] font-black uppercase tracking-[0.2em] transition-all group"
-          >
-            <FileEdit size={16} className="mr-2" />
-            Ouvrir_Studio
-            <ArrowRight
-              size={14}
-              className="ml-2 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all"
-            />
-          </Button>
         </div>
 
-        <div className="flex gap-8">
-          <MetaItem
-            icon={Calendar}
-            label="Émission"
-            value={format(new Date(quote.createdAt), "dd MMMM yyyy", {
-              locale: fr,
-            })}
-          />
-          <MetaItem
-            icon={User}
-            label="Statut_Flux"
-            value={quote.status}
-            highlight
-          />
-          <MetaItem
-            icon={Info}
-            label="Dernière_Action"
-            value={format(new Date(quote.updatedAt), "HH:mm", { locale: fr })}
-          />
-        </div>
+        <button
+          onClick={() => router.push(`/quotes/editor/${quote.id}`)}
+          className="h-10 px-6 bg-slate-950 text-white text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 transition-all flex items-center gap-3 active:scale-95"
+        >
+          Ouvrir_Studio_Production
+          <ArrowRight size={14} weight="bold" />
+        </button>
       </header>
 
-      {/* 2. RÉPARTITION ET FINANCES */}
-      <div className="flex-1 p-8 grid grid-cols-12 gap-12 overflow-y-auto custom-scrollbar">
-        {/* COLONNE GAUCHE : ANALYSE FINANCIÈRE */}
-        <div className="col-span-7 space-y-10">
-          <section className="space-y-4">
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 block">
-              Récapitulatif_Financier
-            </span>
-            <div className="border border-slate-200 p-8 space-y-6">
-              <div className="flex justify-between items-baseline">
-                <span className="text-[12px] font-bold text-slate-500 uppercase">
-                  Base_Hors_Taxe
-                </span>
-                <span className="text-[18px] font-mono font-bold text-slate-950">
-                  {new Intl.NumberFormat("fr-CI").format(amountHT)}{" "}
-                  <span className="text-[10px]">CFA</span>
-                </span>
-              </div>
-              <div className="flex justify-between items-baseline">
-                <span className="text-[12px] font-bold text-slate-500 uppercase">
-                  TVA_Collectée (20%)
-                </span>
-                <span className="text-[18px] font-mono font-bold text-slate-950">
-                  {new Intl.NumberFormat("fr-CI").format(vatAmount)}{" "}
-                  <span className="text-[10px]">CFA</span>
-                </span>
-              </div>
-              <div className="h-px bg-slate-100" />
-              <div className="flex justify-between items-center">
-                <span className="text-[14px] font-black text-indigo-600 uppercase tracking-widest">
-                  Net_A_Payer
-                </span>
-                <span className="text-[32px] font-mono font-black text-slate-950 tracking-tighter tabular-nums">
-                  {new Intl.NumberFormat("fr-CI").format(quote.totalAmount)}{" "}
-                  <span className="text-[14px]">CFA</span>
-                </span>
-              </div>
-            </div>
-          </section>
-
-          {/* 3. TIMELINE D'ÉVÉNEMENTS */}
-          <section className="space-y-4">
-            <div className="flex items-center gap-2 text-slate-400">
-              <History size={14} />
-              <span className="text-[10px] font-black uppercase tracking-[0.2em]">
-                Journal_Dossier
-              </span>
-            </div>
-            <div className="space-y-4 pl-2">
-              <TimelineEntry
-                date={quote.createdAt}
-                label="Initialisation du dossier (DRAFT)"
-                active
-              />
-              <TimelineEntry
-                date={quote.updatedAt}
-                label="Mise à jour des lignes de prestations"
-              />
-            </div>
-          </section>
+      {/* 2. BODY : GRILLE DE DONNÉES & ANALYSE */}
+      <div className="flex-1 overflow-y-auto scrollbar-none divide-y divide-slate-100">
+        {/* SECTION 01 : META MÉTRIQUES */}
+        <div className="grid grid-cols-3 divide-x divide-slate-100 border-b border-slate-100">
+          <MetaTile
+            icon={CalendarBlank}
+            label="Date_Émission"
+            value={format(new Date(quote.createdAt), "dd.MM.yy")}
+          />
+          <MetaTile icon={User} label="Responsable_Flux" value="Admin_Root" />
+          <MetaTile
+            icon={ClockCounterClockwise}
+            label="Last_Sync"
+            value={format(new Date(quote.updatedAt), "HH:mm:ss")}
+          />
         </div>
 
-        {/* COLONNE DROITE : RÉPARTITION BADGES */}
-        <div className="col-span-5 space-y-8">
-          <section className="space-y-4">
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 block">
-              Répartition_Prestations
-            </span>
-            <div className="flex flex-wrap gap-2">
-              <Badge label="Services_Tech" />
-              <Badge label="Consulting" />
-              <Badge label="Frais_Gestion" />
+        <div className="p-8 grid grid-cols-12 gap-12">
+          {/* ANALYSE FINANCIÈRE */}
+          <div className="col-span-7 space-y-6">
+            <div className="flex items-center gap-2">
+              <Money size={16} className="text-slate-400" />
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-900">
+                Audit_Financier_Direct
+              </span>
             </div>
-          </section>
+
+            <div className="border border-slate-200 divide-y divide-slate-100 bg-slate-50/20">
+              <FinancialRow label="Base_Hors_Taxe" value={amountHT} isMono />
+              <FinancialRow
+                label="Taxe_Sur_Valeur_Ajoutée"
+                value={vatAmount}
+                isMono
+              />
+              <div className="p-6 bg-white flex justify-between items-center">
+                <span className="text-[11px] font-black text-indigo-600 uppercase tracking-widest">
+                  Total_Net_A_Payer
+                </span>
+                <p className="text-[28px] font-mono font-black text-slate-950 tracking-tighter tabular-nums">
+                  {new Intl.NumberFormat("fr-CI").format(quote.totalAmount)}
+                  <span className="text-[12px] ml-1">CFA</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* TIMELINE DE PRODUCTION */}
+          <div className="col-span-5 space-y-6">
+            <div className="flex items-center gap-2 text-slate-400">
+              <ClockCounterClockwise size={16} />
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-900">
+                Journal_Événements
+              </span>
+            </div>
+            <div className="border-l border-slate-200 ml-2 space-y-6">
+              <TimelinePoint
+                label="Dossier généré par le système"
+                date={quote.createdAt}
+                active
+              />
+              <TimelinePoint
+                label="Mise à jour des actifs financiers"
+                date={quote.updatedAt}
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-// --- SOUS-COMPOSANTS ---
+// --- COMPOSANTS INTERNES ---
 
-function MetaItem({
+function MetaTile({
   icon: Icon,
   label,
   value,
-  highlight,
 }: {
-  icon: Icon;
+  icon: any;
   label: string;
   value: string;
-  highlight?: boolean;
 }) {
   return (
-    <div className="space-y-1">
-      <div className="flex items-center gap-1.5 text-slate-400">
-        <Icon size={12} />
-        <span className="text-[9px] font-black uppercase tracking-widest">
+    <div className="p-5 space-y-1 bg-white">
+      <div className="flex items-center gap-2">
+        <Icon size={12} weight="bold" className="text-slate-400" />
+        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
           {label}
         </span>
       </div>
-      <p
-        className={cn(
-          "text-[12px] font-bold uppercase tracking-tight",
-          highlight ? "text-indigo-600" : "text-slate-950"
-        )}
-      >
+      <p className="text-[12px] font-bold text-slate-900 uppercase tracking-tight">
         {value}
       </p>
     </div>
   );
 }
 
-function TimelineEntry({
-  date,
+function FinancialRow({
   label,
-  active,
+  value,
+  isMono,
 }: {
-  date: Date;
   label: string;
-  active?: boolean;
+  value: number;
+  isMono?: boolean;
 }) {
   return (
-    <div className="flex gap-4 items-start relative pb-4">
-      <div className="mt-1 w-1.5 h-1.5 rounded-full bg-slate-200 shrink-0" />
-      <div className="space-y-0.5">
-        <p className="text-[10px] font-bold text-slate-950 uppercase">
-          {label}
-        </p>
-        <p className="text-[9px] font-mono text-slate-400">
-          {format(new Date(date), "dd/MM/yy - HH:mm")}
-        </p>
-      </div>
+    <div className="p-4 flex justify-between items-center bg-white/50">
+      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">
+        {label}
+      </span>
+      <span
+        className={cn(
+          "text-[14px] font-bold text-slate-950",
+          isMono && "font-mono"
+        )}
+      >
+        {new Intl.NumberFormat("fr-CI").format(value)}
+      </span>
     </div>
   );
 }
 
-function Badge({ label }: { label: string }) {
+function TimelinePoint({
+  label,
+  date,
+  active,
+}: {
+  label: string;
+  date: Date;
+  active?: boolean;
+}) {
   return (
-    <div className="px-3 py-1.5 bg-slate-100 border border-slate-200 text-[9px] font-black uppercase tracking-widest text-slate-600">
-      {label}
+    <div className="relative pl-6">
+      <div
+        className={cn(
+          "absolute -left-[4.5px] top-1 w-2 h-2 border border-white",
+          active ? "bg-indigo-600" : "bg-slate-300"
+        )}
+      />
+      <p className="text-[10px] font-bold text-slate-900 uppercase leading-none mb-1">
+        {label}
+      </p>
+      <p className="text-[9px] font-mono text-slate-400 uppercase">
+        {format(new Date(date), "dd/MM HH:mm")}
+      </p>
     </div>
+  );
+}
+
+function StatusBadge({ status }: { status: QuoteStatus }) {
+  const config = {
+    DRAFT: "text-slate-400 bg-slate-100",
+    SENT: "text-amber-600 bg-amber-50",
+    ACCEPTED: "text-emerald-600 bg-emerald-50",
+    PAID: "text-indigo-600 bg-indigo-50",
+    REJECTED: "text-rose-600 bg-rose-50",
+  };
+  return (
+    <span
+      className={cn(
+        "px-2 py-0.5 text-[8px] font-black uppercase tracking-widest border border-current",
+        config[status]
+      )}
+    >
+      {status}
+    </span>
   );
 }
 
 function InspectorPlaceholder() {
   return (
-    <div className="h-full flex flex-col items-center justify-center p-20 text-center opacity-10">
-      <Hash size={40} className="mb-4 text-slate-950" />
-      <p className="text-[10px] font-black uppercase tracking-[0.5em]">
-        Sélectionner_Flux_Actif
+    <div className="h-full flex flex-col items-center justify-center p-20 bg-slate-50/30">
+      <div className="w-16 h-16 border border-slate-200 flex items-center justify-center mb-6">
+        <Info size={32} weight="bold" className="text-slate-200" />
+      </div>
+      <p className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-300">
+        AWAITING_DATA_STREAM
       </p>
     </div>
   );

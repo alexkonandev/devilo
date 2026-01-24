@@ -150,6 +150,7 @@ export default function CreateQuoteClient({
   useEffect(() => {
     if (preSelectedOffer && activeQuote.items.length === 0) {
       handleAddItem({
+        subtitle: preSelectedOffer.subtitle,
         title: preSelectedOffer.title,
         unitPrice: preSelectedOffer.unitPrice,
         quantity: 1,

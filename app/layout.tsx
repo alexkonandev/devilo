@@ -5,7 +5,8 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { frFR } from '@clerk/localizations' // Optionnel : pour avoir l'interface en Français
 import "./globals.css";
 import "dotenv/config";   
-import { Toaster } from "sonner"; // ou "@/components/ui/sonner"
+import { Toaster } from "sonner";
+
 // Configurer Figtree comme police principale (sans-serif)
 const figtree = Figtree({
   subsets: ["latin"],
@@ -34,8 +35,9 @@ export default function RootLayout({
     // Appliquer les deux variables à la balise <html>
     <ClerkProvider localization={frFR}>
       <html lang="fr" className={`${figtree.variable} ${jetbrains.variable}`}>
-        <body>{children}
-          <Toaster position="top-center"/>
+        <body>
+          {children}
+          <Toaster position="top-center" />
         </body>
       </html>
     </ClerkProvider>

@@ -10,6 +10,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/webhook(.*)",
   "/aide(.*)",
   "/contact(.*)",
+  "/api/uploadthing(.*)", // <--- AJOUTE ÇA MAINTENANT
   "/mentions-legales(.*)",
   "/confidentialite(.*)",
   "/conditions-generales(.*)",

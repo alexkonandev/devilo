@@ -1,34 +1,67 @@
-import { getClerkUserId } from "@/lib/auth";
-import db from "@/lib/prisma";
+// @/app/dashboard/settings/page.tsx
+import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { checkSubscription } from "@/lib/subscription";
-import { SettingsForm } from "@/features/settings/settings-form";
+import db from "@/lib/prisma";
+import { SettingsForm } from "@/features/settings/components/settings-form";
+
+export const metadata = {
+  title: "Settings | Kernel System",
+  description:
+    "Configuration du moteur de facturation et de l'identité légale.",
+};
 
 export default async function SettingsPage() {
-  const userId = await getClerkUserId();
+  // 1. Authentification & Sécurité
+  const { userId } = await auth();
   if (!userId) redirect("/sign-in");
 
-  const isPro = await checkSubscription();
-
-  const user = await db.user.findUnique({
+  // 2. Data Fetching (Server Side)
+  // On récupère uniquement ce dont on a besoin pour le formulaire
+  const userSettings = await db.user.findUnique({
     where: { id: userId },
+    select: {
+      companyName: true,
+      companyLogo: true,
+      taxId: true,
+      taxIdLabel: true,
+      companyEmail: true,
+      companyPhone: true,
+      companyAddress: true,
+      companyWebsite: true,
+      currency: true,
+      defaultVatRate: true,
+      paymentDetails: true,
+      quotePrefix: true,
+      nextQuoteNumber: true,
+      defaultTerms: true,
+    },
   });
 
-  if (!user) redirect("/onboarding");
-
-  // On passe les données initiales au formulaire
+  // 3. Initialisation des Fallbacks
+  // Si Prisma renvoie null pour certains champs, on assure une valeur par défaut pour React Hook Form
   const initialData = {
-    companyName: user.companyName || "",
-    companyEmail: user.companyEmail || "",
-    companyPhone: user.companyPhone || "",
-    companyAddress: user.companyAddress || "",
-    companySiret: user.companySiret || "",
-    companyWebsite: user.companyWebsite || "",
-    quotePrefix: user.quotePrefix,
-    nextQuoteNumber: user.nextQuoteNumber,
-    defaultVatRate: user.defaultVatRate,
-    defaultTerms: user.defaultTerms || "",
+    companyName: userSettings?.companyName ?? "",
+    companyLogo: userSettings?.companyLogo ?? "",
+    taxId: userSettings?.taxId ?? "",
+    taxIdLabel: userSettings?.taxIdLabel ?? "SIRET",
+    companyEmail: userSettings?.companyEmail ?? "",
+    companyPhone: userSettings?.companyPhone ?? "",
+    companyAddress: userSettings?.companyAddress ?? "",
+    companyWebsite: userSettings?.companyWebsite ?? "",
+    currency: userSettings?.currency ?? "EUR",
+    defaultVatRate: userSettings?.defaultVatRate ?? 20,
+    paymentDetails: userSettings?.paymentDetails ?? "",
+    quotePrefix: userSettings?.quotePrefix ?? "INV-",
+    nextQuoteNumber: userSettings?.nextQuoteNumber ?? 1,
+    defaultTerms: userSettings?.defaultTerms ?? "",
   };
 
-  return <SettingsForm initialData={initialData} isPro={isPro} />;
+  return (
+    <div className="h-full w-full bg-white">
+      {/* On passe les données au Client Component (SettingsForm) 
+        qui va gérer l'interactivité et l'upload.
+      */}
+      <SettingsForm initialData={initialData} />
+    </div>
+  );
 }

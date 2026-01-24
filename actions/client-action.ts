@@ -3,12 +3,13 @@
 import db from "@/lib/prisma";
 import { getClerkUserId } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { ClientListItem } from "@/types/client";
 
 /**
  * RÉCUPÉRATION DES CLIENTS + KPIS
  * Calcule le nombre de devis et le CA total par client pour l'UI.
  */
-export async function getClients() {
+export async function getClients(): Promise<ClientListItem[]> {
   try {
     const authId = await getClerkUserId();
     if (!authId) return [];
@@ -21,27 +22,41 @@ export async function getClients() {
         },
         quotes: {
           select: {
+            id: true,
+            number: true,
+            status: true,
+            createdAt: true,
             lines: {
               select: {
                 quantity: true,
-                unitPrice: true, // Aligné sur ton nouveau schéma
+                unitPrice: true,
               },
             },
           },
+          orderBy: { createdAt: "desc" },
         },
       },
       orderBy: { name: "asc" },
     });
 
-    // Transformation pour correspondre à l'interface ClientListItem
     return clients.map((client) => {
-      const totalSpent = client.quotes.reduce((acc, quote) => {
-        const quoteTotal = quote.lines.reduce(
+      // Mapping des devis avec calcul du total par devis
+      const mappedQuotes = client.quotes.map((quote) => ({
+        id: quote.id,
+        number: quote.number,
+        status: quote.status,
+        createdAt: quote.createdAt,
+        totalAmount: quote.lines.reduce(
           (sum, line) => sum + line.quantity * line.unitPrice,
           0
-        );
-        return acc + quoteTotal;
-      }, 0);
+        ),
+      }));
+
+      // Calcul du CA total (totalSpent)
+      const totalSpent = mappedQuotes.reduce(
+        (acc, q) => acc + q.totalAmount,
+        0
+      );
 
       return {
         id: client.id,
@@ -49,11 +64,10 @@ export async function getClients() {
         email: client.email,
         address: client.address,
         siret: client.siret,
-        userId: client.userId,
         createdAt: client.createdAt,
-        updatedAt: client.updatedAt,
         quoteCount: client._count.quotes,
         totalSpent: totalSpent,
+        quotes: mappedQuotes, // Indispensable pour ClientListItem
       };
     });
   } catch (err) {

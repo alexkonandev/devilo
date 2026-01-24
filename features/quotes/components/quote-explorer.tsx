@@ -1,19 +1,18 @@
-// @/features/quotes/components/quote-explorer.tsx
 "use client";
 
 import React, { useState, useMemo } from "react";
 import {
-  Search,
-  Plus,
-  Clock,
-  FileCheck,
-  PenTool,
-  CheckCircle2,
-} from "lucide-react";
+  MagnifyingGlassIcon,
+  PlusIcon,
+  ClockIcon,
+  FileCheckIcon,
+  PencilLineIcon, // Remplacement pour PenTool
+  CheckCircleIcon,
+  ListBulletsIcon,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { QuoteListItem, QuoteStatus } from "@/types/quote";
 import { format } from "date-fns";
-import { Button } from "@/components/ui/button";
 
 interface QuoteExplorerProps {
   items: QuoteListItem[];
@@ -22,6 +21,15 @@ interface QuoteExplorerProps {
 }
 
 type TensionFilter = "all" | QuoteStatus;
+
+const SectionHeader = ({ title, icon: Icon }: { title: string; icon: any }) => (
+  <div className="flex items-center gap-2 px-4 mb-3 shrink-0">
+    <Icon size={14} weight="bold" className="text-indigo-600" />
+    <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-slate-900">
+      {title}
+    </span>
+  </div>
+);
 
 export function QuoteExplorer({
   items,
@@ -44,169 +52,173 @@ export function QuoteExplorer({
   }, [items, search, filter]);
 
   return (
-    <div className="flex flex-col h-full bg-slate-50/20">
-      <div className="p-4 bg-white border-b border-slate-200 space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-950">
-            Flux_Radar
+    <div className="flex flex-col h-full bg-white border-r border-slate-200 w-[320px] overflow-hidden rounded-none shadow-none">
+      {/* 00. HEADER : SYNC H-15 (Standard Studio) */}
+      <header className="h-15 shrink-0 flex items-center px-4 justify-between border-b border-slate-200 bg-white z-10">
+        <div className="flex flex-col">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">
+            Flux_Projets
           </span>
-          <Button
-            size="sm"
-            className="h-7 rounded-none bg-indigo-600 hover:bg-indigo-700 text-[9px] font-black uppercase tracking-widest px-3"
-          >
-            <Plus size={12} className="mr-1" /> Nouveau
-          </Button>
+          <span className="text-[14px] font-bold text-indigo-600 tracking-tight">
+            Radar_Devis
+          </span>
         </div>
+        <button className="h-8 w-8 flex items-center justify-center bg-slate-900 text-white hover:bg-indigo-600 transition-colors">
+          <PlusIcon size={16} weight="bold" />
+        </button>
+      </header>
 
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="RECHERCHE_DOSSIER..."
-            className="w-full pl-10 pr-4 h-9 bg-slate-100 border-none text-[10px] font-bold uppercase tracking-widest outline-none focus:ring-1 ring-indigo-600 transition-all"
-          />
-        </div>
+      <div className="flex-1 overflow-y-auto scrollbar-none flex flex-col min-h-0">
+        {/* MODULE 01 : SCAN & FILTRES TENSION */}
+        <section className="py-5 border-b border-slate-100 bg-slate-50/30">
+          <SectionHeader title="Scan_Documents" icon={ListBulletsIcon} />
+          <div className="px-4 space-y-3">
+            <div className="relative group">
+              <MagnifyingGlassIcon
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors"
+                size={14}
+              />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="RECHERCHE RAPIDE..."
+                className="w-full bg-white border border-slate-200 pl-9 pr-3 h-9 text-[11px] font-bold uppercase outline-none focus:border-indigo-600 transition-all placeholder:text-slate-200"
+              />
+            </div>
 
-        {/* FILTRES BASÉS SUR TON ENUM PRISMA */}
-        <div className="flex flex-wrap gap-1">
-          <TensionTab
-            active={filter === "all"}
-            onClick={() => setFilter("all")}
-            label="Tous"
-          />
-          <TensionTab
-            active={filter === "DRAFT"}
-            onClick={() => setFilter("DRAFT")}
-            label="Brouillon"
-            icon={PenTool}
-          />
-          <TensionTab
-            active={filter === "SENT"}
-            onClick={() => setFilter("SENT")}
-            label="Envoyé"
-            icon={Clock}
-            color="text-amber-500"
-          />
-          <TensionTab
-            active={filter === "ACCEPTED"}
-            onClick={() => setFilter("ACCEPTED")}
-            label="Accepté"
-            icon={FileCheck}
-            color="text-emerald-500"
-          />
-          <TensionTab
-            active={filter === "PAID"}
-            onClick={() => setFilter("PAID")}
-            label="Payé"
-            icon={CheckCircle2}
-            color="text-indigo-500"
-          />
-        </div>
+            <div className="flex divide-x divide-slate-200 border border-slate-200">
+              <TensionButton
+                active={filter === "all"}
+                onClick={() => setFilter("all")}
+                label="ALL"
+              />
+              <TensionButton
+                active={filter === "DRAFT"}
+                onClick={() => setFilter("DRAFT")}
+                label="DFT"
+                icon={PencilLineIcon}
+              />
+              <TensionButton
+                active={filter === "SENT"}
+                onClick={() => setFilter("SENT")}
+                label="SNT"
+                icon={ClockIcon}
+              />
+              <TensionButton
+                active={filter === "PAID"}
+                onClick={() => setFilter("PAID")}
+                label="PD"
+                icon={CheckCircleIcon}
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* MODULE 02 : FEED DE PRODUCTION */}
+        <section className="flex-1 flex flex-col min-h-0">
+          <div className="flex-1 overflow-y-auto scrollbar-none divide-y divide-slate-100">
+            {filteredItems.length > 0 ? (
+              filteredItems.map((quote) => (
+                <button
+                  key={quote.id}
+                  onClick={() => onSelect(quote.id)}
+                  className={cn(
+                    "w-full p-4 flex flex-col items-start gap-1.5 transition-none group relative text-left",
+                    activeId === quote.id ? "bg-white" : "hover:bg-slate-50/50"
+                  )}
+                >
+                  {activeId === quote.id && (
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-600" />
+                  )}
+
+                  <div className="w-full flex items-center justify-between">
+                    <span className="text-[9px] font-mono font-bold text-slate-400 tracking-tighter uppercase">
+                      #{quote.number}
+                    </span>
+                    <StatusIndicator status={quote.status} />
+                  </div>
+
+                  <span
+                    className={cn(
+                      "text-[12px] font-bold uppercase tracking-tight truncate w-full",
+                      activeId === quote.id
+                        ? "text-slate-900"
+                        : "text-slate-500"
+                    )}
+                  >
+                    {quote.clientName}
+                  </span>
+
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-[13px] font-mono font-black text-slate-950">
+                      {new Intl.NumberFormat("fr-CI").format(quote.totalAmount)}
+                    </span>
+                    <span className="text-[9px] font-bold text-slate-400 uppercase">
+                      CFA
+                    </span>
+                    <span className="ml-auto text-[8px] font-bold text-slate-300 uppercase">
+                      {format(new Date(quote.updatedAt), "dd.MM.yy")}
+                    </span>
+                  </div>
+                </button>
+              ))
+            ) : (
+              <div className="p-12 text-center opacity-20">
+                <span className="text-[10px] font-black uppercase tracking-widest">
+                  Zero_Result
+                </span>
+              </div>
+            )}
+          </div>
+        </section>
       </div>
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar divide-y divide-slate-100">
-        {filteredItems.map((quote) => (
-          <QuoteCard
-            key={quote.id}
-            quote={quote}
-            isActive={activeId === quote.id}
-            onClick={() => onSelect(quote.id)}
-          />
-        ))}
-      </div>
+      {/* FOOTER SYNC SOURCE VÉRITÉ */}
+      <footer className="mt-auto border-t border-slate-900 bg-white p-5 shrink-0">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            Flux_Actif
+          </span>
+          <div className="flex items-center gap-2 text-emerald-600">
+            <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" />
+            <span className="text-[10px] font-mono font-bold uppercase">
+              Ready
+            </span>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
 
-// --- SOUS-COMPOSANTS ---
-
-function TensionTab({
-  active,
-  onClick,
-  label,
-  icon: Icon,
-  color,
-}: {
-  active: boolean;
-  onClick: () => void;
-  label: string;
-  icon?: React.ElementType;
-  color?: string;
-}) {
+function TensionButton({ active, onClick, label, icon: Icon }: any) {
   return (
     <button
       onClick={onClick}
       className={cn(
-        "flex-1 min-w-[65px] h-7 flex items-center justify-center gap-1 px-2 border transition-none",
+        "flex-1 h-8 flex items-center justify-center gap-1.5 px-1 transition-none",
         active
-          ? "bg-slate-950 border-slate-950 text-white"
-          : "bg-white border-slate-200 text-slate-400 hover:border-slate-400"
+          ? "bg-slate-900 text-white"
+          : "bg-white text-slate-400 hover:text-slate-900"
       )}
     >
-      {Icon && (
-        <Icon size={10} className={active ? "text-indigo-400" : color} />
-      )}
-      <span className="text-[8px] font-black uppercase tracking-tighter whitespace-nowrap">
+      {Icon && <Icon size={10} weight="bold" />}
+      <span className="text-[8px] font-black uppercase tracking-tighter">
         {label}
       </span>
     </button>
   );
 }
 
-function QuoteCard({
-  quote,
-  isActive,
-  onClick,
-}: {
-  quote: QuoteListItem;
-  isActive: boolean;
-  onClick: () => void;
-}) {
+function StatusIndicator({ status }: { status: QuoteStatus }) {
+  const config = {
+    DRAFT: "bg-slate-200",
+    SENT: "bg-amber-400",
+    ACCEPTED: "bg-emerald-500",
+    PAID: "bg-indigo-600",
+    REJECTED: "bg-rose-500",
+  };
   return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "w-full p-4 flex flex-col items-start gap-1 transition-none relative group overflow-hidden",
-        isActive ? "bg-white" : "hover:bg-slate-100/50"
-      )}
-    >
-      <div
-        className={cn(
-          "absolute bottom-0 left-0 h-[2px] transition-all",
-          isActive ? "w-full" : "w-0 group-hover:w-full",
-          quote.status === "PAID" || quote.status === "ACCEPTED"
-            ? "bg-emerald-500"
-            : quote.status === "SENT"
-            ? "bg-amber-500"
-            : quote.status === "REJECTED"
-            ? "bg-rose-500"
-            : "bg-slate-300"
-        )}
-      />
-
-      <div className="flex justify-between w-full items-center mb-0.5">
-        <span className="text-[9px] font-mono font-bold text-slate-400 tracking-tighter uppercase">
-          {quote.number}
-        </span>
-        <span className="text-[9px] font-bold text-slate-400">
-          {format(new Date(quote.updatedAt), "dd.MM.yy")}
-        </span>
-      </div>
-
-      <h3
-        className={cn(
-          "text-[12px] font-black uppercase tracking-tight truncate w-full text-left",
-          isActive ? "text-slate-950" : "text-slate-600"
-        )}
-      >
-        {quote.clientName}
-      </h3>
-
-      <p className="text-[14px] font-mono font-black text-slate-950 tabular-nums">
-        {new Intl.NumberFormat("fr-CI").format(quote.totalAmount)}{" "}
-        <span className="text-[10px] font-bold">CFA</span>
-      </p>
-    </button>
+    <div className={cn("w-1.5 h-1.5", config[status] || "bg-slate-200")} />
   );
 }

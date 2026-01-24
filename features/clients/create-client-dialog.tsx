@@ -8,15 +8,23 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, UserPlus, Mail, Phone, MapPin, Building2 } from "lucide-react";
-// ✅ On utilise upsertClient pour la création (id est optionnel)
+import {
+  Plus,
+  UserPlus,
+  Envelope,
+  Phone,
+  MapPin,
+  IdentificationCard,
+  Hash,
+} from "@phosphor-icons/react";
 import { upsertClient } from "@/actions/client-action";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 /**
- * DIALOGUE DE CRÉATION CLIENT
- * Alignement strict sur l'action serveur et le schéma Prisma.
+ * DIALOGUE DE CRÉATION CLIENT - VERSION STUDIO
+ * Source de vérité : Interface Industrielle Épurée.
+ * Zéro Shadow, Zéro Rounded, Focus Indigo.
  */
 export function CreateClientDialog() {
   const [open, setOpen] = useState(false);
@@ -27,19 +35,21 @@ export function CreateClientDialog() {
     const formData = new FormData(e.currentTarget);
 
     startTransition(async () => {
-      // Mapping direct vers les arguments de upsertClient
       const res = await upsertClient({
         name: formData.get("name") as string,
         email: formData.get("email") as string,
         address: (formData.get("address") as string) || "",
-        siret: (formData.get("siret") as string) || "", // Mappe l'identifiant fiscal vers siret
+        siret: (formData.get("siret") as string) || "",
       });
 
       if (res.success) {
-        toast.success("CLIENT_ENREGISTRÉ");
+        toast.success("SYNC_SUCCESS", {
+          className:
+            "rounded-none border-slate-200 font-bold text-[10px] uppercase tracking-widest",
+        });
         setOpen(false);
       } else {
-        toast.error("ERREUR_CRÉATION", { description: res.error });
+        toast.error("SYNC_ERROR", { description: res.error });
       }
     });
   };
@@ -47,96 +57,143 @@ export function CreateClientDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="h-8 rounded-none bg-slate-950 hover:bg-indigo-600 text-[9px] font-black uppercase tracking-widest px-3 transition-colors gap-2">
-          <Plus size={12} />
-          Nouveau_Client
-        </Button>
+        <button className="h-8 flex items-center gap-2 border border-slate-200 bg-white hover:border-indigo-600 hover:text-indigo-600 px-3 transition-all">
+          <Plus size={14} weight="bold" />
+          <span className="text-[9px] font-black uppercase tracking-[0.15em]">
+            Ajouter_Client
+          </span>
+        </button>
       </DialogTrigger>
 
-      <DialogContent className="max-w-md rounded-none border-2 border-slate-950 p-0 overflow-hidden shadow-[20px_20px_0px_rgba(0,0,0,0.1)]">
-        <DialogHeader className="p-8 bg-slate-950 text-white shrink-0">
-          <DialogTitle className="text-[12px] font-black uppercase tracking-[0.3em] flex items-center gap-3">
-            <UserPlus size={16} className="text-indigo-400" />
-            Enregistrement_Client
-          </DialogTitle>
+      <DialogContent className="max-w-[480px] rounded-none border border-slate-200 p-0 overflow-hidden shadow-none bg-white gap-0">
+        {/* 00. HEADER : ALIGNÉ SUR LE STUDIO */}
+        <DialogHeader className="p-5 border-b border-slate-100 flex flex-row items-center gap-4 space-y-0 bg-slate-50/30">
+          <div className="h-10 w-10 flex items-center justify-center border border-slate-200 bg-white text-indigo-600">
+            <UserPlus size={20} weight="bold" />
+          </div>
+          <div className="flex flex-col">
+            <DialogTitle className="text-[12px] font-black uppercase tracking-[0.2em] text-slate-900">
+              Nouveau_Profil_Client
+            </DialogTitle>
+            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+              Saisie_Manuelle_Actif
+            </span>
+          </div>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="p-8 space-y-6 bg-white">
-          {/* NOM (OBLIGATOIRE) */}
-          <div className="space-y-2">
-            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-              <Building2 size={12} /> Nom_Complet_Ou_Société
-            </label>
-            <input
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          {/* SECTION IDENTITÉ */}
+          <div className="space-y-4">
+            <InputGroup
+              label="Désignation_Entité"
               name="name"
+              icon={IdentificationCard}
+              placeholder="RAISON SOCIALE..."
               required
-              className="w-full border-b-2 border-slate-100 p-2 text-[12px] font-bold outline-none focus:border-slate-950 transition-colors bg-transparent"
-              placeholder="EX: TECH_SOLUTIONS_SARL"
             />
-          </div>
-
-          {/* EMAIL (OBLIGATOIRE) */}
-          <div className="space-y-2">
-            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-              <Mail size={12} /> Email_De_Contact
-            </label>
-            <input
+            <InputGroup
+              label="Email_Facturation"
               name="email"
               type="email"
+              icon={Envelope}
+              placeholder="CONTACT@CLIENT.COM"
               required
-              className="w-full border-b-2 border-slate-100 p-2 text-[12px] font-bold outline-none focus:border-slate-950 transition-colors bg-transparent"
-              placeholder="CONTACT@SOCIETE.COM"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
-            {/* TÉLÉPHONE (Optionnel selon ton action) */}
-            <div className="space-y-2">
-              <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-                <Phone size={12} /> Téléphone
-              </label>
-              <input
-                name="phone"
-                className="w-full border-b-2 border-slate-100 p-2 text-[12px] font-bold outline-none focus:border-slate-950 transition-colors bg-transparent"
-                placeholder="+225..."
-              />
-            </div>
-
-            {/* SIRET / ID FISCAL */}
-            <div className="space-y-2">
-              <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-                Identifiant_Fiscal
-              </label>
-              <input
-                name="siret"
-                className="w-full border-b-2 border-slate-100 p-2 text-[12px] font-bold outline-none focus:border-slate-950 transition-colors bg-transparent"
-                placeholder="RCCM / IFU"
-              />
-            </div>
+          {/* SECTION METADATA GRID */}
+          <div className="grid grid-cols-2 gap-4">
+            <InputGroup
+              label="Contact_Tel"
+              name="phone"
+              icon={Phone}
+              placeholder="+225..."
+            />
+            <InputGroup
+              label="ID_Fiscal"
+              name="siret"
+              icon={Hash}
+              placeholder="RCCM / IFU"
+            />
           </div>
 
-          {/* ADRESSE GEOGRAPHIQUE */}
-          <div className="space-y-2">
+          {/* SECTION GEO */}
+          <div className="space-y-1.5">
             <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-              <MapPin size={12} /> Localisation_Physique
+              <MapPin size={12} weight="bold" /> Localisation_Physique
             </label>
             <textarea
               name="address"
               rows={2}
-              className="w-full border-b-2 border-slate-100 p-2 text-[12px] font-bold outline-none focus:border-slate-950 transition-colors resize-none bg-transparent"
-              placeholder="ABIDJAN, COCODY..."
+              className="w-full border border-slate-200 p-3 text-[11px] font-bold uppercase outline-none focus:border-indigo-600 bg-white transition-colors resize-none placeholder:text-slate-100"
+              placeholder="ADRESSE DE LIVRAISON..."
             />
           </div>
 
-          <Button
-            type="submit"
-            disabled={isPending}
-            className="w-full h-14 bg-slate-950 text-white rounded-none font-black uppercase tracking-[0.2em] text-[10px] hover:bg-indigo-600 transition-all shadow-md active:scale-[0.98]"
-          >
-            {isPending ? "Communication_Serveur..." : "Valider_Enregistrement"}
-          </Button>
+          {/* ACTION FOOTER */}
+          <div className="pt-4 border-t border-slate-100 flex flex-col gap-3">
+            <button
+              type="submit"
+              disabled={isPending}
+              className={cn(
+                "w-full h-12 flex items-center justify-center font-black uppercase tracking-[0.2em] text-[10px] transition-all",
+                isPending
+                  ? "bg-slate-50 text-slate-300 cursor-not-allowed"
+                  : "bg-indigo-600 text-white hover:bg-indigo-700"
+              )}
+            >
+              {isPending ? "Traitement_Données..." : "Valider_Enregistrement"}
+            </button>
+            <div className="flex justify-between items-center px-1">
+              <span className="text-[8px] font-bold text-slate-300 uppercase tracking-widest italic">
+                {isPending ? "Transmission_Encours" : "Prêt_Pour_Commit"}
+              </span>
+              <div className="flex gap-1">
+                <div className="w-1 h-1 bg-emerald-500 rounded-full" />
+                <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" />
+              </div>
+            </div>
+          </div>
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** * COMPOSANT INTERNE : INPUT_GROUP
+ * Typage strict pour éviter 'any' [cite: 2026-01-06].
+ */
+interface InputGroupProps {
+  label: string;
+  name: string;
+  icon: any;
+  placeholder: string;
+  type?: string;
+  required?: boolean;
+}
+
+function InputGroup({
+  label,
+  name,
+  icon: Icon,
+  placeholder,
+  type = "text",
+  required = false,
+}: InputGroupProps) {
+  return (
+    <div className="space-y-1.5 group">
+      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 px-0.5 transition-colors group-focus-within:text-indigo-600">
+        <Icon size={12} weight="bold" /> {label}
+      </label>
+      <div className="flex items-center border border-slate-200 bg-white focus-within:border-indigo-600 transition-colors">
+        <input
+          name={name}
+          type={type}
+          required={required}
+          className="w-full h-9 px-3 text-[11px] font-bold uppercase outline-none placeholder:text-slate-100"
+          placeholder={placeholder}
+        />
+      </div>
+    </div>
   );
 }

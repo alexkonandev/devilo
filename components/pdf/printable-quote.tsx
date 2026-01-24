@@ -117,45 +117,49 @@ const PrintableQuote = forwardRef<HTMLDivElement, PrintableQuoteProps>(
           </div>
 
           {/* --- TABLEAU DE DONNÉES (Blueprint Look) --- */}
+          {/* --- TABLEAU DE DONNÉES (Alignement Chirurgical) --- */}
           <div className="flex-1">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-y border-slate-900 bg-slate-50/50">
-                  <th className="py-3 px-2 text-[10px] font-black uppercase tracking-widest text-slate-900">
-                    Désignation des prestations
+                <tr className="border-y-2 border-slate-900">
+                  <th className="py-4 px-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-900">
+                    Désignation
                   </th>
-                  <th className="py-3 px-2 text-[10px] font-black uppercase tracking-widest text-center w-20 text-slate-900">
-                    UNIT
+                  <th className="py-4 px-2 text-[10px] font-black uppercase tracking-[0.2em] text-right w-20 text-slate-900">
+                    Qté
                   </th>
-                  <th className="py-3 px-2 text-[10px] font-black uppercase tracking-widest text-right w-32 text-slate-900">
+                  <th className="py-4 px-2 text-[10px] font-black uppercase tracking-[0.2em] text-right w-32 text-slate-900">
                     P.U HT
                   </th>
-                  <th className="py-3 px-2 text-[10px] font-black uppercase tracking-widest text-right w-32 text-slate-900">
-                    TOTAL HT
+                  <th className="py-4 px-2 text-[10px] font-black uppercase tracking-[0.2em] text-right w-32 text-slate-900">
+                    Total HT
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {quote.items.map((item, idx) => (
-                  <tr key={idx}>
-                    <td className="py-6 px-2 align-top">
-                      <div className="text-[12px] font-black uppercase text-slate-900 mb-1">
+                  <tr key={idx} className="group">
+                    <td className="py-5 px-2 align-top">
+                      <div className="text-[12px] font-black uppercase text-slate-950 mb-1 leading-none">
                         {item.title}
                       </div>
-                      <div className="text-[10px] text-slate-400 leading-relaxed font-medium uppercase italic max-w-md">
-                        {item.subtitle}
-                      </div>
+                      {item.subtitle && (
+                        <div className="text-[9px] text-slate-400 font-bold uppercase tracking-tight leading-relaxed max-w-md">
+                          {item.subtitle}
+                        </div>
+                      )}
                     </td>
-                    <td className="py-6 px-2 text-[11px] font-mono font-bold text-center text-slate-400 align-top">
+                    {/* Alignement à droite pour toutes les colonnes numériques */}
+                    <td className="py-5 px-2 text-[11px] font-mono font-bold text-right text-slate-500 align-top">
                       {item.quantity}
                     </td>
-                    <td className="py-6 px-2 text-[11px] font-mono font-medium text-right text-slate-600 align-top">
+                    <td className="py-5 px-2 text-[11px] font-mono font-bold text-right text-slate-500 align-top tabular-nums">
                       {item.unitPrice.toLocaleString("fr-FR", {
                         minimumFractionDigits: 2,
                       })}
                       €
                     </td>
-                    <td className="py-6 px-2 text-[11px] font-mono font-black text-right text-slate-900 align-top">
+                    <td className="py-5 px-2 text-[11px] font-mono font-black text-right text-slate-950 align-top tabular-nums">
                       {(item.quantity * item.unitPrice).toLocaleString(
                         "fr-FR",
                         { minimumFractionDigits: 2 }

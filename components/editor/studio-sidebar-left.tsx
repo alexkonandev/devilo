@@ -5,12 +5,8 @@ import {
   CaretLeftIcon,
   UserIcon,
   PlusIcon,
-  HashIcon,
-  GearSixIcon,
-  CloudCheckIcon,
   ListBulletsIcon,
   XIcon,
-  CurrencyEurIcon,
   MagnifyingGlassIcon,
   Icon,
 } from "@phosphor-icons/react";
@@ -22,7 +18,8 @@ import {
   EditorClient,
 } from "@/types/editor";
 import { useDebounce } from "@/hooks/use-debounce";
-import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+
 
 interface StudioSidebarLeftProps {
   activeQuote: EditorActiveQuote;
@@ -43,8 +40,6 @@ interface StudioSidebarLeftProps {
   removeItem: (index: number) => void;
 }
 
-// --- MICRO-COMPOSANTS BLUEPRINT V3.1 ---
-
 const SectionHeader = ({
   title,
   icon: Icon,
@@ -54,29 +49,14 @@ const SectionHeader = ({
   icon: Icon;
   right?: React.ReactNode;
 }) => (
-  <div className="h-9 bg-slate-50 border-y border-slate-200 flex items-center justify-between px-3 shrink-0">
+  <div className="flex items-center justify-between px-3 mb-2 shrink-0">
     <div className="flex items-center gap-2">
-      <Icon size={12} weight="bold" className="text-slate-900" />
-      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-900">
+      <Icon size={14} weight="bold" className="text-indigo-600" />
+      <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-slate-900">
         {title}
       </span>
     </div>
     {right}
-  </div>
-);
-
-const ChampPropriete = ({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) => (
-  <div className="flex flex-col gap-1 px-3 py-3 border-b border-slate-50">
-    <label className="text-[9px] font-bold uppercase tracking-[0.12em] text-slate-500 select-none">
-      {label}
-    </label>
-    <div className="flex items-center gap-2">{children}</div>
   </div>
 );
 
@@ -113,145 +93,178 @@ export const StudioSidebarLeft = ({
       />
 
       <div className="flex flex-col h-full bg-white border-r border-slate-200 w-[320px] overflow-hidden rounded-none shadow-none">
-        {/* EN-TÊTE : NAVIGATION & IDENTITÉ PROJET */}
-        <div className="h-14 shrink-0 flex items-center px-3 gap-3 border-b border-slate-200 bg-white z-10">
+        {/* 00. HEADER : SYNC H-16 */}
+        <header className="h-15 shrink-0 flex items-center px-3 gap-3 border-b border-slate-200 bg-white z-10">
           <button
             onClick={onBack}
-            className="p-1.5 hover:bg-slate-100 transition-none rounded-none text-slate-900"
+            className="h-7 w-7 flex items-center justify-center border border-slate-200 hover:bg-slate-50 transition-colors text-slate-900"
           >
-            <CaretLeftIcon size={18} weight="bold" />
+            <CaretLeftIcon size={16} />
           </button>
-          <div className="flex flex-col min-w-0 flex-1">
-            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-              INST_EDITEUR
+          <div className="flex flex-col min-w-0 ">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">
+              Instance Projet
             </span>
             <input
               value={activeQuote.title}
               onChange={(e) => updateField(null, "title", e.target.value)}
-              className="bg-transparent text-[14px] font-black text-indigo-600 uppercase tracking-tighter outline-none truncate placeholder:italic placeholder:font-normal placeholder:text-slate-200"
-              placeholder="NOM_DU_PROJET..."
+              className="bg-transparent text-[14px] font-bold text-indigo-600 tracking-tight outline-none truncate"
+              placeholder="Nom du projet..."
             />
           </div>
-        </div>
+        </header>
 
-        {/* ZONE DE TRAVAIL INTERNE */}
         <div className="flex-1 overflow-y-auto scrollbar-none flex flex-col min-h-0 bg-white">
-          {/* IDENTIFICATION CLIENT */}
-          <div className="shrink-0">
-            <SectionHeader title="IDENTIFICATION_CLIENT" icon={UserIcon} />
-            <ChampPropriete label="Raison Sociale">
-              <div className="flex w-full items-center border border-slate-200 bg-white focus-within:border-slate-900 transition-none">
+          {/* MODULE 01 : CONFIGURATION CLIENT & FISCALE */}
+          <section className="py-4 border-b border-slate-100 bg-slate-50/30">
+            <SectionHeader title="Saisie Client" icon={UserIcon} />
+            <div className="px-3 space-y-2">
+              <div className="flex w-full items-center border border-slate-200 bg-white focus-within:border-indigo-600 transition-colors">
                 <input
                   value={activeQuote.client.name}
                   onChange={(e) =>
                     updateField("client", "name", e.target.value)
                   }
-                  className="w-full bg-transparent px-2 py-2 text-[12px] font-bold text-slate-900 uppercase outline-none placeholder:text-slate-200 placeholder:italic placeholder:font-normal"
-                  placeholder="CLIENT_NON_DEFINI..."
+                  className="w-full bg-transparent px-3 h-8 text-[12px] font-bold text-slate-900 uppercase outline-none placeholder:text-slate-300"
+                  placeholder="Sélectionner client..."
                 />
                 <button
                   onClick={() => setIsModalOpen(true)}
-                  className="h-9 w-9 flex items-center justify-center border-l border-slate-100 text-slate-900 hover:bg-slate-50"
+                  className="h-8 w-10 flex items-center justify-center border-l border-slate-100 hover:bg-slate-50"
                 >
-                  <PlusIcon size={14} weight="bold" />
+                  <PlusIcon size={14} />
                 </button>
               </div>
-            </ChampPropriete>
 
-            {/* FINANCES : GRILLE DE HAUTE DENSITÉ */}
-            <div className="grid grid-cols-2 divide-x divide-slate-100 border-b border-slate-200">
-              <div className="flex flex-col px-3 py-3 gap-1">
-                <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">
-                  Remise_€
-                </span>
-                <input
-                  type="number"
-                  value={activeQuote.financials.discountAmountEuros}
-                  onChange={(e) =>
-                    updateField(
-                      "financials",
-                      "discountAmountEuros",
-                      parseFloat(e.target.value) || 0
-                    )
-                  }
-                  className="bg-transparent font-mono text-[14px] font-black text-indigo-600 outline-none"
-                />
-              </div>
-              <div className="flex flex-col px-3 py-3 gap-1">
-                <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">
-                  TVA_%
-                </span>
-                <input
-                  type="number"
-                  value={activeQuote.financials.vatRatePercent}
-                  onChange={(e) =>
-                    updateField(
-                      "financials",
-                      "vatRatePercent",
-                      parseFloat(e.target.value) || 0
-                    )
-                  }
-                  className="bg-transparent font-mono text-[14px] font-black text-slate-900 outline-none"
-                />
+              {/* GRILLE FISCALE RÉDUITE */}
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-white border border-slate-200 p-2">
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">
+                    Remise (€)
+                  </span>
+                  <input
+                    type="number"
+                    value={activeQuote.financials.discountAmountEuros}
+                    onChange={(e) =>
+                      updateField(
+                        "financials",
+                        "discountAmountEuros",
+                        parseFloat(e.target.value) || 0
+                      )
+                    }
+                    className="w-full bg-transparent font-mono text-[14px] font-bold text-indigo-600 outline-none"
+                  />
+                </div>
+                <div className="bg-white border border-slate-200 p-2">
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-1">
+                    TVA (%)
+                  </span>
+                  <input
+                    type="number"
+                    value={activeQuote.financials.vatRatePercent}
+                    onChange={(e) =>
+                      updateField(
+                        "financials",
+                        "vatRatePercent",
+                        parseFloat(e.target.value) || 0
+                      )
+                    }
+                    className="w-full bg-transparent font-mono text-[14px] font-bold text-slate-900 outline-none"
+                  />
+                </div>
               </div>
             </div>
-          </div>
+          </section>
 
-          {/* LIGNES DE DEVIS */}
-          <div className="shrink-0 flex flex-col min-h-0">
+          {/* MODULE 02 : ÉDITEUR DE PRODUCTION */}
+          <section className="py-4 border-b border-slate-100">
             <SectionHeader
-              title="LIGNES_ACTIVES"
+              title="Lignes de Production"
               icon={ListBulletsIcon}
               right={
-                <span className="font-mono text-[11px] font-black text-white px-2 py-0.5 bg-slate-900">
-                  {activeQuote.items.length}
+                <span className="font-mono text-[10px] font-bold text-slate-400">
+                  Total: {activeQuote.items.length.toString().padStart(2, "0")}
                 </span>
               }
             />
-            <div className="p-3 space-y-4">
+
+            <div className="px-3 space-y-4">
               {activeQuote.items.map((item, idx) => (
                 <div
                   key={idx}
-                  className="group border-l-2 border-slate-200 hover:border-indigo-600 pl-3 py-1 relative transition-none"
+                  className="group border border-slate-200 bg-white transition-all relative"
                 >
+                  {/* BOUTON SUPPRIMER (Top Right Flush) */}
                   <button
                     onClick={() => removeItem(idx)}
-                    className="absolute -right-1 top-0 opacity-0 group-hover:opacity-100 p-1 text-slate-300 hover:text-red-600 transition-none"
+                    className="absolute right-0 top-0 h-6 w-6 opacity-0 group-hover:opacity-100 bg-red-600 text-white flex items-center justify-center transition-all z-10"
                   >
-                    <XIcon size={12} weight="bold" />
+                    <XIcon size={10} weight="bold" />
                   </button>
-                  <input
-                    value={item.title}
-                    onChange={(e) => updateItem(idx, "title", e.target.value)}
-                    className="w-full bg-transparent text-[12px] font-bold text-slate-900 uppercase outline-none focus:text-indigo-600 placeholder:text-slate-200 italic"
-                    placeholder="DESIGNATION_SERVICE..."
-                  />
-                  <div className="flex items-center gap-4 mt-2">
-                    <div className="flex items-center gap-1.5">
-                      <CurrencyEurIcon
-                        size={12}
-                        weight="bold"
-                        className="text-slate-400"
-                      />
+
+                  <div className="p-2 space-y-2">
+                    {/* 1. TITRE (Impact maximum) */}
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">
+                        Désignation
+                      </label>
                       <input
-                        type="number"
-                        value={item.unitPrice}
+                        value={item.title}
                         onChange={(e) =>
-                          updateItem(
-                            idx,
-                            "unitPrice",
-                            parseFloat(e.target.value) || 0
-                          )
+                          updateItem(idx, "title", e.target.value)
                         }
-                        className="w-16 bg-transparent font-mono text-[12px] font-black text-slate-900 outline-none border-b border-transparent focus:border-slate-200"
+                        className="w-full bg-transparent text-[11px] font-bold text-slate-900 uppercase outline-none focus:text-indigo-600 placeholder:text-slate-200"
+                        placeholder="NOM DU SERVICE..."
                       />
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <HashIcon
-                        size={12}
-                        weight="bold"
-                        className="text-slate-400"
+
+                    {/* 2. SOUS-TITRE (Libéré dans son propre bloc) */}
+                    <div className="flex flex-col gap-1 bg-slate-50/80 p-2 border-l-2 border-slate-200">
+                      <textarea
+                        value={item.subtitle || ""}
+                        onChange={(e) =>
+                          updateItem(idx, "subtitle", e.target.value)
+                        }
+                        className="w-full bg-transparent text-[10px] font-medium text-slate-800 uppercase outline-none focus:text-black resize-none h-auto min-h-[14px] leading-tight"
+                        placeholder="DÉTAILS..."
+                        rows={1}
+                        onInput={(e) => {
+                          const target = e.target as HTMLTextAreaElement;
+                          target.style.height = "auto";
+                          target.style.height = `${target.scrollHeight}px`;
+                        }}
                       />
+                    </div>
+                  </div>
+
+                  {/* 3. BARRE DE CALCUL (Base de la card) */}
+                  <div className="flex divide-x divide-slate-100 border-t border-slate-100 bg-slate-50/30">
+                    <div className="flex-1 p-2">
+                      <label className="block text-[8px] font-black text-slate-400 uppercase mb-1">
+                        P.U HT
+                      </label>
+                      <div className="flex items-center gap-1">
+                        <span className="text-[10px] font-bold text-slate-400">
+                          €
+                        </span>
+                        <input
+                          type="number"
+                          value={item.unitPrice}
+                          onChange={(e) =>
+                            updateItem(
+                              idx,
+                              "unitPrice",
+                              parseFloat(e.target.value) || 0
+                            )
+                          }
+                          className="w-full bg-transparent font-mono text-[12px] font-black text-slate-900 outline-none"
+                        />
+                      </div>
+                    </div>
+                    <div className="w-20 p-2">
+                      <label className="block text-[8px] font-black text-slate-400 uppercase mb-1 text-right">
+                        Quantité
+                      </label>
                       <input
                         type="number"
                         value={item.quantity}
@@ -262,96 +275,100 @@ export const StudioSidebarLeft = ({
                             parseFloat(e.target.value) || 0
                           )
                         }
-                        className="w-12 bg-transparent font-mono text-[12px] font-black text-slate-900 outline-none border-b border-transparent focus:border-slate-200"
+                        className="w-full bg-transparent font-mono text-[12px] font-black text-slate-900 text-right outline-none"
                       />
                     </div>
                   </div>
                 </div>
               ))}
+
               <button
                 onClick={() => addItem()}
-                className="w-full py-2 border border-dashed border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-indigo-600 hover:border-indigo-600 transition-none"
+                className={cn(
+                  "w-full h-8", // Hauteur réduite au minimum (32px)
+                  "border border-dashed border-slate-300", // Traits découpés discrets
+                  "bg-slate-50/50 text-slate-400", // Couleurs neutres pour ne pas polluer l'oeil
+                  "flex items-center justify-center gap-2",
+                  "transition-all duration-200",
+                  "hover:border-indigo-600 hover:bg-indigo-50/30 hover:text-indigo-600", // Feedback chirurgical
+                  "group mt-4"
+                )}
               >
-                + AJOUTER_LIGNE
+                <PlusIcon size={12} weight="bold" />
+                <span className="text-[9px] font-black uppercase tracking-[0.15em]">
+                  Ajouter une ligne
+                </span>
               </button>
             </div>
-          </div>
+          </section>
 
-          {/* CATALOGUE SOURCE */}
-          <div className="shrink-0 bg-slate-50/50">
+          {/* MODULE 03 : BIBLIOTHÈQUE DE RESSOURCES */}
+          <section className="py-4 bg-slate-50/50 flex-1">
             <SectionHeader
-              title="CATALOGUE_SOURCE"
+              title="Catalogue Services"
               icon={MagnifyingGlassIcon}
             />
-            <div className="p-3">
-              <input
-                placeholder="RECHERCHER_SERVICE..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full bg-white border-2 border-slate-200 px-3 py-2 text-[10px] font-black uppercase outline-none focus:border-slate-900 transition-all placeholder:text-slate-200"
-              />
-            </div>
-            <div className="max-h-50 overflow-y-auto p-3 pt-0 space-y-2 scrollbar-none">
-              {filteredCatalog.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    addItem({
-                      title: item.title,
-                      unitPrice: item.unitPrice,
-                      quantity: 1,
-                    });
-                    toast.success(`SERVICE_AJOUTE`);
-                  }}
-                  className="w-full flex items-center justify-between p-2.5 bg-white border border-slate-200 hover:border-indigo-600 text-left transition-none group shadow-sm"
-                >
-                  <span className="text-[10px] font-bold text-slate-900 uppercase truncate flex-1 group-hover:text-indigo-600">
-                    {item.title}
-                  </span>
-                  <span className="font-mono text-[11px] font-black text-slate-900 ml-3">
-                    {item.unitPrice}€
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex-1 min-h-10" />
-
-          {/* AUDIT SYSTEME */}
-          <div className="shrink-0 mt-auto border-t border-slate-200 bg-white">
-            <SectionHeader title="AUDIT_SYSTEME" icon={GearSixIcon} />
-            <div className="px-3 py-4 flex flex-col gap-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-slate-400">
-                  <HashIcon size={12} weight="bold" />
-                  <span className="text-[10px] font-bold uppercase tracking-wider">
-                    DOC_ID
-                  </span>
-                </div>
-                <span className="text-[11px] font-mono font-black text-indigo-600">
-                  {activeQuote.quote.number || "EN_ATTENTE"}
-                </span>
+            <div className="px-3 space-y-4">
+              <div className="relative">
+                <MagnifyingGlassIcon
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                  size={14}
+                />
+                <input
+                  placeholder="RECHERCHE RAPIDE..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full bg-white border border-slate-200 pl-9 pr-3 h-8 text-[11px] font-bold outline-none focus:border-indigo-600 transition-colors"
+                />
               </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-slate-400">
-                  <CloudCheckIcon
-                    size={12}
-                    weight="bold"
-                    className="text-indigo-600"
-                  />
-                  <span className="text-[10px] font-bold uppercase tracking-wider">
-                    STATUT_SYNC
-                  </span>
-                </div>
-                <span className="text-[10px] font-mono text-slate-500 font-black uppercase tracking-tighter">
-                  FLUX_OPTIMAL
+
+              <div className="space-y-1 max-h-60 overflow-y-auto scrollbar-none">
+                {filteredCatalog.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() =>
+                      addItem({
+                        title: item.title,
+                        unitPrice: item.unitPrice,
+                        quantity: 1,
+                      })
+                    }
+                    className="w-full flex items-center justify-between p-3 bg-white border border-slate-100 hover:border-indigo-600 group transition-colors"
+                  >
+                    <span className="text-[11px] font-bold text-slate-900 truncate flex-1 text-left">
+                      {item.title}
+                    </span>
+                    <span className="font-mono text-[11px] font-bold text-slate-400 group-hover:text-indigo-600 ml-2">
+                      {item.unitPrice}€
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* FOOTER : AUDIT & STATUT */}
+          <footer className="mt-auto border-t border-slate-900 bg-white p-6 shrink-0">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                Document ID
+              </span>
+              <span className="text-[11px] font-mono font-bold text-indigo-600">
+                {activeQuote.quote.number || "Attente"}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                État Système
+              </span>
+              <div className="flex items-center gap-2 text-emerald-600">
+                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                <span className="text-[10px] font-mono font-bold uppercase">
+                  Optimal
                 </span>
               </div>
             </div>
-            {/* LIGNE DE FORCE FINALE */}
-            <div className="h-1 bg-indigo-600 w-full" />
-          </div>
+          </footer>
         </div>
       </div>
     </>
