@@ -6,6 +6,7 @@ import React, {
   useState,
   ReactNode,
   useTransition,
+  useMemo,
 } from "react";
 import {
   DndContext,
@@ -27,10 +28,14 @@ import { notify } from "@/lib/notifications";
 interface CatalogContextType {
   activeId: string | null;
   isDragging: boolean;
-  isLoading: boolean; // Pilotage des skeletons
-  userServices: CatalogService[];
-  platformServices: CatalogService[];
-  updateLocalService: (id: string, data: Partial<CatalogService>) => void; // Mise à jour immédiate après édition
+  isLoading: boolean;
+  userServices: CatalogService[]; // Version filtrée pour l'UI
+  platformServices: CatalogService[]; // Version filtrée pour l'UI
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+  selectedCategory: string;
+  setSelectedCategory: (category: string) => void;
+  updateLocalService: (id: string, data: Partial<CatalogService>) => void;
 }
 
 const CatalogContext = createContext<CatalogContextType | undefined>(undefined);
@@ -56,19 +61,46 @@ export function CatalogProvider({
     null
   );
 
-  const [userServices, setUserServices] =
+  // ÉTATS DE DONNÉES BRUTES
+  const [rawUserServices, setRawUserServices] =
     useState<CatalogService[]>(initialUserServices);
-  const [platformServices] = useState<CatalogService[]>(
+  const [rawPlatformServices] = useState<CatalogService[]>(
     initialPlatformServices
   );
+
+  // ÉTATS DE FILTRAGE
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("ALL");
+
+  // LOGIQUE DE FILTRAGE (Mémoïsée pour la performance)
+  const filteredUserServices = useMemo(() => {
+    return rawUserServices.filter((s) => {
+      const matchSearch = s.title
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
+      const matchCat =
+        selectedCategory === "ALL" || s.category === selectedCategory;
+      return matchSearch && matchCat;
+    });
+  }, [rawUserServices, searchQuery, selectedCategory]);
+
+  const filteredPlatformServices = useMemo(() => {
+    return rawPlatformServices.filter((s) => {
+      const matchSearch = s.title
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
+      const matchCat =
+        selectedCategory === "ALL" || s.category === selectedCategory;
+      return matchSearch && matchCat;
+    });
+  }, [rawPlatformServices, searchQuery, selectedCategory]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   );
 
-  // Fonction pour mettre à jour l'UI localement (Profit & Vitesse)
   const updateLocalService = (id: string, data: Partial<CatalogService>) => {
-    setUserServices((prev) =>
+    setRawUserServices((prev) =>
       prev.map((s) => (s.id === id ? { ...s, ...data } : s))
     );
   };
@@ -89,11 +121,10 @@ export function CatalogProvider({
 
     if (!over) return;
 
-    // LOGIQUE 1 : IMPORTATION
     if (activeData.source === "PLATFORM" && over.id === "user-inventory-zone") {
       const serviceToImport = activeData.service;
 
-      if (userServices.some((s) => s.title === serviceToImport.title)) {
+      if (rawUserServices.some((s) => s.title === serviceToImport.title)) {
         notify.error(
           "DÉJÀ_PRÉSENT",
           "Ce service est déjà dans votre catalogue."
@@ -108,26 +139,25 @@ export function CatalogProvider({
         source: "PERSONAL" as const,
       };
 
-      setUserServices((prev) => [newService, ...prev]);
+      setRawUserServices((prev) => [newService, ...prev]);
 
       startTransition(async () => {
         const result = await importServiceAction(serviceToImport.id);
         if (result.success && result.data) {
-          setUserServices((prev) =>
+          setRawUserServices((prev) =>
             prev.map((s) => (s.id === tempId ? result.data! : s))
           );
           notify.success("IMPORT_SUCCÈS", `${serviceToImport.title} importé.`);
         } else {
           notify.error("IMPORT_ERREUR", "Échec de l'importation.");
-          setUserServices((prev) => prev.filter((s) => s.id !== tempId));
+          setRawUserServices((prev) => prev.filter((s) => s.id !== tempId));
         }
       });
       return;
     }
 
-    // LOGIQUE 2 : RÉORGANISATION
     if (activeData.source === "PERSONAL" && active.id !== over.id) {
-      setUserServices((items) => {
+      setRawUserServices((items) => {
         const oldIndex = items.findIndex((item) => item.id === active.id);
         const newIndex = items.findIndex((item) => item.id === over.id);
         return arrayMove(items, oldIndex, newIndex);
@@ -141,8 +171,12 @@ export function CatalogProvider({
         activeId,
         isDragging: !!activeId,
         isLoading: isPending,
-        userServices,
-        platformServices,
+        userServices: filteredUserServices,
+        platformServices: filteredPlatformServices,
+        searchQuery,
+        setSearchQuery,
+        selectedCategory,
+        setSelectedCategory,
         updateLocalService,
       }}
     >

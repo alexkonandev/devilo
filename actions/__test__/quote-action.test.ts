@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { upsertQuoteAction } from "../quote-action";
+import { upsertQuoteAction } from "../quote-editor-action";
 import db from "@/lib/prisma";
 import { getClerkUserId } from "@/lib/auth";
 import { QuoteStatus } from "@/app/generated/prisma/client";
-import { ActiveQuote } from "@/types/quote";
+import { ActiveQuote } from "@/types/quote-editor";
 
 describe("Quote Actions - Business Logic Validation", () => {
   beforeEach(() => {

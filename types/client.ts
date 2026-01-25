@@ -1,6 +1,5 @@
-
 import { Client, QuoteStatus } from "@/app/generated/prisma/client";
-import { ActionResponse } from "./quote"; // On réutilise l'interface générique
+import { ActionResponse } from "./quote-editor"; // On réutilise l'interface générique
 
 export interface ClientListItem {
   id: string;

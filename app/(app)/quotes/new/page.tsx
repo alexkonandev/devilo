@@ -48,7 +48,7 @@ export default async function EditorPage({ searchParams }: PageProps) {
     companyEmail: user.companyEmail ?? "",
     companyPhone: user.companyPhone ?? "",
     companyAddress: user.companyAddress ?? "",
-    companySiret: user.companySiret ?? "",
+    companySiret: user.taxIdLabel ?? "",
     companyWebsite: user.companyWebsite ?? "",
     quotePrefix: user.quotePrefix ?? "DEV-",
     nextQuoteNumber: user.nextQuoteNumber ?? 1,

@@ -1,52 +1,38 @@
-// @/app/quotes/page.tsx
+import { Suspense } from "react"; // 1. Import de Suspense
+import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { getClerkUserId } from "@/lib/auth";
-import QuotesView from "@/features/quotes/quotes-view";
+import { getQuotesAction } from "@/actions/quote-registry-action";
+import { QuoteProvider } from "@/features/quotes/components/quote-context";
+import { QuotesLayout } from "@/features/quotes/components/quotes-layout";
 
-// ✅ Import de l'action (Logique de récupération)
-import { getQuotesListAction } from "@/actions/quote-action";
+// Importation des composants
+import { QuotesStatusNav } from "@/features/quotes/components/quotes-status-nav";
+import { QuoteList } from "@/features/quotes/components/quote-list";
+import { QuotesStatsGrid } from "@/features/quotes/components/quotes-stats-grid";
+import { QuoteSkeleton } from "@/features/quotes/components/quote-skeleton"; // 2. Import du Skeleton
 
-// ✅ Import du type pour les filtres
-import { QuoteFilters } from "@/types/quote";
-
-export const metadata = {
-  title: "QOS | Flux Devis Industriel",
-};
-
-interface PageProps {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}
-
-export default async function QuotesPage({ searchParams }: PageProps) {
-  const userId = await getClerkUserId();
+export default async function QuotesPage() {
+  const { userId } = await auth();
   if (!userId) redirect("/sign-in");
 
-  const resolvedParams = await searchParams;
+  const response = await getQuotesAction();
+  const initialQuotes = response.success ? response.data || [] : [];
 
-  /**
-   * NORMALISATION DES FILTRES
-   * On transforme les query params bruts en un objet typé QuoteFilters
-   */
-  const filters: QuoteFilters = {
-    page:
-      typeof resolvedParams.page === "string"
-        ? parseInt(resolvedParams.page)
-        : 1,
-    pageSize: 20,
-    search:
-      typeof resolvedParams.search === "string" ? resolvedParams.search : "",
-    status: (typeof resolvedParams.status === "string"
-      ? resolvedParams.status
-      : "all") as QuoteFilters["status"],
-    sortBy: (typeof resolvedParams.sortBy === "string"
-      ? resolvedParams.sortBy
-      : "updatedAt") as QuoteFilters["sortBy"],
-    sortDir: resolvedParams.sortDir === "asc" ? "asc" : "desc",
-  };
-
-  // FETCHING : Récupération des données via Server Action
-  const result = await getQuotesListAction(filters);
-
-  // INJECTION : On passe le résultat à la vue interactive
-  return <QuotesView initialData={result} />;
+  return (
+    <QuoteProvider initialQuotes={initialQuotes}>
+      <QuotesLayout
+        /* G : PIPELINE_NAVIGATION */
+        filters={<QuotesStatusNav />}
+        /* C : MASTER_LEDGER */
+        mainList={
+          // 3. On enveloppe la liste dans Suspense avec le skeleton en fallback
+          <Suspense fallback={<QuoteSkeleton />}>
+            <QuoteList />
+          </Suspense>
+        }
+        /* D : FINANCIAL_INTELLIGENCE */
+        kpiPanel={<QuotesStatsGrid />}
+      />
+    </QuoteProvider>
+  );
 }

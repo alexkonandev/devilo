@@ -159,7 +159,7 @@ export const StudioSidebarRight = ({
             </div>
 
             <div className="text-right">
-              <span className="font-mono-numbers text-[28px] font-bold text-white leading-none tracking-tighter ">
+              <span className="font-mono-numbers text-[22px] font-bold text-white leading-none tracking-tighter ">
                 {totals.totalTTC.toLocaleString("fr-FR")}€
               </span>
             </div>

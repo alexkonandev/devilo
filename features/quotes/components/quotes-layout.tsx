@@ -3,35 +3,49 @@
 import React from "react";
 
 interface QuotesLayoutProps {
-  explorer: React.ReactNode; // RADAR : Liste & Flux
-  inspector: React.ReactNode; // FOCUS : Work Product (Document / Détails)
-  intelligence: React.ReactNode; // STRATÉGIE : Profit & Data
+  filters: React.ReactNode; // G : Navigation par statut (Brouillons, Payés, etc.)
+  mainList: React.ReactNode; // C : Le listing principal (Le Ledger)
+  kpiPanel: React.ReactNode; // D : Statistiques de performance (Revenus, Pipeline)
 }
 
 export function QuotesLayout({
-  explorer,
-  inspector,
-  intelligence,
+  filters,
+  mainList,
+  kpiPanel,
 }: QuotesLayoutProps) {
   return (
-    /**
-     * Viewport 100% - Hauteur calculée moins le Header Studio (2.5rem / 40px)
-     * Utilisation de 'bg-white' comme base neutre
-     */
-    <div className="flex h-[calc(100vh-2.5rem)] w-full overflow-hidden bg-white antialiased">
-      {/* 1. RADAR : EXPLORATEUR (G) - Standard 320px */}
-      <aside className="w-80 shrink-0 border-r border-slate-200 flex flex-col bg-slate-50/30 overflow-hidden">
-        {explorer}
+    <div className="flex h-[calc(100vh-2.5rem)] w-full overflow-hidden bg-slate-50">
+      {/* 1. STATUS_NAVIGATION (G) - Étroit & Tactique */}
+      <aside className="w-64 shrink-0 border-r border-slate-200 bg-white flex flex-col">
+        <div className="h-12 px-4 flex items-center border-b border-slate-100 bg-slate-50/50">
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+            Pipeline_Status
+          </span>
+        </div>
+        <div className="flex-1 overflow-y-auto">{filters}</div>
       </aside>
 
-      {/* 2. FOCUS : INSPECTEUR (C) - Zone de production extensible */}
-      <main className="flex-1 min-w-0 flex flex-col bg-white overflow-hidden relative">
-        {inspector}
+      {/* 2. QUOTE_LEDGER (C) - La vue centrale massive */}
+      <main className="flex-1 min-w-0 flex flex-col bg-white">
+        <div className="h-12 px-6 flex items-center justify-between border-b border-slate-200">
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-900">
+            Registry_Master_View
+          </span>
+          {/* Espace pour une barre de recherche rapide ici */}
+        </div>
+        <div className="flex-1 overflow-y-auto scrollbar-none p-4">
+          {mainList}
+        </div>
       </main>
 
-      {/* 3. STRATÉGIE : INTELLIGENCE (D) - Standard 320px */}
-      <aside className="w-80 shrink-0 border-l border-slate-200 flex flex-col bg-slate-50/30 overflow-hidden">
-        {intelligence}
+      {/* 3. CASH_INTELLIGENCE (D) - Focus sur le profit global */}
+      <aside className="w-80 shrink-0 border-l border-slate-200 bg-slate-50/30 flex flex-col">
+        <div className="h-12 px-4 flex items-center border-b border-slate-200 bg-white">
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-600">
+            Financial_Insights
+          </span>
+        </div>
+        <div className="flex-1 overflow-y-auto p-4">{kpiPanel}</div>
       </aside>
     </div>
   );

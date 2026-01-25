@@ -23,7 +23,7 @@ import {
 } from "@/types/editor";
 
 // --- ACTIONS ---
-import { upsertQuoteAction } from "@/actions/quote-action";
+import { upsertQuoteAction } from "@/actions/quote-editor-action";
 
 interface CreateQuoteClientProps {
   initialCatalog: EditorCatalogOffer[];
@@ -146,7 +146,7 @@ export default function CreateQuoteClient({
     },
     []
   );
-  
+
   useEffect(() => {
     if (preSelectedOffer && activeQuote.items.length === 0) {
       handleAddItem({
