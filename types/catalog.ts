@@ -1,33 +1,35 @@
-// @/types/catalog.ts
-import {
-  Profession,
-  BusinessModel,
-  UserService,
-  CatalogOffer,
-} from "@/app/generated/prisma/client";
+/**
+ * SOURCE_TYPE : Identification du flux d'origine
+ */
+export type CatalogSource = "PERSONAL" | "PLATFORM";
 
 /**
- * SOURCE DE VÉRITÉ : L'ACTIF
- * Fusionne les services personnels et les offres catalogue.
+ * CATALOG_SERVICE : Le pivot de données unifié
+ * Fusionne CatalogOffer (Plateforme) et UserService (Perso).
+ * Les noms sont calqués sur l'interface React pour respecter ta règle.
  */
-export type CatalogItem = (UserService | CatalogOffer) & {
-  category: string; // Obligatoire pour le tri
+export interface CatalogService {
+  id: string;
+  title: string;
+  subtitle: string;
+  unitPrice: number;
+  category: string; // "GENERAL" par défaut pour UserService
+  source: CatalogSource;
   isPremium: boolean;
-};
-
-/**
- * FILTRAGE STRATÉGIQUE
- */
-export interface CatalogFilters {
-  search?: string;
-  profession?: Profession;
-  model?: BusinessModel;
-  type: "personal" | "library";
+  userId: string;
+  createdAt: Date;
 }
 
 /**
- * CONTRAT DE RÉPONSE UNIFIÉ
- * Évite l'usage de 'any' et standardise les retours d'actions.
+ * FILTRAGE_STRATÉGIQUE
+ */
+export interface CatalogFilters {
+  search: string;
+  category: string | "ALL";
+}
+
+/**
+ * ACTION_RESPONSE : Contrat de mutation standard
  */
 export interface ActionResponse<T = void> {
   success: boolean;
@@ -36,12 +38,10 @@ export interface ActionResponse<T = void> {
 }
 
 /**
- * LIST ITEM (Pour la scannabilité dans le Radar)
+ * DND_PAYLOAD : Payload de transfert pour @dnd-kit
  */
-export interface CatalogListItem {
-  id: string;
-  title: string;
-  category: string;
-  unitPrice: number;
-  isPremium: boolean;
+export interface DragData {
+  type: "CATALOG_ITEM";
+  source: CatalogSource;
+  service: CatalogService;
 }
