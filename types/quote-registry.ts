@@ -47,10 +47,12 @@ export interface QuoteContextType {
   // State
   isLoading: boolean;
   searchQuery: string;
+  search: string; // Alias pour compatibilité
   activeStatus: QuoteStatus | "ALL";
 
   // Setters (UI)
   setSearchQuery: (query: string) => void;
+  setSearch: (query: string) => void; // Alias pour compatibilité
   setActiveStatus: (status: QuoteStatus | "ALL") => void;
 
   // Actions (Mutations)

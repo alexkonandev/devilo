@@ -6,7 +6,6 @@ import { CaretRightIcon, HouseIcon } from "@phosphor-icons/react";
 
 /**
  * PATH_MAP : Traduction française avec sémantique "Système"
- * On garde les slashs pour l'esthétique Industrial Blueprint.
  */
 const PATH_MAP: Record<string, string> = {
   dashboard: "Console / Accueil",
@@ -28,11 +27,11 @@ export function AppBreadcrumb() {
   return (
     <nav
       aria-label="Breadcrumb"
-      className="flex items-center gap-1.5 select-none"
+      className="flex items-center gap-2 select-none"
     >
       <Link
         href="/dashboard"
-        className="text-slate-400 hover:text-slate-950 transition-none flex items-center"
+        className="w-6 h-6 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-950 hover:bg-slate-100 transition-all"
       >
         <HouseIcon size={14} weight="bold" />
       </Link>
@@ -41,7 +40,6 @@ export function AppBreadcrumb() {
         const href = `/${segments.slice(0, index + 1).join("/")}`;
         const isLast = index === segments.length - 1;
 
-        // On cherche la traduction, sinon on affiche un ID type Hash si c'est long
         const label =
           PATH_MAP[segment] ||
           (segment.length > 10
@@ -49,7 +47,7 @@ export function AppBreadcrumb() {
             : segment);
 
         return (
-          <div key={href} className="flex items-center gap-1.5">
+          <div key={href} className="flex items-center gap-2">
             <CaretRightIcon
               size={10}
               weight="bold"
@@ -57,13 +55,14 @@ export function AppBreadcrumb() {
             />
 
             {isLast ? (
-              <span className="text-[9px] font-black uppercase tracking-[0.15em] text-indigo-600 bg-indigo-50/50 px-2 py-0.5 border border-indigo-100 rounded-none">
+              /* LE DERNIER SEGMENT : Pilule Spatial Intelligence */
+              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-indigo-700 bg-indigo-50 border border-indigo-100 px-3 py-1 rounded-full shadow-sm shadow-indigo-500/5">
                 {label}
               </span>
             ) : (
               <Link
                 href={href}
-                className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 hover:text-slate-950 transition-none"
+                className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 hover:text-slate-950 transition-colors px-1"
               >
                 {label}
               </Link>

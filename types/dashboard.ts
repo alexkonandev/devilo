@@ -16,6 +16,7 @@ export interface DashboardActivity {
   amount: number;
   status: QuoteStatus;
   clientName: string;
+  projectName: string;
   quoteNumber: string;
   date: Date | string; // Ajout de string car les dates venant du serveur peuvent être sérialisées
 }
@@ -25,6 +26,8 @@ export interface TopClient {
   name: string;
   totalSpent: number;
   quoteCount: number;
+  healthScore: "EXCELLENT" | "GOOD" | "SLOW";
+  averagePaymentDays: number;
 }
 
 export interface SuggestedService {

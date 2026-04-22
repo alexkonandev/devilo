@@ -64,7 +64,7 @@ export function QuoteProvider({
       counts[q.status]++;
       const totalHT = q.lines.reduce(
         (acc, ln) => acc + ln.unitPrice * ln.quantity,
-        0
+        0,
       );
 
       // Logique financière : DRAFT, SENT et ACCEPTED font partie du pipeline (argent potentiel)
@@ -104,7 +104,7 @@ export function QuoteProvider({
     } else {
       notify.success(
         "STATUT_MIS_À_JOUR",
-        `Le devis est maintenant marqué comme ${status}.`
+        `Le devis est maintenant marqué comme ${status}.`,
       );
     }
   };
@@ -132,7 +132,9 @@ export function QuoteProvider({
         stats,
         isLoading: isPending,
         searchQuery,
+        search: searchQuery, // Alias pour compatibilité
         setSearchQuery,
+        setSearch: setSearchQuery, // Alias pour compatibilité
         activeStatus,
         setActiveStatus,
         updateStatus,

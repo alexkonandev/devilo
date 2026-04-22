@@ -5,181 +5,200 @@ import {
   PrinterIcon,
   MagnifyingGlassMinusIcon,
   MagnifyingGlassPlusIcon,
-  CircleNotchIcon,
-  EyeIcon,
-  PencilSimpleIcon,
-  LayoutIcon,
-  CloudCheckIcon,
+  PaletteIcon,
+  CheckIcon,
   CaretDownIcon,
+  EyeIcon,
+  LayoutIcon,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { useKernelStore } from "@/hooks/use-kernel-store";
 import { EditorTheme } from "@/types/editor";
 
 interface FloatingToolbarProps {
-  zoom: number;
-  setZoom: (zoom: number) => void;
   onPrint: () => void;
-  onSave: () => void;
-  isSaving: boolean;
-  viewMode: "studio" | "preview";
-  setViewMode: (mode: "studio" | "preview") => void;
+  onSave: () => void; // Nouvelle action pour la sauvegarde manuelle
   themes: EditorTheme[];
-  activeThemeId: string;
-  onThemeChange: (id: string) => void;
 }
 
-export const FloatingToolbar = ({
-  zoom,
-  setZoom,
-  onPrint,
-  onSave,
-  isSaving,
-  viewMode,
-  setViewMode,
-  themes,
-  activeThemeId,
-  onThemeChange,
-}: FloatingToolbarProps) => {
+export const FloatingToolbar = ({ onPrint, themes }: FloatingToolbarProps) => {
   const [showThemeMenu, setShowThemeMenu] = useState(false);
 
+  // Connexion au Kernel Store
+  const {
+    zoom,
+    setZoom,
+    activeThemeId,
+    setActiveThemeId,
+    viewMode,
+    setViewMode,
+  } = useKernelStore();
+
+  const isPreview = viewMode === "preview";
+
   return (
-    <div className="flex flex-col items-center gap-3">
-      {/* 01. THEME PICKER (Figma-Style Overlay) */}
+    <div className="flex flex-col items-center gap-2 relative">
+      {/* ━━━ THEME PICKER POPOVER ━━━ */}
       {showThemeMenu && (
-        <div className="mb-2 w-56 bg-white border border-slate-200/60   overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-          <div className="flex flex-col p-1">
-            {themes.map((theme) => (
-              <button
-                key={theme.id}
-                onClick={() => {
-                  onThemeChange(theme.id);
-                  setShowThemeMenu(false);
-                }}
-                className={cn(
-                  "flex items-center gap-3 w-full px-3 py-2 rounded-lg transition-colors text-left",
-                  activeThemeId === theme.id
-                    ? "bg-slate-100"
-                    : "hover:bg-slate-50"
-                )}
-              >
-                <div
-                  className="w-4 h-4  border border-black/5"
-                  style={{ backgroundColor: theme.color }}
-                />
-                <span className="text-[12px] font-medium text-slate-700">
-                  {theme.name}
-                </span>
-                {activeThemeId === theme.id && (
-                  <div className="ml-auto w-1.5 h-1.5 bg-indigo-500 " />
-                )}
-              </button>
-            ))}
+        <div className="absolute bottom-full mb-4 w-64 bg-white shadow-2xl border-2 border-slate-200 rounded-2xl overflow-hidden animate-in fade-in zoom-in-95 slide-in-from-bottom-4 duration-200 z-60">
+          <div className="px-4 py-4 border-b-2 border-slate-100 bg-slate-50/50">
+            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-indigo-600">
+              Moteur de Style
+            </span>
+          </div>
+
+          <div className="p-2 max-h-[300px] overflow-y-auto scrollbar-none">
+            {themes.map((theme) => {
+              const isSelected = activeThemeId === theme.id;
+              return (
+                <button
+                  key={theme.id}
+                  onClick={() => {
+                    setActiveThemeId(theme.id);
+                    setShowThemeMenu(false);
+                  }}
+                  className={cn(
+                    "flex items-center gap-3 w-full px-3 py-3 rounded-xl transition-all group mb-1 last:mb-0",
+                    isSelected
+                      ? "bg-indigo-50 border-2 border-indigo-100"
+                      : "hover:bg-slate-50 border-2 border-transparent",
+                  )}
+                >
+                  <div
+                    className="w-5 h-5 rounded-xl border-2 border-white shrink-0 flex items-center justify-center shadow-md"
+                    style={{ backgroundColor: theme.color }}
+                  >
+                    {isSelected && (
+                      <CheckIcon
+                        size={10}
+                        weight="bold"
+                        className="text-white"
+                      />
+                    )}
+                  </div>
+
+                  <span
+                    className={cn(
+                      "text-[10px] font-bold uppercase tracking-tight",
+                      isSelected
+                        ? "text-indigo-600"
+                        : "text-slate-600 group-hover:text-slate-900",
+                    )}
+                  >
+                    {theme.name}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
 
-      {/* 02. MAIN TOOLBAR (The Pill) */}
-      <div className="flex items-center h-12 px-2 bg-white/90 backdrop-blur-md border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.08)] ">
-        {/* TOOLS GROUP */}
-        <div className="flex items-center gap-1 pr-2 border-r border-slate-200">
-          <button
-            onClick={() => setViewMode("studio")}
-            className={cn(
-              "p-2  transition-all",
-              viewMode === "studio"
-                ? "bg-slate-900 text-white shadow-md"
-                : "text-slate-500 hover:bg-slate-100"
-            )}
+      {/* ━━━ MAIN TOOLBAR PILL - Glassmorphic ━━━ */}
+      <div
+        className={cn(
+          "flex items-center h-12 px-2 gap-0.5 bg-white/70 backdrop-blur-xl border border-white/20 rounded-2xl shadow-[0_8px_32px_-8px_rgba(0,0,0,0.12),0_2px_8px_-2px_rgba(0,0,0,0.05),inset_0_1px_0_rgba(255,255,255,0.6)] transition-all",
+        )}
+      >
+        {/* Toggle Mode */}
+        <div className="flex items-center gap-1 pr-2 border-r-2 border-slate-100">
+          <ToolBtn
+            active={isPreview}
+            onClick={() => setViewMode(isPreview ? "studio" : "preview")}
+            title={isPreview ? "Revenir à l'édition" : "Voir l'aperçu PDF"}
           >
-            <PencilSimpleIcon
-              size={18}
-              weight={viewMode === "studio" ? "fill" : "bold"}
-            />
-          </button>
-          <button
-            onClick={() => setViewMode("preview")}
-            className={cn(
-              "p-2  transition-all",
-              viewMode === "preview"
-                ? "bg-slate-900 text-white shadow-md"
-                : "text-slate-500 hover:bg-slate-100"
+            {isPreview ? (
+              <LayoutIcon size={18} weight="fill" className="text-indigo-600" />
+            ) : (
+              <EyeIcon size={18} weight="bold" />
             )}
-          >
-            <EyeIcon
-              size={18}
-              weight={viewMode === "preview" ? "fill" : "bold"}
-            />
-          </button>
+          </ToolBtn>
         </div>
 
-        {/* ZOOM GROUP */}
-        <div className="flex items-center gap-1 px-3 border-r border-slate-200">
-          <button
-            onClick={() => setZoom(Math.max(zoom - 0.1, 0.5))}
-            className="p-1.5 text-slate-400 hover:text-slate-900"
+        {/* Zoom Controls */}
+        <div className="flex items-center gap-1 px-2 border-r-2 border-slate-100 text-slate-600">
+          <ToolBtn
+            onClick={() => setZoom(Math.max(zoom - 0.1, 0.4))}
+            title="Zoom arrière"
           >
             <MagnifyingGlassMinusIcon size={16} weight="bold" />
-          </button>
-          <span className="text-[11px] font-bold text-slate-700 w-10 text-center select-none font-mono">
-            {Math.round(zoom * 100)}%
-          </span>
-          <button
-            onClick={() => setZoom(Math.min(zoom + 0.1, 1.5))}
-            className="p-1.5 text-slate-400 hover:text-slate-900"
+          </ToolBtn>
+
+          <div className="w-12 text-center">
+            <span className="text-[11px] font-mono font-black text-slate-800">
+              {Math.round(zoom * 100)}%
+            </span>
+          </div>
+
+          <ToolBtn
+            onClick={() => setZoom(Math.min(zoom + 0.1, 1.2))}
+            title="Zoom avant"
           >
             <MagnifyingGlassPlusIcon size={16} weight="bold" />
-          </button>
+          </ToolBtn>
         </div>
 
-        {/* STYLE SELECTOR */}
-        <div className="flex items-center px-1 border-r border-slate-200">
-          <button
+        {/* Theme Picker */}
+        <div className="flex items-center pl-1 border-r-2 border-slate-100 pr-2">
+          <ToolBtn
+            active={showThemeMenu}
             onClick={() => setShowThemeMenu(!showThemeMenu)}
-            className={cn(
-              "flex items-center gap-2 px-3 py-1.5  transition-all",
-              showThemeMenu
-                ? "bg-slate-100"
-                : "hover:bg-slate-100 text-slate-600"
-            )}
+            title="Changer le thème"
           >
-            <LayoutIcon size={18} weight="bold" />
+            <PaletteIcon size={18} weight="bold" />
             <CaretDownIcon
               size={10}
               weight="bold"
               className={cn(
-                "transition-transform",
-                showThemeMenu && "rotate-180"
+                "ml-1.5 transition-transform duration-200",
+                showThemeMenu && "rotate-180",
               )}
             />
-          </button>
+          </ToolBtn>
         </div>
 
-        {/* FINAL ACTIONS */}
-        <div className="flex items-center gap-2 pl-2">
-          <button
-            onClick={onSave}
-            disabled={isSaving}
-            className="p-2.5 text-slate-500 hover:text-indigo-600 transition-colors"
-          >
-            {isSaving ? (
-              <CircleNotchIcon size={18} className="animate-spin" />
-            ) : (
-              <CloudCheckIcon size={20} weight="bold" />
-            )}
-          </button>
-
-          <button
-            onClick={onPrint}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white  transition-all shadow-lg shadow-indigo-500/20 active:scale-95"
-          >
-            <PrinterIcon size={16} weight="bold" />
-            <span className="text-[11px] font-black uppercase tracking-wider">
-              Imprimer
-            </span>
-          </button>
-        </div>
+        {/* Print / Export Action */}
+        <button
+          onClick={onPrint}
+          className={cn(
+            "flex items-center gap-2.5 px-6 py-2.5 rounded-xl transition-all active:scale-95 shadow-lg ml-1",
+            "bg-slate-900 hover:bg-indigo-600 text-white shadow-slate-900/20",
+          )}
+        >
+          <PrinterIcon size={16} weight="bold" />
+          <span className="text-[10px] font-black uppercase tracking-[0.2em]">
+            Exporter
+          </span>
+        </button>
       </div>
     </div>
   );
 };
+
+// ━━━ COMPOSANT INTERNE : ToolBtn ━━━
+function ToolBtn({
+  active,
+  onClick,
+  title,
+  children,
+}: {
+  active?: boolean;
+  onClick: () => void;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      title={title}
+      className={cn(
+        "group relative flex items-center p-2.5 rounded-xl transition-all duration-200",
+        active
+          ? "bg-indigo-50 text-indigo-600 ring-1 ring-indigo-200"
+          : "text-slate-400 hover:text-slate-900 hover:bg-slate-50",
+      )}
+    >
+      {children}
+    </button>
+  );
+}

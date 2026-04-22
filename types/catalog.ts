@@ -6,14 +6,19 @@ export type CatalogSource = "PERSONAL" | "PLATFORM";
 /**
  * CATALOG_SERVICE : Le pivot de données unifié
  * Fusionne CatalogOffer (Plateforme) et UserService (Perso).
- * Les noms sont calqués sur l'interface React pour respecter ta règle.
+ * Les noms sont strictement identiques à l'interface React et au schéma Prisma.
  */
 export interface CatalogService {
   id: string;
   title: string;
   subtitle: string;
   unitPrice: number;
-  category: string; // "GENERAL" par défaut pour UserService
+  /**
+   * baseCost : Le coût de revient interne (Temps/Ressources).
+   * Vital pour le calcul de la marge de performance.
+   */
+  baseCost: number;
+  category: string;
   source: CatalogSource;
   isPremium: boolean;
   userId: string;

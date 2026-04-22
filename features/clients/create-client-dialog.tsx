@@ -20,12 +20,8 @@ import {
 import { upsertClient } from "@/actions/client-action";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { SpatialInput } from "@/features/settings/components/spatial-input"; // Using standard spatial input if possible, or style similar
 
-/**
- * DIALOGUE DE CRÉATION CLIENT - VERSION STUDIO
- * Source de vérité : Interface Industrielle Épurée.
- * Zéro Shadow, Zéro Rounded, Focus Indigo.
- */
 export function CreateClientDialog() {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -39,17 +35,14 @@ export function CreateClientDialog() {
         name: formData.get("name") as string,
         email: formData.get("email") as string,
         address: (formData.get("address") as string) || "",
-        siret: (formData.get("siret") as string) || "",
+        taxId: (formData.get("siret") as string) || "", // Maps to taxId in backend
       });
 
       if (res.success) {
-        toast.success("SYNC_SUCCESS", {
-          className:
-            "rounded-none border-slate-200 font-bold text-[10px] uppercase tracking-widest",
-        });
+        toast.success("Client créé avec succès");
         setOpen(false);
       } else {
-        toast.error("SYNC_ERROR", { description: res.error });
+        toast.error("Erreur", { description: res.error });
       }
     });
   };
@@ -57,143 +50,94 @@ export function CreateClientDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="h-8 flex items-center gap-2 border border-slate-200 bg-white hover:border-indigo-600 hover:text-indigo-600 px-3 transition-all">
-          <Plus size={14} weight="bold" />
-          <span className="text-[9px] font-black uppercase tracking-[0.15em]">
-            Ajouter_Client
-          </span>
+        <button className="group flex items-center gap-2.5 px-7 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl text-[11px] font-bold uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-indigo-600/25 hover:shadow-indigo-500/40">
+            <Plus size={16} weight="bold" />
+            Ajouter un client
         </button>
       </DialogTrigger>
 
-      <DialogContent className="max-w-[480px] rounded-none border border-slate-200 p-0 overflow-hidden shadow-none bg-white gap-0">
-        {/* 00. HEADER : ALIGNÉ SUR LE STUDIO */}
-        <DialogHeader className="p-5 border-b border-slate-100 flex flex-row items-center gap-4 space-y-0 bg-slate-50/30">
-          <div className="h-10 w-10 flex items-center justify-center border border-slate-200 bg-white text-indigo-600">
-            <UserPlus size={20} weight="bold" />
-          </div>
-          <div className="flex flex-col">
-            <DialogTitle className="text-[12px] font-black uppercase tracking-[0.2em] text-slate-900">
-              Nouveau_Profil_Client
-            </DialogTitle>
-            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
-              Saisie_Manuelle_Actif
-            </span>
+      <DialogContent className="max-w-[480px] p-0 overflow-hidden bg-[#0A0E1A]/90 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-2xl text-white">
+        
+        {/* HEADER */}
+        <DialogHeader className="p-6 border-b border-white/5 bg-white/[0.02]">
+          <div className="flex items-center gap-4">
+              <div className="h-10 w-10 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center border border-indigo-500/30">
+                <UserPlus size={20} weight="fill" />
+              </div>
+              <div>
+                <DialogTitle className="text-sm font-black uppercase tracking-widest text-white">
+                  Nouveau Client
+                </DialogTitle>
+                <div className="text-[10px] text-slate-400 font-medium mt-0.5">
+                  Création d'une nouvelle fiche partenaire
+                </div>
+              </div>
           </div>
         </DialogHeader>
 
+        {/* FORM */}
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
-          {/* SECTION IDENTITÉ */}
-          <div className="space-y-4">
-            <InputGroup
-              label="Désignation_Entité"
-              name="name"
-              icon={IdentificationCard}
-              placeholder="RAISON SOCIALE..."
-              required
-            />
-            <InputGroup
-              label="Email_Facturation"
-              name="email"
-              type="email"
-              icon={Envelope}
-              placeholder="CONTACT@CLIENT.COM"
-              required
-            />
-          </div>
+           
+           <SpatialInput 
+                name="name" 
+                label="Nom / Raison Sociale" 
+                required 
+                placeholder="Ex: Acme Corp"
+                icon={<IdentificationCard />}
+           />
 
-          {/* SECTION METADATA GRID */}
-          <div className="grid grid-cols-2 gap-4">
-            <InputGroup
-              label="Contact_Tel"
-              name="phone"
-              icon={Phone}
-              placeholder="+225..."
-            />
-            <InputGroup
-              label="ID_Fiscal"
-              name="siret"
-              icon={Hash}
-              placeholder="RCCM / IFU"
-            />
-          </div>
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <SpatialInput 
+                    name="email" 
+                    label="Email" 
+                    type="email" 
+                    placeholder="contact@acme.com"
+                    icon={<Envelope />}
+                />
+                <SpatialInput 
+                    name="phone" 
+                    label="Téléphone" 
+                    placeholder="+33 6..."
+                    icon={<Phone />}
+                />
+           </div>
 
-          {/* SECTION GEO */}
-          <div className="space-y-1.5">
-            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-              <MapPin size={12} weight="bold" /> Localisation_Physique
-            </label>
-            <textarea
-              name="address"
-              rows={2}
-              className="w-full border border-slate-200 p-3 text-[11px] font-bold uppercase outline-none focus:border-indigo-600 bg-white transition-colors resize-none placeholder:text-slate-100"
-              placeholder="ADRESSE DE LIVRAISON..."
-            />
-          </div>
+           <SpatialInput 
+                name="siret" 
+                label="Identifiant Fiscal / SIRET" 
+                placeholder="000 000 000"
+                icon={<Hash />}
+           />
 
-          {/* ACTION FOOTER */}
-          <div className="pt-4 border-t border-slate-100 flex flex-col gap-3">
-            <button
-              type="submit"
-              disabled={isPending}
-              className={cn(
-                "w-full h-12 flex items-center justify-center font-black uppercase tracking-[0.2em] text-[10px] transition-all",
-                isPending
-                  ? "bg-slate-50 text-slate-300 cursor-not-allowed"
-                  : "bg-indigo-600 text-white hover:bg-indigo-700"
-              )}
-            >
-              {isPending ? "Traitement_Données..." : "Valider_Enregistrement"}
-            </button>
-            <div className="flex justify-between items-center px-1">
-              <span className="text-[8px] font-bold text-slate-300 uppercase tracking-widest italic">
-                {isPending ? "Transmission_Encours" : "Prêt_Pour_Commit"}
-              </span>
-              <div className="flex gap-1">
-                <div className="w-1 h-1 bg-emerald-500 rounded-full" />
-                <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" />
+           <div className="space-y-2">
+              <label className="text-[9px] font-bold uppercase tracking-widest text-slate-500 ml-1">Adresse</label>
+              <div className="relative group">
+                  <div className="absolute left-3 top-3 text-slate-400 group-focus-within:text-indigo-400 transition-colors">
+                      <MapPin size={16} />
+                  </div>
+                  <textarea 
+                      name="address"
+                      rows={3}
+                      className="w-full bg-white/[0.03] border border-white/[0.05] rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder:text-slate-600 outline-none focus:border-indigo-500/50 focus:bg-indigo-500/5 transition-all resize-none"
+                      placeholder="Adresse complète..."
+                  />
               </div>
-            </div>
-          </div>
+           </div>
+
+           {/* FOOTER ACTIONS */}
+           <div className="pt-2 flex flex-col gap-3">
+              <button 
+                  type="submit" 
+                  disabled={isPending}
+                  className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-900/20"
+              >
+                  {isPending ? "Création..." : "Enregistrer le client"}
+              </button>
+           </div>
+
         </form>
+
       </DialogContent>
     </Dialog>
-  );
-}
-
-/** * COMPOSANT INTERNE : INPUT_GROUP
- * Typage strict pour éviter 'any' [cite: 2026-01-06].
- */
-interface InputGroupProps {
-  label: string;
-  name: string;
-  icon: any;
-  placeholder: string;
-  type?: string;
-  required?: boolean;
-}
-
-function InputGroup({
-  label,
-  name,
-  icon: Icon,
-  placeholder,
-  type = "text",
-  required = false,
-}: InputGroupProps) {
-  return (
-    <div className="space-y-1.5 group">
-      <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 px-0.5 transition-colors group-focus-within:text-indigo-600">
-        <Icon size={12} weight="bold" /> {label}
-      </label>
-      <div className="flex items-center border border-slate-200 bg-white focus-within:border-indigo-600 transition-colors">
-        <input
-          name={name}
-          type={type}
-          required={required}
-          className="w-full h-9 px-3 text-[11px] font-bold uppercase outline-none placeholder:text-slate-100"
-          placeholder={placeholder}
-        />
-      </div>
-    </div>
   );
 }

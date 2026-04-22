@@ -4,7 +4,6 @@ import db from "@/lib/prisma";
 import { getClerkUserId } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { ClientListItem } from "@/types/client";
-
 /**
  * RÉCUPÉRATION DES CLIENTS + KPIS
  * Calcule le nombre de devis et le CA total par client pour l'UI.
@@ -26,6 +25,8 @@ export async function getClients(): Promise<ClientListItem[]> {
             number: true,
             status: true,
             createdAt: true,
+            // Note: Vérifie que ton modèle Quote a bien une relation 'lines' ou 'items'
+            // Ici on suit ta logique 'lines'
             lines: {
               select: {
                 quantity: true,
@@ -52,7 +53,7 @@ export async function getClients(): Promise<ClientListItem[]> {
         ),
       }));
 
-      // Calcul du CA total (totalSpent)
+      // Calcul du CA total (ROI direct pour le business)
       const totalSpent = mappedQuotes.reduce(
         (acc, q) => acc + q.totalAmount,
         0
@@ -63,11 +64,11 @@ export async function getClients(): Promise<ClientListItem[]> {
         name: client.name,
         email: client.email,
         address: client.address,
-        siret: client.siret,
+        taxId: client.taxId, // ✅ Mis à jour : taxId
         createdAt: client.createdAt,
         quoteCount: client._count.quotes,
         totalSpent: totalSpent,
-        quotes: mappedQuotes, // Indispensable pour ClientListItem
+        quotes: mappedQuotes,
       };
     });
   } catch (err) {
@@ -85,7 +86,7 @@ export async function upsertClient(data: {
   name: string;
   email?: string;
   address?: string;
-  siret?: string;
+  taxId?: string; // ✅ Mis à jour : taxId
 }) {
   try {
     const authId = await getClerkUserId();
@@ -95,7 +96,7 @@ export async function upsertClient(data: {
       name: data.name,
       email: data.email || null,
       address: data.address || null,
-      siret: data.siret || null,
+      taxId: data.taxId || null, // ✅ Mis à jour : taxId
       userId: authId,
     };
 
@@ -106,8 +107,9 @@ export async function upsertClient(data: {
         })
       : await db.client.create({ data: clientData });
 
-    revalidatePath("/dashboard/clients");
-    revalidatePath("/quotes/new"); // Pour rafraîchir la liste dans l'éditeur de devis
+    // Stratégie de revalidation : on nettoie les pages de listing et d'édition
+    revalidatePath("/clients");
+    revalidatePath("/quotes");
 
     return { success: true, data: client };
   } catch (err) {
@@ -131,7 +133,7 @@ export async function deleteClient(clientId: string) {
       },
     });
 
-    revalidatePath("/dashboard/clients");
+    revalidatePath("/clients");
     return { success: true };
   } catch (err) {
     console.error("[DELETE_CLIENT_ERROR]:", err);
@@ -143,7 +145,7 @@ export async function deleteClient(clientId: string) {
 }
 
 /**
- * SUPPRESSION GROUPÉE (BATCH DELETE)
+ * SUPPRESSION GROUPÉE
  */
 export async function deleteManyClients(clientIds: string[]) {
   try {
@@ -157,7 +159,7 @@ export async function deleteManyClients(clientIds: string[]) {
       },
     });
 
-    revalidatePath("/dashboard/clients");
+    revalidatePath("/clients");
     return { success: true, count: result.count };
   } catch (err) {
     console.error("[DELETE_MANY_CLIENTS_ERROR]:", err);

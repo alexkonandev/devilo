@@ -1,5 +1,3 @@
-
-
 generator client {
   provider = "prisma-client"
   output   = "../app/generated/prisma"
@@ -9,6 +7,187 @@ datasource db {
   provider = "postgresql"
 }
 
+model User {
+  id                    String         @id
+  email                 String         @unique
+  plan                  PlanStatus     @default(FREE)
+  profession            Profession?
+  businessModel         BusinessModel?
+  isOnboarded           Boolean        @default(false)
+  companyName           String?
+  companyLogo           String?
+  taxId                 String?
+  taxIdLabel            String?        @default("NCC")
+  companyEmail          String?
+  companyPhone          String?
+  companyWebsite        String?
+  currency              String         @default("XOF")
+  defaultVatRate        Float          @default(18.0)
+  quotePrefix           String         @default("INV-")
+  nextQuoteNumber       Int            @default(1)
+  defaultTerms          String?
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  companyAddressDetails String?
+  companyArea           String?
+  companyCity           String?
+  companyDistrict       String?
+  
+  // --- CHAMPS BANCAIRES (Phase 1 - Bloqueurs Critiques) ---
+  bankName              String?
+  bankIBAN              String?
+  bankSWIFT             String?
+  bankBIC               String?
+  catalogOffers         CatalogOffer[]
+  clients               Client[]
+  subscription          Subscription?
+  userServices          UserService[]
+  quotes                Quote[]
+
+  @@map("users")
+}
+
+model UserApiLimit {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  count     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Subscription {
+  id             String    @id @default(cuid())
+  userId         String    @unique
+  variantId      String?
+  customerId     String?   @unique
+  subscriptionId String?   @unique
+  endsAt         DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CatalogOffer {
+  id        String   @id @default(cuid())
+  category  String
+  title     String
+  subtitle  String   @default("")
+  userId    String
+  unitPrice Float
+  isPremium Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([category])
+}
+
+model UserService {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  subtitle  String   @default("")
+  unitPrice Float
+  createdAt DateTime @default(now())
+  baseCost  Float    @default(0)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, title])
+}
+
+model Client {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  email     String?
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  taxId     String?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quotes    Quote[]
+
+  @@unique([userId, name])
+  @@index([userId, taxId])
+}
+
+model Quote {
+  id             String      @id @default(cuid())
+  userId         String
+  clientId       String
+  
+  // --- NOUVEAUX CHAMPS POUR ALIGNEMENT UI ---
+  title          String      @default("NOUVEAU_PROJET")
+  
+  // Snapshot Company (Pour que le devis reste intact si l'utilisateur change de branding plus tard)
+  companyName    String?
+  companyEmail   String?
+  companyAddress String?
+  companyTaxId   String?
+  companyTaxIdL  String?     // Label Tax (ex: NCC)
+  companyWebsite String?
+
+  // Snapshot Client (L'adresse peut être différente de la fiche client par défaut)
+  clientName     String?
+  clientEmail    String?
+  clientAddress  String?
+  clientTaxId    String?
+
+  // --- CHAMPS LÉGAUX MANQUANTS (Phase 1 - Bloqueurs Critiques) ---
+  dueDate         DateTime?   // Date d'échéance
+  currency        String      @default("XOF")  // Devise du devis
+  validityDays    Int         @default(30)     // Durée de validité en jours
+
+  // --- SNAPSHOT BANCAIRE (figé au moment de la création) ---
+  bankName       String?
+  bankIBAN       String?
+  bankSWIFT      String?
+  bankBIC        String?
+
+  // --- CHAMPS EXISTANTS ---
+  number         String      @unique
+  status         QuoteStatus @default(DRAFT)
+  issueDate      DateTime    @default(now())
+  vatRatePercent Float       @default(20)
+  discount       Float       @default(0)
+  terms          String?     @db.Text // Utilise .Text pour les longs paragraphes
+  
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  
+  lines          QuoteLine[]
+  client         Client      @relation(fields: [clientId], references: [id])
+  user           User        @relation(fields: [userId], references: [id])
+
+  @@map("quotes")
+}
+
+model QuoteLine {
+  id        String @id @default(cuid())
+  quoteId   String
+  title     String
+  subtitle  String @default("")
+  quantity  Float  @default(1)
+  unitPrice Float
+  baseCost  Float  @default(0)  // Pour calculer la marge brute (Phase 1)
+  quote     Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  @@map("quote_lines")
+}
+
+model Theme {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  color       String
+  baseLayout  String
+  config      Json
+  isSystem    Boolean  @default(false)
+  isPremium   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isSystem])
+}
 
 enum PlanStatus {
   FREE
@@ -37,150 +216,4 @@ enum BusinessModel {
   TIME
   RECURRING
   UNIT
-}
-
-model User {
-  id              String    @id 
-  email           String    @unique
-  plan            PlanStatus @default(FREE)
-  profession      Profession?
-  businessModel   BusinessModel?
-  isOnboarded     Boolean   @default(false)
-
-  // IDENTITÉ LÉGALE & BRANDING
-  companyName     String?
-  companyLogo     String?   // URL de l'image (Cloudinary/Uploadthing)
-  taxId           String?   // Le numéro (ex: 21B01234)
-  taxIdLabel      String?   @default("SIRET") // Pour afficher "RCCM", "NIF", "SIRET" etc.
-  
-  // COORDONNÉES DE CONTACT
-  companyEmail    String?
-  companyPhone    String?
-  companyAddress  String?
-  companyWebsite  String?
-
-  // CONFIGURATION FINANCIÈRE (Le "Cash-Flow")
-  currency        String    @default("EUR") // EUR, CFA, USD, etc.
-  paymentDetails  String?   // Instructions de paiement (RIB, IBAN, Mobile Money)
-  defaultVatRate  Float     @default(20.0)
-  
-  // LOGISTIQUE DE FACTURATION
-  quotePrefix     String    @default("INV-")
-  nextQuoteNumber Int       @default(1)
-  defaultTerms    String?   // Mentions légales et clauses de retard
-  
-  // RELATIONS
-  clients         Client[]
-  quotes          Quote[]
-  userServices    UserService[]
-  catalogOffers   CatalogOffer[] 
-  subscription    Subscription?
-  
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-
-  @@map("users")
-}
-model UserApiLimit {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  count     Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Subscription {
-  id               String    @id @default(cuid())
-  userId           String    @unique
-  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  variantId        String?   
-  customerId       String?   @unique
-  subscriptionId   String?   @unique
-  endsAt           DateTime?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-}
-
-model CatalogOffer {
-  id              String    @id @default(cuid())
-  category        String    
-  title           String    
-  subtitle        String    @default("")
-  userId          String
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  unitPrice  Float
-  isPremium       Boolean   @default(false)
-  createdAt       DateTime  @default(now())
-
-  @@index([category])
-}
-
-model UserService {
-  id              String    @id @default(cuid())
-  userId          String
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title           String
-  subtitle        String    @default("")
-  unitPrice  Float
-  createdAt       DateTime  @default(now())
-  @@unique([userId, title])
-}
-
-
-model Client {
-  id              String    @id @default(cuid())
-  userId          String
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name            String
-  email           String?
-  address         String?
-  siret           String?
-  quotes          Quote[]
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-
-  @@unique([userId, name])
-}
-
-model Quote {
-  id              String    @id @default(cuid())
-  userId          String
-  user            User      @relation(fields: [userId], references: [id])
-  clientId        String
-  client          Client    @relation(fields: [clientId], references: [id])
-  number          String    @unique
-  status          QuoteStatus @default(DRAFT)
-  issueDate       DateTime  @default(now())
-  vatRatePercent  Float     @default(20)
-  discountEuros   Float     @default(0)
-  lines           QuoteLine[]
-  terms           String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-
-  @@map("quotes")
-}
-
-model QuoteLine {
-  id              String    @id @default(cuid())
-  quoteId         String
-  quote           Quote     @relation(fields: [quoteId], references: [id], onDelete: Cascade)
-  title           String
-  subtitle        String    @default("")
-  quantity        Float     @default(1)
-  unitPrice  Float
-  @@map("quote_lines")
-}
-model Theme {
-  id          String   @id @default(cuid())
-  name        String   
-  description String?  
-  color       String   
-  baseLayout  String   
-  config      Json   
-  isSystem    Boolean  @default(false)
-  isPremium   Boolean  @default(true) 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  @@index([isSystem])
 }

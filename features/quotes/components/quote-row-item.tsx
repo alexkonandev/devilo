@@ -5,14 +5,15 @@ import { QuoteRegistryItem } from "@/types/quote-registry";
 import { useQuotes } from "./quote-context";
 import { cn } from "@/lib/utils";
 import {
-  MoreVertical,
-  ExternalLink,
-  Download,
-  Trash2,
+  DotsThreeVertical,
+  ArrowSquareOut,
+  DownloadSimple,
+  Trash,
   CheckCircle,
   Clock,
-  AlertCircle,
-} from "lucide-react";
+  WarningCircle,
+  Icon,
+} from "@phosphor-icons/react";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -21,8 +22,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"; // Assure-toi d'avoir shadcn/ui dropdown
-import { Icon } from "@phosphor-icons/react";
+} from "@/components/ui/dropdown-menu";
 
 interface QuoteRowItemProps {
   quote: QuoteRegistryItem;
@@ -31,13 +31,11 @@ interface QuoteRowItemProps {
 export function QuoteRowItem({ quote }: QuoteRowItemProps) {
   const { updateStatus, deleteQuote } = useQuotes();
 
-  // 1. CALCUL DU MONTANT HT (Logique métier rapide)
   const totalHT = quote.lines.reduce(
     (acc, ln) => acc + ln.unitPrice * ln.quantity,
     0
   );
 
-  // 2. FORMATAGE CFA STRICT
   const formatCFA = (amount: number) => {
     return new Intl.NumberFormat("fr-FR", {
       style: "currency",
@@ -46,112 +44,127 @@ export function QuoteRowItem({ quote }: QuoteRowItemProps) {
     }).format(amount);
   };
 
-  // 3. CONFIGURATION DES BADGES
-  const statusStyles: Record<string, { bg: string; text: string; icon: Icon }> =
-    {
-      DRAFT: { bg: "bg-amber-100", text: "text-amber-700", icon: Clock },
-      SENT: { bg: "bg-blue-100", text: "text-blue-700", icon: ExternalLink },
-      ACCEPTED: {
-        bg: "bg-indigo-100",
-        text: "text-indigo-700",
-        icon: CheckCircle,
-      },
-      PAID: {
-        bg: "bg-emerald-100",
-        text: "text-emerald-700",
-        icon: CheckCircle,
-      },
-      REJECTED: { bg: "bg-rose-100", text: "text-rose-700", icon: AlertCircle },
-    };
+  const statusStyles: Record<
+    string,
+    { border: string; text: string; icon: Icon }
+  > = {
+    DRAFT: { border: "border-amber-200", text: "text-amber-600", icon: Clock },
+    SENT: {
+      border: "border-blue-200",
+      text: "text-blue-600",
+      icon: ArrowSquareOut,
+    },
+    ACCEPTED: {
+      border: "border-indigo-200",
+      text: "text-indigo-600",
+      icon: CheckCircle,
+    },
+    PAID: {
+      border: "border-emerald-200",
+      text: "text-emerald-600",
+      icon: CheckCircle,
+    },
+    REJECTED: {
+      border: "border-rose-200",
+      text: "text-rose-600",
+      icon: WarningCircle,
+    },
+  };
 
   const currentStatus = statusStyles[quote.status];
   const StatusIcon = currentStatus.icon;
 
   return (
-    <div className="group grid grid-cols-12 items-center px-4 py-3 bg-white border border-slate-200 rounded-lg hover:border-indigo-300 hover:shadow-md hover:shadow-indigo-500/5 transition-all duration-200 animate-in fade-in slide-in-from-left-2">
-      {/* RÉFÉRENCE */}
-      <div className="col-span-2 flex flex-col">
-        <span className="text-xs font-black text-slate-900 tracking-tight">
+    <div className="group grid grid-cols-12 items-center px-4 py-2 bg-white border-b border-slate-200 hover:bg-slate-50 transition-colors rounded-none shadow-none">
+      {/* RÉFÉRENCE : MONO & DENSE */}
+      <div className="col-span-2 flex flex-col gap-0.5">
+        <span className="font-mono text-[11px] font-black uppercase text-slate-900 leading-none">
           {quote.number}
         </span>
-        <span className="text-[10px] text-slate-400 font-medium">
-          {new Date(quote.createdAt).toLocaleDateString()}
+        <span className="font-mono text-[9px] text-slate-400 uppercase tracking-tighter">
+          {new Date(quote.createdAt).toLocaleDateString("fr-FR")}
         </span>
       </div>
 
-      {/* CLIENT */}
+      {/* CLIENT : FOCUS NOM */}
       <div className="col-span-4 flex flex-col">
-        <span className="text-sm font-bold text-slate-700 truncate pr-4">
+        <span className="text-[12px] font-bold text-slate-800 uppercase tracking-tight truncate pr-4">
           {quote.client.name}
         </span>
-        <span className="text-[10px] text-slate-400 truncate pr-4">
+        <span className="text-[10px] text-slate-400 font-medium truncate pr-4">
           {quote.client.email}
         </span>
       </div>
 
-      {/* MONTANT HT */}
+      {/* FINANCE : ALIGNEMENT DROITE STRICT */}
       <div className="col-span-2 text-right">
-        <span className="text-sm font-black text-slate-900">
+        <span className="font-mono text-[13px] font-black text-slate-900 tabular-nums">
           {formatCFA(totalHT)}
         </span>
       </div>
 
-      {/* STATUT (BADGE) */}
+      {/* STATUT : BADGE INDUSTRIEL (SANS BG) */}
       <div className="col-span-2 flex justify-center">
         <div
           className={cn(
-            "flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
-            currentStatus.bg,
+            "flex items-center gap-1.5 px-2 py-0.5 border rounded-none text-[9px] font-black uppercase tracking-widest",
+            currentStatus.border,
             currentStatus.text
           )}
         >
-          <StatusIcon className="w-3 h-3" />
+          <StatusIcon size={12} weight="bold" />
           {quote.status}
         </div>
       </div>
 
-      {/* ACTIONS (DROPDOWN) */}
+      {/* ACTIONS : DISCRET & RÉACTIF */}
       <div className="col-span-2 flex justify-end">
         <DropdownMenu>
-          <DropdownMenuTrigger className="p-1.5 hover:bg-slate-100 rounded-md text-slate-400 hover:text-slate-900 transition-colors">
-            <MoreVertical className="w-4 h-4" />
+          <DropdownMenuTrigger className="p-1 hover:text-indigo-600 outline-none transition-colors cursor-pointer">
+            <DotsThreeVertical
+              size={18}
+              weight="bold"
+              className="text-slate-400"
+            />
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuLabel>Actions du devis</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-
-            {/* Lien vers ton éditeur existant */}
-            <DropdownMenuItem asChild>
+          <DropdownMenuContent
+            align="end"
+            className="rounded-none border-slate-200 shadow-none min-w-[180px]"
+          >
+            <DropdownMenuLabel className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+              Opérations
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator className="bg-slate-100" />
+            <DropdownMenuItem
+              asChild
+              className="rounded-none focus:bg-slate-50 cursor-pointer"
+            >
               <Link
                 href={`/quotes/${quote.id}/edit`}
-                className="cursor-pointer flex items-center gap-2"
+                className="flex items-center gap-2 text-[11px] font-bold uppercase"
               >
-                <ExternalLink className="w-4 h-4 text-blue-500" /> Modifier le
-                devis
+                <ArrowSquareOut size={14} className="text-slate-400" /> Éditer
+                l'actif
               </Link>
             </DropdownMenuItem>
-
-            <DropdownMenuItem className="cursor-pointer flex items-center gap-2">
-              <Download className="w-4 h-4 text-slate-500" /> Télécharger PDF
+            <DropdownMenuItem className="rounded-none focus:bg-slate-50 cursor-pointer flex items-center gap-2 text-[11px] font-bold uppercase">
+              <DownloadSimple size={14} className="text-slate-400" /> Exporter
+              PDF
             </DropdownMenuItem>
-
-            <DropdownMenuSeparator />
-
-            {/* Changement de statut rapide */}
+            <DropdownMenuSeparator className="bg-slate-100" />
             {quote.status !== "PAID" && (
               <DropdownMenuItem
                 onClick={() => updateStatus(quote.id, "PAID")}
-                className="cursor-pointer flex items-center gap-2 text-emerald-600 focus:text-emerald-700 focus:bg-emerald-50"
+                className="rounded-none focus:bg-emerald-50 text-emerald-600 cursor-pointer flex items-center gap-2 text-[11px] font-black uppercase"
               >
-                <CheckCircle className="w-4 h-4" /> Marquer comme PAYÉ
+                <CheckCircle size={14} weight="bold" /> Encaisser flux
               </DropdownMenuItem>
             )}
-
             <DropdownMenuItem
               onClick={() => deleteQuote(quote.id)}
-              className="cursor-pointer flex items-center gap-2 text-rose-600 focus:text-rose-700 focus:bg-rose-50"
+              className="rounded-none focus:bg-rose-50 text-rose-600 cursor-pointer flex items-center gap-2 text-[11px] font-black uppercase"
             >
-              <Trash2 className="w-4 h-4" /> Supprimer l&apos;archive
+              <Trash size={14} weight="bold" /> Purger archive
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -14,6 +14,7 @@ export interface QuoteItemLine {
   subtitle: string;
   quantity: number;
   unitPrice: number;
+  baseCost?: number; // Pour calculer la marge brute
 }
 
 /**
@@ -27,24 +28,28 @@ export interface ActiveQuote {
     name: string;
     email: string;
     address: string;
-    siret: string;
+    taxId: string;
+    taxIdLabel: string;
     website: string;
   };
   client: {
     name: string;
     email: string;
     address: string;
-    siret: string;
+    taxId: string;
   };
   quote: {
     number: string;
     issueDate: string; // ISO string pour faciliter le transit client/serveur
+    dueDate?: string; // Date d'échéance (Phase 2 - Bloqueurs Critiques)
     terms: string;
     status: QuoteStatus | string; // Flexible pour le cast final côté serveur
   };
+  currency: string; // Devise du devis (Phase 2)
+  validityDays: number; // Durée de validité en jours (Phase 2)
   financials: {
     vatRatePercent: number;
-    discountAmountEuros: number;
+    discountAmount: number;
   };
   items: QuoteItemLine[];
 }

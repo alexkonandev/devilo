@@ -10,13 +10,25 @@ import {
   ShieldCheck,
   ArrowUpRight,
   Clock,
+  PencilLine, // Ajout pour le bouton d'édition
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ClientListItem } from "@/types/client";
-
+import { EditClientDialog } from "../edit-client-dialog"; // Import du nouveau modal
 interface ClientInspectorProps {
   client?: ClientListItem;
 }
+
+/**
+ * Mapper pour la cohérence des statuts en français
+ */
+const TRADUCTION_STATUTS: Record<string, string> = {
+  DRAFT: "BROUILLON",
+  SENT: "ENVOYÉ",
+  ACCEPTED: "ACCEPTÉ",
+  REJECTED: "REFUSÉ",
+  PAID: "PAYÉ",
+};
 
 export function ClientInspector({ client }: ClientInspectorProps) {
   if (!client) return <EmptyState />;
@@ -24,53 +36,53 @@ export function ClientInspector({ client }: ClientInspectorProps) {
   return (
     <div className="flex flex-col h-full bg-white antialiased">
       {/* 1. HEADER : SÉPARATEUR SLATE-200 */}
-      <div className="h-20 border-b border-slate-200 flex items-center justify-between px-6 shrink-0 bg-white">
+      <div className="h-15 border-b border-slate-200 flex items-center justify-between px-6 shrink-0 bg-white">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 border border-slate-200 flex items-center justify-center relative bg-slate-50/50">
-            <User className="text-slate-400 w-5 h-5" />{" "}
-            {/* Icon @ Slate-400 via label logic */}
+          <div className="w-8 h-8 border border-slate-200 flex items-center justify-center relative bg-slate-50/50">
+            <User className="text-slate-400 w-5 h-5" />
             <div className="absolute -right-1 -bottom-1 w-4 h-4 bg-white border border-slate-200 flex items-center justify-center">
               <ShieldCheck className="text-indigo-600 w-2.5 h-2.5" />
             </div>
           </div>
           <div className="flex flex-col">
-            <h2 className="text-[16px] font-black text-slate-900 uppercase tracking-tight leading-none mb-1.5">
+            <h2 className="text-[16px] font-black text-slate-900 uppercase tracking-tight leading-none">
               {client.name}
             </h2>
-            <div className="flex items-center gap-3">
-              <span className="text-[9px] font-mono font-black text-indigo-600 uppercase tracking-[0.15em] bg-indigo-50/50 px-2 py-0.5 border border-indigo-100/50">
-                AUTH_ACTIVE
-              </span>
-              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
-                REF_{client.id.slice(0, 8)}
-              </span>
-            </div>
           </div>
         </div>
 
-        <button className="h-8 px-4 border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-900 hover:border-indigo-600 hover:text-indigo-600 transition-all">
-          Modifier_Dossier
-        </button>
+        {/* Bouton d'édition : Icone uniquement pour plus de densité visuelle */}
+        <EditClientDialog
+          client={client}
+          trigger={
+            <button
+              title="Modifier le dossier"
+              className="h-8 w-8 flex items-center justify-center border border-slate-200 text-slate-900 hover:border-indigo-600 hover:text-indigo-600 transition-all active:scale-95"
+            >
+              <PencilLine size={16} />
+            </button>
+          }
+        />
       </div>
 
       {/* 2. BODY : DATA GRID & FLUX */}
       <div className="flex-1 overflow-y-auto p-6 space-y-8 scrollbar-none">
         {/* DATA GRID : SÉPARATEURS SLATE-200 */}
-        <div className="grid grid-cols-3 gap-px bg-slate-200 border border-slate-200">
+        <div className="grid grid-cols-3 gap-px bg-slate-200 border border-slate-200 shadow-sm">
           <InfoTile
-            label="Comm_Protocol"
-            value={client.email || "NULL_ENTRY"}
+            label="Protocole_Mail"
+            value={client.email || "ENTRÉE_NULLE"}
             icon={Mail}
           />
           <InfoTile
-            label="Legal_Registry"
-            value={client.siret || "---"}
+            label="Registre_Légal"
+            value={client.taxId || "---"}
             icon={Building2}
             isMono
           />
           <InfoTile
-            label="Geo_Position"
-            value={client.address || "NO_LOCATION"}
+            label="Position_Géo"
+            value={client.address || "NON_RENSEIGNÉE"}
             icon={MapPin}
           />
         </div>
@@ -81,7 +93,7 @@ export function ClientInspector({ client }: ClientInspectorProps) {
             <div className="flex items-center gap-2">
               <History size={14} className="text-slate-400" />
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-900">
-                History_Logs
+                Journal_Activités
               </span>
             </div>
           </div>
@@ -93,7 +105,7 @@ export function ClientInspector({ client }: ClientInspectorProps) {
                   key={quote.id}
                   label={quote.number}
                   amount={quote.totalAmount || 0}
-                  status={quote.status}
+                  status={TRADUCTION_STATUTS[quote.status] || quote.status}
                   date={new Date(quote.createdAt)
                     .toLocaleDateString("fr-FR", {
                       day: "2-digit",
@@ -109,7 +121,7 @@ export function ClientInspector({ client }: ClientInspectorProps) {
             ) : (
               <div className="p-12 text-center bg-slate-50/30">
                 <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.3em]">
-                  Zero_Activity_Detected
+                  Aucune_Activité_Détectée
                 </p>
               </div>
             )}
@@ -160,7 +172,7 @@ function ActivityRow({ label, amount, status, date, isPending, isError }: any) {
       <div className="flex items-center gap-4">
         <div
           className={cn(
-            "w-1 h-1",
+            "w-1 h-3",
             isPending
               ? "bg-amber-400"
               : isError
@@ -180,7 +192,11 @@ function ActivityRow({ label, amount, status, date, isPending, isError }: any) {
       <div className="flex items-center gap-6">
         <div className="text-right">
           <p className="text-[11px] font-mono font-black text-slate-950 leading-none">
-            {new Intl.NumberFormat("fr-CI").format(amount)}
+            {new Intl.NumberFormat("fr-CI", {
+              style: "currency",
+              currency: "XOF",
+              minimumFractionDigits: 0,
+            }).format(amount)}
           </p>
           <p
             className={cn(
@@ -211,7 +227,7 @@ function EmptyState() {
         <Clock size={20} className="text-slate-400" />
       </div>
       <p className="text-[9px] font-black uppercase tracking-[0.5em] text-slate-300">
-        Awaiting_Asset_Selection
+        En_Attente_De_Sélection
       </p>
     </div>
   );

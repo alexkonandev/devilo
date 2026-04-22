@@ -1,13 +1,7 @@
 import "dotenv/config";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
-import {
-  PrismaClient,
-  QuoteStatus,
-  PlanStatus,
-  Profession,
-  BusinessModel,
-} from "../app/generated/prisma/client.js";
+import { PrismaClient } from "../app/generated/prisma/client.js";
 
 const connectionString = process.env.DATABASE_URL!;
 const pool = new Pool({ connectionString });
@@ -15,117 +9,80 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  const USER_ID = "user_38cjHYDUKxIeuFplxEkzrvbxbkF";
-  const USER_EMAIL = "alexkonan.dev@gmail.com";
+  console.log("🧹 NETTOYAGE DES THÈMES...");
+  
+  // On ne nettoie que les thèmes système pour éviter de supprimer les thèmes perso des users
+  await prisma.theme.deleteMany({ where: { isSystem: true } });
 
-  console.log("🧹 NETTOYAGE_RADICAL...");
+  console.log("🎨 INJECTION DES THÈMES SPATIAUX...");
 
-  // Suppression par ordre de dépendance
-  await prisma.quoteLine.deleteMany({});
-  await prisma.quote.deleteMany({});
-  await prisma.userService.deleteMany({});
-  await prisma.catalogOffer.deleteMany({});
-  await prisma.client.deleteMany({});
-  await prisma.user.deleteMany({});
-
-  console.log(`🚀 INITIALISATION_ALEX : ${USER_EMAIL}`);
-
-  // 1. Profil Entrepreneur
-  const user = await prisma.user.create({
-    data: {
-      id: USER_ID,
-      email: USER_EMAIL,
-      plan: PlanStatus.PRO,
-      profession: Profession.TECH,
-      businessModel: BusinessModel.PROJECT,
-      isOnboarded: true,
-      companyName: "STUDIO DIGITAL IVOIRE",
-      taxId: "CI-ABJ-2026-B-88",
-      taxIdLabel: "RCCM",
-      currency: "CFA",
-      defaultVatRate: 18.0,
-      quotePrefix: "QT-",
-    },
-  });
-
-  console.log("📦 INJECTION_MARKET_OFFERS (CatalogOffer)...");
-
-  // 2. Offres Globales (Marketplace) - Dans ton schéma, elles sont liées à un User
-  const marketOffers = [
+  const themes = [
     {
-      userId: USER_ID,
-      title: "ARCHITECTURE_MICROSERVICES",
-      subtitle: "Conception scale-out avec gRPC/RabbitMQ.",
-      category: "BACKEND",
-      unitPrice: 1200000,
-      isPremium: true,
-    },
-    {
-      userId: USER_ID,
-      title: "UI_KIT_TAILWIND_PRO",
-      subtitle: "Bibliothèque de composants React documentés.",
-      category: "FRONTEND",
-      unitPrice: 350000,
+      name: "STUDIO_INDIGO",
+      description: "L'identité standard de la plateforme. Professionnel et technologique.",
+      color: "#6366f1",
+      baseLayout: "standard",
+      isSystem: true,
       isPremium: false,
-    },
-  ];
-
-  for (const offer of marketOffers) {
-    await prisma.catalogOffer.create({ data: offer });
-  }
-
-  console.log("👤 INJECTION_INVENTAIRE_PERSO (UserService)...");
-
-  // 3. Tes Services Personnels (Ton catalogue de vente direct)
-  const personalServices = [
-    {
-      userId: USER_ID,
-      title: "DEVELOPPEMENT_COCKPIT_GESTION",
-      subtitle: "Next.js 15 + Neon DB (Production Ready)",
-      unitPrice: 1250000,
-    },
-  ];
-
-  for (const service of personalServices) {
-    await prisma.userService.create({ data: service });
-  }
-
-  // 4. Client & Devis
-  const client = await prisma.client.create({
-    data: {
-      userId: user.id,
-      name: "ORANGE CI",
-      email: "billing@orange.ci",
-      siret: "CI-ABJ-1996-B-112",
-    },
-  });
-
-  await prisma.quote.create({
-    data: {
-      userId: user.id,
-      clientId: client.id,
-      number: "QT-26-001",
-      status: QuoteStatus.DRAFT,
-      vatRatePercent: 18.0,
-      lines: {
-        create: [
-          {
-            title: "DÉVELOPPEMENT COCKPIT GESTION",
-            subtitle: "Next.js 15 + Neon DB",
-            quantity: 1,
-            unitPrice: 1250000,
-          },
-        ],
+      config: {
+        fontFamily: "Inter",
+        borderRadius: "4px",
+        primaryContrast: "#ffffff",
       },
     },
-  });
+    {
+      name: "ARCTIC_EMERALD",
+      description: "Un style frais et épuré, idéal pour les projets environnementaux ou créatifs.",
+      color: "#10b981",
+      baseLayout: "minimal",
+      isSystem: true,
+      isPremium: true,
+      config: {
+        fontFamily: "Inter",
+        borderRadius: "2px",
+        primaryContrast: "#ffffff",
+      },
+    },
+    {
+      name: "DEEP_SLATE",
+      description: "Minimalisme absolu. Noir profond et gris acier pour un rendu haut de gamme.",
+      color: "#0f172a",
+      baseLayout: "modern",
+      isSystem: true,
+      isPremium: true,
+      config: {
+        fontFamily: "Inter",
+        borderRadius: "0px",
+        primaryContrast: "#ffffff",
+      },
+    },
+    {
+      name: "CRIMSON_VELVET",
+      description: "Énergie et passion. Un thème qui ne passe pas inaperçu.",
+      color: "#f43f5e",
+      baseLayout: "standard",
+      isSystem: true,
+      isPremium: true,
+      config: {
+        fontFamily: "Inter",
+        borderRadius: "8px",
+        primaryContrast: "#ffffff",
+      },
+    }
+  ];
 
-  console.log("✅ SEED_COMPLET : ALEX, TON SYSTEME EST ALIGNÉ SUR TON SCHEMA.");
+  for (const theme of themes) {
+    await prisma.theme.create({
+      data: theme,
+    });
+  }
+
+  console.log(`✅ SEED THÈMES TERMINÉ : ${themes.length} thèmes injectés.`);
 }
 
 main()
   .catch((e) => {
-    console.error("❌ ERREUR_SEED:", e);
+    console.error("❌ ERREUR_SEED_THEMES:", e);
     process.exit(1);
   })
   .finally(async () => {

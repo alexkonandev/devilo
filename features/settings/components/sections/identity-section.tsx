@@ -31,7 +31,7 @@ export function IdentitySection({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(
-    initialLogo || null
+    initialLogo || null,
   );
 
   const { startUpload, isUploading } = useUploadThing("companyLogo", {
@@ -43,7 +43,9 @@ export function IdentitySection({
       setSelectedFile(null);
       setTimeout(() => window.location.reload(), 800);
     },
-    onUploadError: (e) => toast.error(`ERREUR : ${e.message.toUpperCase()}`),
+    onUploadError: (e) => {
+      toast.error(`ERREUR : ${e.message.toUpperCase()}`);
+    },
   });
 
   useEffect(() => {
@@ -63,7 +65,7 @@ export function IdentitySection({
         "taxId",
         val.slice(0, 7).replace(/[^0-9]/g, "") +
           val.slice(7, 8).replace(/[^A-Z]/g, ""),
-        { shouldValidate: true }
+        { shouldValidate: true },
       );
     } else if (selectedType === "RCCM") {
       if (!val.startsWith("CI")) val = "CI" + val;
@@ -113,7 +115,7 @@ export function IdentitySection({
             <div
               className={cn(
                 "relative w-full max-w-[200px] aspect-square border border-slate-200 flex items-center justify-center transition-all bg-white",
-                selectedFile && "border-indigo-600"
+                selectedFile && "border-indigo-600",
               )}
             >
               {previewUrl ? (
@@ -169,7 +171,7 @@ export function IdentitySection({
                     variant="outline"
                     onClick={() => {
                       setSelectedFile(null);
-                      setPreviewUrl(initialLogo);
+                      setPreviewUrl(initialLogo ?? null);
                     }}
                     className="rounded-none border-slate-200 text-[10px] font-bold uppercase h-8"
                   >

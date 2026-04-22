@@ -58,10 +58,10 @@ export function ClientExplorer({
       {/* 00. HEADER : SYNC H-15 */}
       <header className="h-15 shrink-0 flex items-center px-4 justify-between border-b border-slate-200 bg-white z-10">
         <div className="flex flex-col">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">
-            Base_Actifs
-          </span>
-          <span className="text-[14px] font-bold text-indigo-600 tracking-tight">
+            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest leading-none mb-1">
+              Base_Actifs
+            </span>
+          <span className="text-[14px] font-bold text-slate-900 tracking-tight">
             Radar_Contacts
           </span>
         </div>

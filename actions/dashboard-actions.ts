@@ -5,95 +5,117 @@ import { auth } from "@clerk/nextjs/server";
 import { QuoteStatus as PrismaQuoteStatus } from "@/app/generated/prisma/client";
 import { AdvancedDashboardData, QuoteStatus } from "@/types/dashboard";
 
-
+/**
+ * LOGIQUE MÉTIER COMPLEXE :
+ * 1. Analyse de la LTV (Lifetime Value) par client.
+ * 2. Calcul de la vélocité de paiement (Temps moyen entre SENT et PAID).
+ * 3. Segmentation du flux opérationnel vs patrimoine stratégique.
+ */
 export async function getAdvancedDashboardData(): Promise<AdvancedDashboardData> {
   const { userId } = await auth();
   if (!userId) throw new Error("Non autorisé");
 
-  // Parallélisation des requêtes pour maximiser la vitesse d'exécution
-  const [quotes, clients, catalogOffers] = await Promise.all([
-    db.quote.findMany({
-      where: { userId },
-      orderBy: { updatedAt: "desc" },
-      include: {
-        client: true,
-        lines: true,
+  // On récupère tout le graphe de données en une seule requête optimisée
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    include: {
+      quotes: {
+        include: {
+          client: true,
+          lines: true,
+        },
+        orderBy: { updatedAt: "desc" },
       },
-    }),
-    db.client.findMany({
-      where: { userId },
-      include: {
-        _count: { select: { quotes: true } },
-        quotes: { include: { lines: true } },
+      clients: {
+        include: {
+          quotes: {
+            include: { lines: true },
+          },
+          _count: { select: { quotes: true } },
+        },
       },
-    }),
-    db.catalogOffer.findMany({
-      where: { userId },
-      take: 3,
-    }),
-  ]);
+      catalogOffers: { take: 3 },
+    },
+  });
 
-  // Helper pour calculer le montant total HT d'un devis basé sur les lignes
-  const getQuoteTotal = (
-    lines: { unitPrice: number; quantity: number }[]
-  ): number => {
-    return lines.reduce(
-      (acc: number, line) => acc + line.unitPrice * line.quantity,
-      0
-    );
-  };
+  if (!user) throw new Error("Profil utilisateur introuvable");
 
-  // KPI : Profit validé (ACCEPTED ou PAID)
-  const totalRevenue = quotes
-    .filter(
-      (q) =>
-        q.status === PrismaQuoteStatus.ACCEPTED ||
-        q.status === PrismaQuoteStatus.PAID
-    )
-    .reduce((acc: number, q) => acc + getQuoteTotal(q.lines), 0);
+  // Helper : Calcul du montant total d'un devis (Somme des lignes)
+  const getQuoteTotal = (lines: { unitPrice: number; quantity: number }[]) =>
+    lines.reduce((acc, line) => acc + line.unitPrice * line.quantity, 0);
 
-  // KPI : Cash-flow sécurisable (SENT)
-  const pendingRevenue = quotes
+  // --- 1. CALCUL DES KPIS DE PERFORMANCE ---
+  const quotesValidees = user.quotes.filter(
+    (q) =>
+      q.status === PrismaQuoteStatus.PAID ||
+      q.status === PrismaQuoteStatus.ACCEPTED
+  );
+
+  const totalRevenue = quotesValidees.reduce(
+    (acc, q) => acc + getQuoteTotal(q.lines),
+    0
+  );
+
+  const pendingRevenue = user.quotes
     .filter((q) => q.status === PrismaQuoteStatus.SENT)
-    .reduce((acc: number, q) => acc + getQuoteTotal(q.lines), 0);
+    .reduce((acc, q) => acc + getQuoteTotal(q.lines), 0);
 
-  // KPI : Efficacité commerciale (Taux de closing)
   const conversionRate =
-    quotes.length > 0
-      ? (quotes.filter(
-          (q) =>
-            q.status === PrismaQuoteStatus.ACCEPTED ||
-            q.status === PrismaQuoteStatus.PAID
-        ).length /
-          quotes.length) *
-        100
+    user.quotes.length > 0
+      ? (quotesValidees.length / user.quotes.length) * 100
       : 0;
 
-  // Formattage de l'activité avec mapping de l'Enum (Prisma -> Frontend)
-  const activity = quotes.slice(0, 5).map((q) => ({
+  // --- 2. FLUX DE TRÉSORERIE (Activité Récente) ---
+  // On transforme le flux pour afficher l'OBJET du projet (Première ligne) pour différencier de la liste client
+  const activity = user.quotes.slice(0, 5).map((q) => ({
     id: q.id,
     amount: getQuoteTotal(q.lines),
-    // Cast sécurisé pour satisfaire TypeScript sans importer Prisma côté client
     status: q.status as unknown as QuoteStatus,
     clientName: q.client.name,
+    projectName: q.lines[0]?.title || "Prestation de service", // Ajout d'une info métier
     quoteNumber: q.number,
     date: q.updatedAt,
   }));
 
-  // Loi de Pareto : Focus sur les clients à haute valeur marchande
-  const topClients = clients
-    .map((c) => ({
-      id: c.id,
-      name: c.name,
-      totalSpent: c.quotes
+  // --- 3. ANALYSE DU PORTEFEUILLE STRATÉGIQUE (Ranking & Santé) ---
+  const topClients = user.clients
+    .map((c) => {
+      const quotesPayees = c.quotes.filter(
+        (q) => q.status === PrismaQuoteStatus.PAID
+      );
+
+      // Calcul de la vélocité de paiement : Moyenne des jours entre émission et paiement
+      const delaiPaiementMoyen =
+        quotesPayees.length > 0
+          ? quotesPayees.reduce((acc, q) => {
+              const diff = q.updatedAt.getTime() - q.issueDate.getTime();
+              return acc + diff / (1000 * 3600 * 24);
+            }, 0) / quotesPayees.length
+          : 0;
+
+      const totalSpent = c.quotes
         .filter(
           (q) =>
-            q.status === PrismaQuoteStatus.ACCEPTED ||
-            q.status === PrismaQuoteStatus.PAID
+            q.status === PrismaQuoteStatus.PAID ||
+            q.status === PrismaQuoteStatus.ACCEPTED
         )
-        .reduce((acc: number, q) => acc + getQuoteTotal(q.lines), 0),
-      quoteCount: c._count.quotes,
-    }))
+        .reduce((acc, q) => acc + getQuoteTotal(q.lines), 0);
+
+      return {
+        id: c.id,
+        name: c.name,
+        totalSpent,
+        quoteCount: c._count.quotes,
+        healthScore: (
+          delaiPaiementMoyen < 7
+            ? "EXCELLENT"
+            : delaiPaiementMoyen < 15
+            ? "GOOD"
+            : "SLOW"
+        ) as "EXCELLENT" | "GOOD" | "SLOW",
+        averagePaymentDays: Math.round(delaiPaiementMoyen),
+      };
+    })
     .sort((a, b) => b.totalSpent - a.totalSpent)
     .slice(0, 5);
 
@@ -102,12 +124,13 @@ export async function getAdvancedDashboardData(): Promise<AdvancedDashboardData>
       totalRevenue,
       pendingRevenue,
       conversionRate,
-      activeQuotes: quotes.filter((q) => q.status === PrismaQuoteStatus.SENT)
-        .length,
+      activeQuotes: user.quotes.filter(
+        (q) => q.status === PrismaQuoteStatus.SENT
+      ).length,
     },
     activity,
-    topClients,
-    suggestedServices: catalogOffers.map((o) => ({
+    topClients, // Contient maintenant healthScore et averagePaymentDays
+    suggestedServices: user.catalogOffers.map((o) => ({
       id: o.id,
       title: o.title,
       price: o.unitPrice,
