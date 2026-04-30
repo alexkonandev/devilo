@@ -1,10 +1,12 @@
 import * as z from "zod";
+import { validateIBAN, validateBIC } from "@/lib/iban-validation";
 
 // REGEX pour accepter www. OU https://
 const websiteRegex =
   /^(https?:\/\/|www\.)[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,}(\/\S*)?$/;
 
-export const settingsSchema = z.object({
+// Champs communs à toutes les zones
+const baseSettingsSchema = z.object({
   // IDENTITÉ & BRANDING
   companyName: z.string().min(2, "Nom trop court"),
   companyLogo: z.string().optional().nullable(),
@@ -18,31 +20,22 @@ export const settingsSchema = z.object({
     { message: "Format d'identifiant fiscal invalide (Ex: 1234567A)" },
   ),
 
-  // SCHEMA CONTACT
+  // CONTACT
   companyEmail: z.string().email("Format email pro requis"),
   companyPhone: z
     .string()
-    .min(14, "Numéro CI incomplet") // Format: 00 00 00 00 00
-    .max(14, "Numéro trop long"),
+    .min(8, "Numéro incomplet")
+    .max(20, "Numéro trop long"),
 
-  // STRUCTURE GÉOGRAPHIQUE SEGMENTÉE
+  // ADRESSE
   companyCity: z
     .string()
     .min(2, "Ville requise")
     .transform((v) => v.toUpperCase()),
-  companyDistrict: z
-    .string()
-    .min(2, "Commune requise")
-    .transform((v) => v.toUpperCase()),
-  companyArea: z
-    .string()
-    .min(2, "Quartier requis")
-    .transform((v) => v.toUpperCase()),
   companyAddressDetails: z
     .string()
-    .min(5, "Précisions requises")
+    .min(5, "Adresse requise")
     .transform((v) => v.toUpperCase()),
-
   companyWebsite: z
     .string()
     .regex(websiteRegex, "Format : www. ou https://")
@@ -50,48 +43,76 @@ export const settingsSchema = z.object({
     .or(z.literal(""))
     .nullable(),
 
-  // FINANCE (ÉPURÉ & SÉCURISÉ)
+  // FINANCE
   currency: z.string().min(1).default("XOF"),
-  // SUPPRESSION DE paymentDetails POUR ÉVITER TOUTE RESPONSABILITÉ
-  defaultVatRate: z.number().min(0).max(100).default(18), // Standard Côte d'Ivoire
+  defaultVatRate: z.number().min(0).max(100).default(18),
 
-  // LOGISTIQUE (PILOTAGE DE L'EFFICACITÉ)
+  // LOGISTIQUE
   quotePrefix: z.string().min(1).max(10).default("QT-"),
   nextQuoteNumber: z.number().int().positive().default(1),
   defaultTerms: z.string().optional().nullable(),
 
-  // IDENTITÉ BANCAIRE (Phase 5 - Coordonnées de paiement)
-  bankName: z.string().optional().nullable(),
-  bankIBAN: z
+  // Affichage coordonnées sur devis
+  showBankDetailsOnQuotes: z.boolean().default(false),
+
+  // Champ commun banque
+  bankName: z.string().max(50, "Max 50 caractères").optional().nullable(),
+});
+
+// Schéma USA : routing 9 chiffres + account number
+const usaPaymentSchema = baseSettingsSchema.extend({
+  paymentZone: z.literal("USA"),
+  bankRoutingNumber: z
     .string()
-    .refine(
-      (val) => {
-        if (!val || val === "") return true; // Optionnel
-        // Validation IBAN basique: 14-34 caractères alphanumériques, commence par 2 lettres
-        const ibanRegex =
-          /^[A-Z]{2}[0-9]{2}[A-Z0-9]{4}[0-9]{7}([A-Z0-9]?){0,16}$/;
-        return ibanRegex.test(val.replace(/\s/g, ""));
-      },
-      {
-        message: "Format IBAN invalide (Ex: FR14 2004 1010 0505 0001 3M02 606)",
-      },
-    )
-    .optional()
-    .nullable(),
-  bankSWIFT: z
+    .regex(/^\d{9}$/, "Le Routing Number doit contenir exactement 9 chiffres"),
+  bankAccountNumber: z
     .string()
-    .refine(
-      (val) => {
-        if (!val || val === "") return true; // Optionnel
-        // SWIFT/BIC: 8 ou 11 caractères alphanumériques
-        const swiftRegex = /^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/;
-        return swiftRegex.test(val);
-      },
-      { message: "Format SWIFT invalide (Ex: SOGEFRPP)" },
-    )
-    .optional()
-    .nullable(),
+    .min(4, "Numéro de compte requis")
+    .max(17, "Max 17 caractères"),
+  bankIBAN: z.string().optional().nullable(),
+  bankSWIFT: z.string().optional().nullable(),
   bankBIC: z.string().optional().nullable(),
 });
 
+// Schéma EUR : IBAN SEPA obligatoire + BIC
+const eurPaymentSchema = baseSettingsSchema.extend({
+  paymentZone: z.literal("EUR"),
+  bankIBAN: z
+    .string()
+    .max(34, "IBAN trop long - max 34 caractères")
+    .refine(validateIBAN, {
+      message: "IBAN invalide - Vérifiez le format (Modulo 97)",
+    }),
+  bankBIC: z
+    .string()
+    .max(11, "Max 11 caractères")
+    .refine(validateBIC, { message: "Code BIC/SWIFT invalide (ISO 9362)" }),
+  bankSWIFT: z.string().max(11).optional().nullable(),
+  bankRoutingNumber: z.string().optional().nullable(),
+  bankAccountNumber: z.string().optional().nullable(),
+});
+
+// Schéma AFRI : SWIFT + numéro de compte obligatoires
+const afriPaymentSchema = baseSettingsSchema.extend({
+  paymentZone: z.literal("AFRI"),
+  bankSWIFT: z
+    .string()
+    .max(11, "Max 11 caractères")
+    .refine(validateBIC, { message: "Code SWIFT invalide (ISO 9362)" }),
+  bankAccountNumber: z
+    .string()
+    .min(4, "Numéro de compte / RIB requis")
+    .max(30, "Max 30 caractères"),
+  bankIBAN: z.string().optional().nullable(),
+  bankBIC: z.string().optional().nullable(),
+  bankRoutingNumber: z.string().optional().nullable(),
+});
+
+export const settingsSchema = z.discriminatedUnion("paymentZone", [
+  usaPaymentSchema,
+  eurPaymentSchema,
+  afriPaymentSchema,
+]);
+
 export type SettingsFormValues = z.infer<typeof settingsSchema>;
+export type PaymentZone = "USA" | "EUR" | "AFRI";

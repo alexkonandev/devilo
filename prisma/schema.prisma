@@ -29,15 +29,18 @@ model User {
   createdAt             DateTime       @default(now())
   updatedAt             DateTime       @updatedAt
   companyAddressDetails String?
-  companyArea           String?
   companyCity           String?
-  companyDistrict       String?
   
-  // --- CHAMPS BANCAIRES (Phase 1 - Bloqueurs Critiques) ---
+  // --- CHAMPS BANCAIRES (Phase 2 - Géo-spécifique) ---
+  paymentZone           PaymentZone    @default(AFRI)
   bankName              String?
   bankIBAN              String?
   bankSWIFT             String?
   bankBIC               String?
+  bankRoutingNumber     String?
+  bankAccountNumber     String?
+  showBankDetailsOnQuotes Boolean      @default(false)
+  deletedAt             DateTime?
   catalogOffers         CatalogOffer[]
   clients               Client[]
   subscription          Subscription?
@@ -138,10 +141,14 @@ model Quote {
   validityDays    Int         @default(30)     // Durée de validité en jours
 
   // --- SNAPSHOT BANCAIRE (figé au moment de la création) ---
-  bankName       String?
-  bankIBAN       String?
-  bankSWIFT      String?
-  bankBIC        String?
+  paymentZone         String?     @default("AFRI")
+  bankName            String?
+  bankIBAN            String?
+  bankSWIFT           String?
+  bankBIC             String?
+  bankRoutingNumber   String?
+  bankAccountNumber   String?
+  showBankDetails     Boolean     @default(false)
 
   // --- CHAMPS EXISTANTS ---
   number         String      @unique
@@ -209,6 +216,12 @@ enum Profession {
   MARKETING
   CONTENT
   CONSULTING
+}
+
+enum PaymentZone {
+  USA
+  EUR
+  AFRI
 }
 
 enum BusinessModel {

@@ -11,39 +11,71 @@ export async function updateSettings(rawData: unknown) {
     const { userId } = await auth();
     if (!userId) return { success: false, error: "UNAUTHORIZED_ACCESS" };
 
-    // 1. Validation Zod (Strict)
-    const validated = settingsSchema.parse(rawData);
+    // 1. Validation Zod (discriminatedUnion strict par zone)
+    const data = settingsSchema.parse(rawData);
 
-    // 2. Nettoyage des chaînes vides -> null pour Prisma
-    // On type explicitement pour garantir la correspondance avec le modèle Prisma
-    const cleanData: Partial<SettingsFormValues> = Object.fromEntries(
-      Object.entries(validated).map(([key, value]) => [
-        key,
-        value === "" ? null : value,
-      ])
-    );
+    // 2. Mapping explicite des champs communs (aucun spread dangereux)
+    const commonPayload = {
+      companyName: data.companyName,
+      companyLogo: data.companyLogo ?? null,
+      taxIdLabel: data.taxIdLabel,
+      taxId: data.taxId,
+      companyEmail: data.companyEmail,
+      companyPhone: data.companyPhone,
+      companyCity: data.companyCity,
+      companyAddressDetails: data.companyAddressDetails,
+      companyWebsite: data.companyWebsite ?? null,
+      currency: data.currency,
+      defaultVatRate: data.defaultVatRate,
+      quotePrefix: data.quotePrefix,
+      nextQuoteNumber: data.nextQuoteNumber,
+      defaultTerms: data.defaultTerms ?? null,
+      showBankDetailsOnQuotes: data.showBankDetailsOnQuotes,
+      paymentZone: data.paymentZone,
+      bankName: data.bankName ?? null,
+    };
 
-    // 3. Update atomique sur la table User
-    // On s'assure que cleanData ne contient QUE ce que Prisma accepte
-    await db.user.update({
-      where: { id: userId },
-      data: {
-        ...cleanData,
-        // On force la devise en XOF si nécessaire pour la cohérence business
-        currency: "XOF",
-      },
-    });
+    // 3. Mapping des champs bancaires selon la zone (colonnes null-safe)
+    let bankPayload: Record<string, string | null> = {};
 
-    revalidatePath("/dashboard/settings");
-    return { success: true };
-  } catch (error: any) {
-    // Analyse précise de l'erreur pour ne pas rester dans le flou
-    console.error("[SETTINGS_SYNC_CRITICAL_ERROR]:", error.message);
-
-    if (error.code === "P2002") {
-      return { success: false, error: "CONFLIT_DE_DONNÉES" };
+    if (data.paymentZone === "USA") {
+      bankPayload = {
+        bankRoutingNumber: data.bankRoutingNumber,
+        bankAccountNumber: data.bankAccountNumber,
+        bankIBAN: null,
+        bankSWIFT: null,
+        bankBIC: null,
+      };
+    } else if (data.paymentZone === "EUR") {
+      bankPayload = {
+        bankIBAN: data.bankIBAN.replace(/\s/g, "").toUpperCase(),
+        bankBIC: data.bankBIC.toUpperCase(),
+        bankSWIFT: data.bankSWIFT?.toUpperCase() ?? null,
+        bankRoutingNumber: null,
+        bankAccountNumber: null,
+      };
+    } else {
+      bankPayload = {
+        bankSWIFT: data.bankSWIFT.toUpperCase(),
+        bankAccountNumber: data.bankAccountNumber,
+        bankIBAN: null,
+        bankBIC: null,
+        bankRoutingNumber: null,
+      };
     }
 
+    // 4. Update atomique — uniquement les colonnes connues de Prisma
+    await db.user.update({
+      where: { id: userId },
+      data: { ...commonPayload, ...bankPayload },
+    });
+
+    revalidatePath("/settings");
+    return { success: true };
+  } catch (error: any) {
+    console.error("[SETTINGS_SYNC_CRITICAL_ERROR]:", error.message);
+    if (error.code === "P2002")
+      return { success: false, error: "CONFLIT_DE_DONNÉES" };
     return { success: false, error: "SYNC_FAILED" };
   }
 }
@@ -70,12 +102,12 @@ export async function deleteAccount() {
 
     // LOG DE SUCCÈS (Tracé business)
     console.log(`[ACCOUNT_TERMINATED]: User ${userId} has been purged.`);
-
   } catch (error: any) {
     console.error("[ACCOUNT_DELETE_CRITICAL_ERROR]:", error.message);
-    return { 
-      success: false, 
-      error: "La suppression a échoué. Veuillez contacter le support technique." 
+    return {
+      success: false,
+      error:
+        "La suppression a échoué. Veuillez contacter le support technique.",
     };
   }
 

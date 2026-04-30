@@ -2,7 +2,6 @@
 
 import React from "react";
 import { ClientListItem } from "@/types/client";
-import { SpatialCard } from "@/features/dashboard/components/spatial-card";
 import { cn } from "@/lib/utils";
 import {
   MapPinIcon,
@@ -11,6 +10,8 @@ import {
   ClockCounterClockwiseIcon,
   XIcon,
   PencilSimpleIcon,
+  CurrencyCircleDollarIcon,
+  FileTextIcon,
 } from "@phosphor-icons/react";
 import { EditClientDialog } from "../edit-client-dialog";
 
@@ -19,11 +20,23 @@ import { EditClientDialog } from "../edit-client-dialog";
 // ═══════════════════════════════════════════════════════════════
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  DRAFT: { label: "Brouillon", color: "text-amber-600 bg-amber-50 border-amber-200" },
+  DRAFT: {
+    label: "Brouillon",
+    color: "text-amber-600 bg-amber-50 border-amber-200",
+  },
   SENT: { label: "Envoyé", color: "text-blue-600 bg-blue-50 border-blue-200" },
-  ACCEPTED: { label: "Accepté", color: "text-indigo-600 bg-indigo-50 border-indigo-200" },
-  REJECTED: { label: "Refusé", color: "text-rose-600 bg-rose-50 border-rose-200" },
-  PAID: { label: "Payé", color: "text-emerald-600 bg-emerald-50 border-emerald-200" },
+  ACCEPTED: {
+    label: "Accepté",
+    color: "text-indigo-600 bg-indigo-50 border-indigo-200",
+  },
+  REJECTED: {
+    label: "Refusé",
+    color: "text-rose-600 bg-rose-50 border-rose-200",
+  },
+  PAID: {
+    label: "Payé",
+    color: "text-emerald-600 bg-emerald-50 border-emerald-200",
+  },
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -51,155 +64,185 @@ export function SpatialClientInspector({
   client,
   onClose,
 }: SpatialClientInspectorProps) {
-  return (
-    <SpatialCard
-      depth={3}
-      variant="glass"
-      className="h-full flex flex-col border-l border-slate-200/60 rounded-l-2xl rounded-r-none relative overflow-hidden"
-    >
-      {/* ─── CLOSE BUTTON ─── */}
-      <div className="absolute top-6 right-6 z-20">
-        <button
-          onClick={onClose}
-          className="p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/60 text-slate-600 transition-all hover:scale-105"
-        >
-          <XIcon size={16} weight="bold" />
-        </button>
-      </div>
+  const isVIP = client.totalSpent > 1_000_000;
 
+  return (
+    <div className="h-full flex flex-col bg-white/95 backdrop-blur-md border-l border-slate-200/60 overflow-hidden">
       {/* ─── HEADER ─── */}
-      <div className="p-8 pb-6 border-b border-slate-100">
-        <div className="flex items-center justify-between mb-6">
+      <div className="px-5 py-4 border-b border-slate-100 shrink-0">
+        {/* Top row */}
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse shadow-[0_0_8px_rgba(99,102,241,0.4)]" />
-            <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-indigo-500">
+            <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse shadow-[0_0_6px_rgba(99,102,241,0.4)]" />
+            <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-indigo-500">
               Dossier Client
             </span>
           </div>
-          <EditClientDialog
-            client={client}
-            trigger={
-              <button className="p-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/60 text-indigo-500 hover:text-indigo-600 transition-all">
-                <PencilSimpleIcon size={14} weight="bold" />
-              </button>
-            }
-          />
+          <div className="flex items-center gap-1.5">
+            <EditClientDialog
+              client={client}
+              trigger={
+                <button className="p-1.5 rounded-lg bg-slate-50 hover:bg-indigo-50 border border-slate-200/60 hover:border-indigo-200 text-slate-400 hover:text-indigo-500 transition-all">
+                  <PencilSimpleIcon size={13} weight="bold" />
+                </button>
+              }
+            />
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg bg-slate-50 hover:bg-rose-50 border border-slate-200/60 hover:border-rose-200 text-slate-400 hover:text-rose-500 transition-all"
+            >
+              <XIcon size={13} weight="bold" />
+            </button>
+          </div>
         </div>
 
-        <h2 className="text-3xl font-black text-slate-900 italic tracking-tight mb-3">
-          {client.name}
-        </h2>
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-2 text-sm text-slate-500">
-            <EnvelopeSimpleIcon size={14} weight="bold" className="text-slate-400" />
-            {client.email || "Non renseigné"}
+        {/* Avatar + Identity */}
+        <div className="flex items-center gap-3">
+          <div
+            className={cn(
+              "w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shrink-0 border",
+              isVIP
+                ? "bg-amber-50 text-amber-600 border-amber-200"
+                : "bg-indigo-50 text-indigo-600 border-indigo-200/60",
+            )}
+          >
+            {client.name.slice(0, 2).toUpperCase()}
           </div>
-          {client.taxId && (
-            <div className="flex items-center gap-2 text-sm text-slate-500">
-              <BuildingsIcon size={14} weight="bold" className="text-slate-400" />
-              {client.taxId}
+          <div className="min-w-0">
+            <h2 className="text-base font-black text-slate-900 tracking-tight truncate">
+              {client.name}
+            </h2>
+            <div className="flex flex-col gap-0.5 mt-0.5">
+              {client.email && (
+                <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
+                  <EnvelopeSimpleIcon size={10} weight="bold" />
+                  <span className="truncate">{client.email}</span>
+                </div>
+              )}
+              {client.taxId && (
+                <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
+                  <BuildingsIcon size={10} weight="bold" />
+                  <span>{client.taxId}</span>
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
 
-      {/* ─── SCROLLABLE BODY ─── */}
-      <div className="flex-1 overflow-y-auto p-8 space-y-8 scrollbar-thin">
-        {/* KPI Stats */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/60">
-            <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400 block mb-2">
-              Chiffre d&apos;Affaires
+      {/* ─── KPI STRIP ─── */}
+      <div className="grid grid-cols-2 divide-x divide-slate-100 border-b border-slate-100 shrink-0">
+        <div className="px-5 py-3">
+          <div className="flex items-center gap-1.5 mb-1">
+            <CurrencyCircleDollarIcon
+              size={10}
+              weight="bold"
+              className="text-slate-400"
+            />
+            <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-slate-400">
+              CA Total
             </span>
-            <p className="text-xl font-mono font-black text-slate-900 tracking-tighter italic">
-              {formatCFA(client.totalSpent)}
-            </p>
           </div>
-          <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/60">
-            <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400 block mb-2">
-              Devis Générés
-            </span>
-            <p className="text-xl font-mono font-black text-slate-900 tracking-tighter italic">
-              {client.quoteCount}
-            </p>
-          </div>
+          <p
+            className={cn(
+              "text-sm font-mono font-black tracking-tight",
+              isVIP ? "text-amber-500" : "text-slate-900",
+            )}
+          >
+            {formatCFA(client.totalSpent)}
+          </p>
         </div>
+        <div className="px-5 py-3">
+          <div className="flex items-center gap-1.5 mb-1">
+            <FileTextIcon size={10} weight="bold" className="text-slate-400" />
+            <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-slate-400">
+              Devis
+            </span>
+          </div>
+          <p className="text-sm font-mono font-black text-slate-900">
+            {client.quoteCount}
+          </p>
+        </div>
+      </div>
 
-        {/* Address */}
-        {client.address && (
-          <div className="p-5 rounded-2xl bg-slate-50/50 border border-slate-200/60 flex items-start gap-3">
+      {/* ─── ADDRESS ─── */}
+      {client.address && (
+        <div className="px-5 py-3 border-b border-slate-100 shrink-0">
+          <div className="flex items-start gap-2">
             <MapPinIcon
-              size={16}
+              size={12}
               weight="bold"
               className="text-slate-400 mt-0.5 shrink-0"
             />
             <div>
-              <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400 block mb-1">
-                Localisation
+              <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-slate-400 block mb-0.5">
+                Adresse
               </span>
-              <p className="text-sm text-slate-600 font-medium">
+              <p className="text-xs text-slate-600 font-medium leading-relaxed">
                 {client.address}
               </p>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Activity Feed */}
-        <div>
-          <div className="flex items-center gap-2 mb-4">
+      {/* ─── ACTIVITY FEED ─── */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="px-5 py-3 border-b border-slate-100 sticky top-0 bg-white/90 backdrop-blur-sm z-10">
+          <div className="flex items-center gap-1.5">
             <ClockCounterClockwiseIcon
-              size={14}
+              size={11}
               weight="bold"
               className="text-slate-400"
             />
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
+            <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-slate-400">
               Historique des transactions
             </span>
           </div>
+        </div>
 
-          <div className="space-y-2">
-            {client.quotes && client.quotes.length > 0 ? (
-              client.quotes.map((quote) => {
-                const status = STATUS_LABELS[quote.status] || STATUS_LABELS.DRAFT;
-                return (
-                  <div
-                    key={quote.id}
-                    className="group p-4 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/60 hover:border-indigo-200/60 transition-all flex justify-between items-center"
-                  >
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-mono text-xs font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">
-                          {quote.number}
-                        </span>
-                        <span
-                          className={cn(
-                            "text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-lg border",
-                            status.color
-                          )}
-                        >
-                          {status.label}
-                        </span>
-                      </div>
-                      <p className="text-[10px] text-slate-400 font-mono">
-                        {new Date(quote.createdAt).toLocaleDateString("fr-FR")}
-                      </p>
+        <div className="divide-y divide-slate-100/60">
+          {client.quotes && client.quotes.length > 0 ? (
+            client.quotes.map((quote) => {
+              const status = STATUS_LABELS[quote.status] || STATUS_LABELS.DRAFT;
+              return (
+                <div
+                  key={quote.id}
+                  className="group px-5 py-3 hover:bg-slate-50 transition-colors flex justify-between items-center"
+                >
+                  <div>
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="font-mono text-xs font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">
+                        {quote.number}
+                      </span>
+                      <span
+                        className={cn(
+                          "text-[7px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border",
+                          status.color,
+                        )}
+                      >
+                        {status.label}
+                      </span>
                     </div>
-                    <span className="text-sm font-mono font-bold text-slate-800">
-                      {formatCFA(quote.totalAmount)}
-                    </span>
+                    <p className="text-[9px] text-slate-400 font-mono">
+                      {new Date(quote.createdAt).toLocaleDateString("fr-FR")}
+                    </p>
                   </div>
-                );
-              })
-            ) : (
-              <div className="py-8 text-center">
-                <p className="text-xs text-slate-400 italic">
-                  Aucune activité récente.
-                </p>
-              </div>
-            )}
-          </div>
+                  <span className="text-xs font-mono font-bold text-slate-800">
+                    {formatCFA(quote.totalAmount)}
+                  </span>
+                </div>
+              );
+            })
+          ) : (
+            <div className="py-10 text-center">
+              <p className="text-[10px] text-slate-400">
+                Aucune activité récente.
+              </p>
+            </div>
+          )}
         </div>
       </div>
-    </SpatialCard>
+    </div>
   );
 }

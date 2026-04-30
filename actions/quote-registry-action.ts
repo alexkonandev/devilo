@@ -4,7 +4,11 @@ import db from "@/lib/prisma";
 import { getClerkUserId } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { QuoteStatus } from "@/app/generated/prisma/client";
-import { QuoteRegistryItem, ActionResponse } from "@/types/quote-registry";
+import {
+  QuoteRegistryItem,
+  ActionResponse,
+  QuoteTimelineEvent,
+} from "@/types/quote-registry";
 
 /**
  * FETCH : Récupère tous les devis de l'utilisateur avec relations
@@ -39,7 +43,7 @@ export async function getQuotesAction(): Promise<
  */
 export async function updateQuoteStatusAction(
   id: string,
-  status: QuoteStatus
+  status: QuoteStatus,
 ): Promise<ActionResponse> {
   try {
     const userId = await getClerkUserId();
@@ -75,5 +79,58 @@ export async function deleteQuoteAction(id: string): Promise<ActionResponse> {
   } catch (error) {
     console.error("[DELETE_QUOTE_ERROR]:", error);
     return { success: false, error: "Erreur lors de la suppression" };
+  }
+}
+
+/**
+ * GET_TIMELINE : Récupère l'historique d'un devis (Audit Trail)
+ * Pour le panneau de télémétrie dans l'UI Master-Detail
+ */
+export async function getQuoteTimelineAction(
+  quoteId: string,
+): Promise<ActionResponse<QuoteTimelineEvent[]>> {
+  try {
+    const userId = await getClerkUserId();
+    if (!userId) return { success: false, error: "Non autorisé" };
+
+    // Vérifier que le devis appartient à l'utilisateur
+    const quote = await db.quote.findFirst({
+      where: { id: quoteId, userId },
+      select: { id: true, createdAt: true, status: true, updatedAt: true },
+    });
+
+    if (!quote) {
+      return { success: false, error: "Devis non trouvé" };
+    }
+
+    // Construire une timeline synthétique à partir des données existantes
+    const timeline: QuoteTimelineEvent[] = [
+      {
+        id: `${quoteId}-created`,
+        quoteId,
+        type: "created",
+        createdAt: quote.createdAt,
+        metadata: { initialStatus: quote.status },
+      },
+    ];
+
+    // Si le statut a changé depuis la création, ajouter un événement
+    if (
+      quote.status !== "DRAFT" ||
+      quote.updatedAt.getTime() !== quote.createdAt.getTime()
+    ) {
+      timeline.push({
+        id: `${quoteId}-status-${quote.updatedAt.getTime()}`,
+        quoteId,
+        type: "status_changed",
+        status: quote.status,
+        createdAt: quote.updatedAt,
+      });
+    }
+
+    return { success: true, data: timeline };
+  } catch (error) {
+    console.error("[GET_TIMELINE_ERROR]:", error);
+    return { success: false, error: "Impossible de charger la timeline" };
   }
 }

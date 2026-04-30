@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from "react";
+import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
@@ -24,95 +24,165 @@ import {
 } from "@/components/ui/tooltip";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useQuotes } from "@/features/quotes/components/quote-context";
+import { QuoteRegistryStats } from "@/types/quote-registry";
 
-const DOCK_ITEMS = [
+// Hook sécurisé pour fonctionner hors contexte QuoteProvider
+function useSafeQuotes() {
+  try {
+    return useQuotes();
+  } catch {
+    return {
+      stats: {
+        countByStatus: {
+          DRAFT: 0,
+          SENT: 0,
+          ACCEPTED: 0,
+          PAID: 0,
+          REJECTED: 0,
+          ALL: 0,
+        },
+        totalPipelineValue: 0,
+        totalOutstandingValue: 0,
+        totalCashCollected: 0,
+        conversionRate: 0,
+      } as QuoteRegistryStats,
+    };
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RAIL DOCK CONFIGURATION - 64px High-Density Sidebar
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface NavItem {
+  label: string;
+  href: string;
+  icon: React.ComponentType<IconProps>;
+  badge?: "drafts" | "notifications";
+}
+
+const TOP_NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: SquaresFourIcon },
-  { label: "Devis", href: "/quotes", icon: FileTextIcon },
+  { label: "Devis", href: "/quotes", icon: FileTextIcon, badge: "drafts" },
   { label: "Clients", href: "/clients", icon: UsersThreeIcon },
   { label: "Catalogue", href: "/catalog", icon: PackageIcon },
-  { type: "divider" },
-  { label: "Nouveau", href: "/quotes/new", icon: PlusIcon, isAction: true },
-  { type: "divider" },
+];
+
+const BOTTOM_NAV_ITEMS: NavItem[] = [
+  { label: "Nouveau Devis", href: "/quotes/new", icon: PlusIcon },
   { label: "Facturation", href: "/billing", icon: CreditCardIcon },
-  { label: "Réglages", href: "/settings", icon: GearSixIcon },
-] as const;
+  { label: "Paramètres", href: "/settings", icon: GearSixIcon },
+];
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SPATIAL RAIL - Fixed 64px Sidebar with High-Density Navigation
+// ═══════════════════════════════════════════════════════════════════════════════
 
 export function SpatialDock() {
+  const { stats } = useSafeQuotes();
+
+  // Get draft count for badge
+  const draftCount = stats.countByStatus?.DRAFT || 0;
+
   return (
-    <motion.div
-      className="fixed left-6 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-3 p-3 rounded-[2rem] bg-white/80 backdrop-blur-md border border-white shadow-2xl shadow-slate-200/50"
-      initial={{ x: -100, opacity: 0 }}
+    <motion.aside
+      className="fixed left-0 top-10 bottom-0 z-40 w-16 bg-white/90 backdrop-blur-md border-r border-slate-200 flex flex-col"
+      initial={{ x: -64, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
-      transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
+      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
     >
-      {DOCK_ITEMS.map((item, idx) =>
-        "type" in item ? (
-          <div
-            key={`sep-${idx}`}
-            className="w-8 h-[1px] bg-slate-200 rounded-full my-1"
-          />
-        ) : (
-          <DockIcon
+      {/* ═══ SECTION HAUTE : Navigation Principale ═══ */}
+      <nav className="flex-1 flex flex-col gap-0.5 pt-2">
+        {TOP_NAV_ITEMS.map((item) => (
+          <RailIcon
             key={item.href}
             {...item}
+            badgeValue={item.badge === "drafts" ? draftCount : undefined}
           />
-        )
-      )}
-      
-      <div className="w-8 h-[1px] bg-slate-200 rounded-full my-1" />
-      
-      <UserProfileIcon />
-    </motion.div>
+        ))}
+      </nav>
+
+      {/* ═══ SÉPARATEUR ═══ */}
+      <div className="mx-3 my-2 h-px bg-slate-200" />
+
+      {/* ═══ SECTION BASSE : Actions Secondaires ═══ */}
+      <nav className="flex flex-col gap-0.5 pb-2">
+        {BOTTOM_NAV_ITEMS.map((item) => (
+          <RailIcon key={item.href} {...item} />
+        ))}
+
+        {/* Séparateur fin avant profil */}
+        <div className="mx-3 my-2 h-px bg-slate-200" />
+
+        {/* Profil / Déconnexion */}
+        <UserProfileRail />
+      </nav>
+    </motion.aside>
   );
 }
 
-function DockIcon({
+// ═══════════════════════════════════════════════════════════════════════════════
+// RAIL ICON - Dense 64px Navigation Item with Selection State & Badges
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function RailIcon({
   label,
   href,
   icon: Icon,
-  isAction,
+  badgeValue,
 }: {
   label: string;
   href: string;
   icon: React.ComponentType<IconProps>;
-  isAction?: boolean;
+  badgeValue?: number;
 }) {
-  const ref = useRef<HTMLAnchorElement>(null);
   const pathname = usePathname();
   const isActive = pathname.startsWith(href);
+  const showBadge = badgeValue && badgeValue > 0;
 
   return (
     <TooltipProvider delayDuration={0}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Link href={href} ref={ref}>
-            <motion.div
+          <Link href={href} className="relative block">
+            {/* ═══ ÉTAT DE SÉLECTION : Rectangle plein largeur ═══ */}
+            {isActive && (
+              <motion.div
+                layoutId="rail-selection"
+                className="absolute inset-y-1 left-0 right-0 bg-indigo-50 border-l-2 border-indigo-500 rounded-r-md"
+                transition={{ type: "spring", stiffness: 500, damping: 30 }}
+              />
+            )}
+
+            <div
               className={cn(
-                "w-11 h-11 rounded-full flex items-center justify-center relative transition-colors aspect-square",
+                "relative z-10 flex items-center justify-center w-16 h-11 transition-colors",
                 isActive
-                  ? "bg-indigo-50 text-indigo-600 border border-indigo-200/60"
-                  : "text-slate-400 hover:text-slate-900 hover:bg-slate-100",
-                isAction && "bg-indigo-500/10 text-indigo-600 hover:bg-indigo-500/20 border border-indigo-200/60"
+                  ? "text-indigo-600"
+                  : "text-slate-400 hover:text-slate-700 hover:bg-slate-50",
               )}
             >
-              <Icon
-                size={22}
-                weight={isActive ? "fill" : "regular"}
-                className="transition-transform duration-300"
-              />
-              
-              {isActive && !isAction && (
-                <motion.div
-                  layoutId="active-dot"
-                  className="absolute -right-1.5 w-1 h-1 rounded-full bg-indigo-500 shadow-[0_0_6px_rgba(99,102,241,0.6)]"
+              <div className="relative">
+                <Icon
+                  size={20}
+                  weight={isActive ? "fill" : "regular"}
+                  className="transition-transform duration-150"
                 />
-              )}
-            </motion.div>
+
+                {/* ═══ BADGE NUMÉRIQUE ═══ */}
+                {showBadge && (
+                  <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-1 bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-sm">
+                    {badgeValue > 99 ? "99+" : badgeValue}
+                  </span>
+                )}
+              </div>
+            </div>
           </Link>
         </TooltipTrigger>
         <TooltipContent
           side="right"
-          className="ml-4 bg-slate-900 backdrop-blur border border-slate-800 text-white font-bold text-[10px] uppercase tracking-widest px-3 py-1.5 rounded-lg"
+          className="ml-2 bg-slate-900 text-white font-medium text-[11px] px-2 py-1 rounded shadow-lg"
         >
           {label}
         </TooltipContent>
@@ -121,33 +191,40 @@ function DockIcon({
   );
 }
 
-function UserProfileIcon() {
+// ═══════════════════════════════════════════════════════════════════════════════
+// USER PROFILE RAIL - Compact Avatar with Sign Out
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function UserProfileRail() {
   const { user } = useUser();
   const { signOut } = useClerk();
-  const ref = useRef<HTMLButtonElement>(null);
 
   return (
     <TooltipProvider delayDuration={0}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <button onClick={() => signOut()} ref={ref}>
-            <motion.div
-              className="w-11 h-11 rounded-full overflow-hidden border border-slate-200 grayscale hover:grayscale-0 transition-all aspect-square"
-            >
+          <button
+            onClick={() => signOut()}
+            className="relative flex items-center justify-center w-16 h-11 text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors group"
+          >
+            <div className="w-7 h-7 rounded-full overflow-hidden border border-slate-200 group-hover:border-rose-200 transition-colors">
               <Avatar className="w-full h-full">
                 <AvatarImage src={user?.imageUrl} className="object-cover" />
-                <AvatarFallback className="bg-slate-100 text-slate-600 text-[10px]">
-                  {user?.firstName?.charAt(0)}
+                <AvatarFallback className="bg-slate-100 text-slate-600 text-[10px] font-bold">
+                  {user?.firstName?.charAt(0) ||
+                    user?.emailAddresses[0]?.emailAddress?.charAt(0) ||
+                    "?"}
                 </AvatarFallback>
               </Avatar>
-            </motion.div>
+            </div>
           </button>
         </TooltipTrigger>
         <TooltipContent
           side="right"
-          className="ml-4 bg-rose-50 backdrop-blur border border-rose-200 text-rose-600 font-bold text-[10px] uppercase tracking-widest px-3 py-1.5 rounded-lg flex items-center gap-2"
+          className="ml-2 bg-rose-50 text-rose-600 font-medium text-[11px] px-2 py-1 rounded flex items-center gap-1.5"
         >
-          <SignOutIcon /> Déconnexion
+          <SignOutIcon size={12} />
+          Déconnexion
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

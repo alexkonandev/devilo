@@ -2,57 +2,62 @@
 
 import React, { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  PlusIcon,
-  ArrowUpRightIcon,
-  MagnifyingGlassIcon,
-  StorefrontIcon,
-  CubeIcon,
-} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { CatalogService } from "@/types/catalog";
 import { createServiceAction } from "@/actions/catalog-action";
+import {
+  PlusIcon,
+  MagnifyingGlassIcon,
+  StorefrontIcon,
+  CubeIcon,
+  CurrencyCircleDollarIcon,
+  CheckCircleIcon,
+  ArrowRightIcon,
+  PackageIcon,
+  TagIcon,
+} from "@phosphor-icons/react";
 
 import { useCatalog } from "./components/catalog-context";
-import { SpatialCard } from "@/features/dashboard/components/spatial-card";
-import { ServiceCard } from "./components/spatial-service-card";
 import { SpatialServiceEditor } from "./components/spatial-service-editor";
-import { PlatformServiceCard } from "./components/marketplace-dialog";
 
-// ═══════════════════════════════════════════════════════════════
-// ANIMATION VARIANTS (Spatial Intelligence DS)
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════════
+// DESIGN SYSTEM - Source de Vérité (Dashboard/Quotes)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const DS = {
+  micro: "text-[9px] uppercase font-bold tracking-tighter",
+  mono: "font-mono text-[11px] tabular-nums leading-none",
+  label: "text-[9px] uppercase font-bold tracking-wider text-slate-400",
+  card: "bg-white border border-slate-200/60",
+};
 
 const EASE_OUT_EXPO: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.06, delayChildren: 0.15 },
-  },
+// ═══════════════════════════════════════════════════════════════════════════════
+// UTILITY FUNCTIONS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const formatCompact = (amount: number): string => {
+  if (amount >= 1_000_000) return `${(amount / 1_000_000).toFixed(1)}M`;
+  if (amount >= 1_000) return `${(amount / 1_000).toFixed(0)}k`;
+  return amount.toString();
 };
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 20, scale: 0.97 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: { duration: 0.5, ease: EASE_OUT_EXPO },
-  },
-};
-
-// ═══════════════════════════════════════════════════════════════
-// TYPES
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════════
+// MAIN COMPONENT - Grid CSS Strict (3 Zones)
+// ═══════════════════════════════════════════════════════════════════════════════
+// Zone 1: Telemetry (KPIs)
+// Zone 2: Inventory Stage [Filters 260px | Main-Grid 1fr]
+// ═══════════════════════════════════════════════════════════════════════════════
 
 type CatalogTab = "INVENTORY" | "MARKETPLACE";
-
-// ═══════════════════════════════════════════════════════════════
-// MAIN COMPONENT
-// ═══════════════════════════════════════════════════════════════
+type CategoryFilter =
+  | "ALL"
+  | "GENERAL"
+  | "TECHNIC"
+  | "CONSULTING"
+  | "SUBSCRIPTION";
 
 export function SpatialCatalogView() {
   const {
@@ -69,12 +74,39 @@ export function SpatialCatalogView() {
   } = useCatalog();
 
   const [activeTab, setActiveTab] = useState<CatalogTab>("INVENTORY");
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("ALL");
 
   // ─── Derived: active service for editor ───
   const activeService = useMemo(
     () => userServices.find((s) => s.id === selectedServiceId),
-    [userServices, selectedServiceId]
+    [userServices, selectedServiceId],
   );
+
+  // ─── Filtered services ───
+  const filteredServices = useMemo(() => {
+    const source = activeTab === "INVENTORY" ? userServices : platformServices;
+    return source.filter((s) => {
+      const matchesSearch =
+        !searchQuery ||
+        s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.subtitle?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory =
+        categoryFilter === "ALL" || s.category === categoryFilter;
+      return matchesSearch && matchesCategory;
+    });
+  }, [userServices, platformServices, activeTab, searchQuery, categoryFilter]);
+
+  // ─── KPI Stats ───
+  const kpiStats = useMemo(() => {
+    const services =
+      activeTab === "INVENTORY" ? userServices : platformServices;
+    const totalValue = services.reduce((sum, s) => sum + (s.unitPrice || 0), 0);
+    return {
+      totalServices: services.length,
+      totalValue,
+      activeCount: services.length, // All services are considered active
+    };
+  }, [userServices, platformServices, activeTab]);
 
   // ─── Create new service ───
   const handleAddNew = async () => {
@@ -98,334 +130,572 @@ export function SpatialCatalogView() {
   // ─── Import from marketplace ───
   const handleImport = async (serviceId: string) => {
     await importService(serviceId);
-    toast.success("Module importé avec succès");
+    toast.success("Module importé");
     setActiveTab("INVENTORY");
   };
 
   return (
-    <div className="relative min-h-[80vh] font-sans">
-      <main className="relative z-10 max-w-[1600px] mx-auto py-8 space-y-8">
-        {/* ─── HEADER ─── */}
-        <motion.header
-          className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-slate-200/60"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: EASE_OUT_EXPO }}
-        >
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse shadow-[0_0_8px_rgba(99,102,241,0.4)]" />
-              <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-slate-400">
-                Catalogue des Services
-              </span>
-            </div>
-            <h1 className="text-4xl font-black tracking-tighter text-slate-900 italic">
-              Inventaire<span className="text-indigo-500">.</span>
-            </h1>
-          </div>
+    // ═══════════════════════════════════════════════════════════════════════════
+    // GRID GLOBAL - 2 Lignes Strictes
+    // grid-rows-[auto_1fr] : [Telemetry] [Inventory Stage]
+    // ═══════════════════════════════════════════════════════════════════════════
+    <div className="h-full grid grid-rows-[auto_1fr] overflow-hidden bg-slate-50">
+      {/* ═══ ZONE 1: TÉLÉMÉTRIE (KPIs) - Hauteur auto ═══ */}
+      <TelemetryHUD
+        stats={kpiStats}
+        activeTab={activeTab}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        onCreate={handleAddNew}
+      />
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleAddNew}
-              className="group flex items-center gap-2.5 px-7 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl text-[11px] font-bold uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-indigo-600/25 hover:shadow-indigo-500/40"
-            >
-              <PlusIcon size={16} weight="bold" />
-              Créer un service
-              <ArrowUpRightIcon
-                size={14}
-                weight="bold"
-                className="opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all"
-              />
-            </button>
-          </div>
-        </motion.header>
+      {/* ═══ ZONE 2: INVENTORY STAGE - 1fr ═══ */}
+      <div className="grid grid-cols-[260px_1fr] overflow-hidden">
+        {/* ─── Colonne Gauche: Filtres/Catégories (260px) ─── */}
+        <FilterSidebar
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          categoryFilter={categoryFilter}
+          setCategoryFilter={setCategoryFilter}
+          userServiceCount={userServices.length}
+          platformServiceCount={platformServices.length}
+        />
 
-        {/* ─── TAB NAVIGATION + SEARCH ─── */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          {/* Tabs */}
-          <div className="flex items-center gap-1 p-1.5 bg-slate-100/80 rounded-2xl border border-slate-200/60">
-            <TabButton
-              active={activeTab === "INVENTORY"}
-              onClick={() => setActiveTab("INVENTORY")}
-              icon={<CubeIcon size={16} weight="duotone" />}
-              label="Mon Inventaire"
-              count={userServices.length}
-            />
-            <TabButton
-              active={activeTab === "MARKETPLACE"}
-              onClick={() => setActiveTab("MARKETPLACE")}
-              icon={<StorefrontIcon size={16} weight="duotone" />}
-              label="Services Plateforme"
-              count={platformServices.length}
-            />
-          </div>
+        {/* ─── Colonne Droite: Main-Grid (1fr) ─── */}
+        <MainGrid
+          services={filteredServices}
+          selectedServiceId={selectedServiceId}
+          onSelect={selectService}
+          onDelete={deleteLocalService}
+          onImport={handleImport}
+          isLoading={isLoading}
+          activeTab={activeTab}
+        />
+      </div>
 
-          {/* Search */}
-          <div className="relative w-full md:w-80">
-            <MagnifyingGlassIcon
-              size={16}
-              weight="bold"
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-            />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Rechercher un service..."
-              className="w-full h-12 pl-11 pr-4 bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 rounded-xl text-sm font-bold text-slate-900 placeholder:text-slate-400 outline-none transition-all"
-            />
-          </div>
-        </div>
-
-        {/* ─── TAB CONTENT ─── */}
-        <AnimatePresence mode="wait">
-          {activeTab === "INVENTORY" ? (
+      {/* ─── EDITOR DRAWER ─── */}
+      <AnimatePresence mode="wait">
+        {activeService && (
+          <>
             <motion.div
-              key="inventory"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.3, ease: EASE_OUT_EXPO }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => selectService(null)}
+              className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 cursor-pointer"
+            />
+            <motion.div
+              initial={{ x: "100%", opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: "100%", opacity: 0 }}
+              transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+              className="fixed inset-y-0 right-0 w-full md:w-[480px] z-50 shadow-2xl"
             >
-              <InventoryGrid
-                services={userServices}
-                selectedServiceId={selectedServiceId}
-                onSelect={selectService}
-                onDelete={deleteLocalService}
+              <SpatialServiceEditor
+                service={activeService}
+                onClose={() => selectService(null)}
               />
             </motion.div>
-          ) : (
-            <motion.div
-              key="marketplace"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.3, ease: EASE_OUT_EXPO }}
-            >
-              <MarketplaceGrid
-                services={platformServices}
-                onImport={handleImport}
-                isLoading={isLoading}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* ─── EDITOR DRAWER ─── */}
-        <AnimatePresence mode="wait">
-          {activeService && (
-            <>
-              {/* Backdrop */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => selectService(null)}
-                className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 cursor-pointer"
-              />
-              {/* Drawer */}
-              <motion.div
-                initial={{ x: "100%", opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                exit={{ x: "100%", opacity: 0 }}
-                transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-                className="fixed inset-y-0 right-0 w-full md:w-[500px] z-50 shadow-2xl"
-              >
-                <SpatialServiceEditor
-                  service={activeService}
-                  onClose={() => selectService(null)}
-                />
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>
-      </main>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════
-// SUB-COMPONENTS
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════════
+// ZONE 1: TELEMETRY HUD (3 KPIs + Search + Create Button)
+// ═══════════════════════════════════════════════════════════════════════════════
 
-// ─── Tab Button ───
-
-interface TabButtonProps {
-  active: boolean;
-  onClick: () => void;
-  icon: React.ReactNode;
-  label: string;
-  count: number;
+interface TelemetryHUDProps {
+  stats: { totalServices: number; totalValue: number; activeCount: number };
+  activeTab: CatalogTab;
+  searchQuery: string;
+  setSearchQuery: (q: string) => void;
+  onCreate: () => void;
 }
 
-function TabButton({ active, onClick, icon, label, count }: TabButtonProps) {
+function TelemetryHUD({
+  stats,
+  activeTab,
+  searchQuery,
+  setSearchQuery,
+  onCreate,
+}: TelemetryHUDProps) {
+  const hudItems = [
+    {
+      icon: PackageIcon,
+      label: "Total Services",
+      value: String(stats.totalServices),
+      subtext: activeTab === "INVENTORY" ? "Mon inventaire" : "Disponibles",
+      color: "text-indigo-600",
+      bg: "bg-indigo-50",
+    },
+    {
+      icon: CurrencyCircleDollarIcon,
+      label: "Valeur Stock",
+      value: formatCompact(stats.totalValue),
+      subtext: "XOF cumulés",
+      color: "text-emerald-600",
+      bg: "bg-emerald-50",
+    },
+    {
+      icon: CheckCircleIcon,
+      label: "Services Actifs",
+      value: String(stats.activeCount),
+      subtext: "En production",
+      color: "text-blue-600",
+      bg: "bg-blue-50",
+    },
+  ];
+
   return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "relative flex items-center gap-2.5 px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all",
-        active
-          ? "bg-white text-indigo-600 border border-indigo-200/60 shadow-sm"
-          : "text-slate-400 hover:text-slate-900 hover:bg-white/60 border border-transparent"
-      )}
-    >
-      {icon}
-      <span className="hidden sm:inline">{label}</span>
-      <span
-        className={cn(
-          "text-[9px] font-mono font-black px-2 py-0.5 rounded-lg",
-          active
-            ? "bg-indigo-50 text-indigo-500"
-            : "bg-slate-100 text-slate-400"
-        )}
-      >
-        {count}
-      </span>
-    </button>
+    <div className="grid grid-cols-[1fr_auto] items-center gap-4 px-4 py-3 border-b border-slate-200/60 bg-white shrink-0">
+      {/* KPIs - 3 colonnes */}
+      <div className="grid grid-cols-3 gap-3">
+        {hudItems.map((item) => (
+          <div
+            key={item.label}
+            className="flex items-center gap-2 p-2 rounded border border-slate-200/60 bg-slate-50/50"
+          >
+            <div
+              className={cn(
+                "w-7 h-7 rounded flex items-center justify-center shrink-0",
+                item.bg,
+              )}
+            >
+              <item.icon size={14} className={item.color} weight="bold" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-baseline gap-1">
+                <span
+                  className={cn(
+                    "text-[13px] font-bold tabular-nums truncate",
+                    item.color,
+                  )}
+                >
+                  {item.value}
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className={cn(DS.micro, "text-slate-500")}>
+                  {item.label}
+                </span>
+                <span className="text-[8px] text-slate-300">·</span>
+                <span className="text-[9px] text-slate-400 truncate">
+                  {item.subtext}
+                </span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Search + Create */}
+      <div className="flex items-center gap-2">
+        <div className="relative w-56">
+          <MagnifyingGlassIcon
+            size={12}
+            weight="bold"
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"
+          />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Rechercher..."
+            className="w-full h-7 pl-8 pr-3 bg-slate-100 border border-slate-200/60 hover:border-slate-300 focus:border-indigo-400/60 focus:bg-white rounded text-xs font-medium text-slate-900 placeholder:text-slate-400 outline-none transition-all"
+          />
+        </div>
+        <button
+          onClick={onCreate}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded text-[9px] font-bold uppercase tracking-wider transition-colors"
+        >
+          <PlusIcon size={12} weight="bold" />
+          Créer
+        </button>
+      </div>
+    </div>
   );
 }
 
-// ─── Inventory Grid ───
+// ═══════════════════════════════════════════════════════════════════════════════
+// ZONE 2A: FILTER SIDEBAR (260px) - Navigation verticale
+// ═══════════════════════════════════════════════════════════════════════════════
 
-interface InventoryGridProps {
+interface FilterSidebarProps {
+  activeTab: CatalogTab;
+  setActiveTab: (tab: CatalogTab) => void;
+  categoryFilter: CategoryFilter;
+  setCategoryFilter: (c: CategoryFilter) => void;
+  userServiceCount: number;
+  platformServiceCount: number;
+}
+
+function FilterSidebar({
+  activeTab,
+  setActiveTab,
+  categoryFilter,
+  setCategoryFilter,
+  userServiceCount,
+  platformServiceCount,
+}: FilterSidebarProps) {
+  const categories: { key: CategoryFilter; label: string; count?: number }[] = [
+    { key: "ALL", label: "Tous les services" },
+    { key: "GENERAL", label: "Général" },
+    { key: "TECHNIC", label: "Technique" },
+    { key: "CONSULTING", label: "Conseil" },
+    { key: "SUBSCRIPTION", label: "Abonnement" },
+  ];
+
+  return (
+    <div className="flex flex-col bg-white border-r border-slate-200/60 overflow-hidden">
+      {/* Header */}
+      <div className="px-3 py-2.5 border-b border-slate-200/60 bg-slate-50/30">
+        <div className="flex items-center gap-1.5">
+          <TagIcon size={13} className="text-indigo-500" weight="bold" />
+          <span className={cn(DS.micro, "text-slate-600")}>CATALOGUE</span>
+        </div>
+      </div>
+
+      {/* Tab Switcher */}
+      <div className="p-2 border-b border-slate-200/60">
+        <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 rounded-md">
+          <button
+            onClick={() => setActiveTab("INVENTORY")}
+            className={cn(
+              "flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-[9px] font-bold uppercase transition-all",
+              activeTab === "INVENTORY"
+                ? "bg-white text-indigo-600 shadow-sm border border-slate-200/60"
+                : "text-slate-500 hover:text-slate-700",
+            )}
+          >
+            <CubeIcon
+              size={12}
+              weight={activeTab === "INVENTORY" ? "bold" : "regular"}
+            />
+            <span>Mes</span>
+            <span
+              className={cn(
+                DS.mono,
+                "text-[10px] bg-slate-200/50 px-1 rounded",
+              )}
+            >
+              {userServiceCount}
+            </span>
+          </button>
+          <button
+            onClick={() => setActiveTab("MARKETPLACE")}
+            className={cn(
+              "flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-[9px] font-bold uppercase transition-all",
+              activeTab === "MARKETPLACE"
+                ? "bg-white text-amber-600 shadow-sm border border-slate-200/60"
+                : "text-slate-500 hover:text-slate-700",
+            )}
+          >
+            <StorefrontIcon
+              size={12}
+              weight={activeTab === "MARKETPLACE" ? "bold" : "regular"}
+            />
+            <span>Plateforme</span>
+            <span
+              className={cn(
+                DS.mono,
+                "text-[10px] bg-slate-200/50 px-1 rounded",
+              )}
+            >
+              {platformServiceCount}
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* Category Filter */}
+      <div className="flex-1 overflow-y-auto p-2">
+        <div className={cn(DS.label, "px-2 py-1.5 mb-1")}>Catégories</div>
+        <div className="space-y-0.5">
+          {categories.map((cat) => (
+            <button
+              key={cat.key}
+              onClick={() => setCategoryFilter(cat.key)}
+              className={cn(
+                "w-full flex items-center justify-between px-2 py-1.5 rounded text-left text-xs transition-all",
+                categoryFilter === cat.key
+                  ? "bg-indigo-50 text-indigo-700 font-medium"
+                  : "text-slate-600 hover:bg-slate-50",
+              )}
+            >
+              <span>{cat.label}</span>
+              {cat.count !== undefined && (
+                <span className={cn(DS.mono, "text-[10px] text-slate-400")}>
+                  {cat.count}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ZONE 2B: MAIN GRID (1fr) - Grille de cartes Bento
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface MainGridProps {
   services: CatalogService[];
   selectedServiceId: string | null;
   onSelect: (id: string | null) => void;
   onDelete: (id: string) => Promise<void>;
+  onImport: (id: string) => Promise<void>;
+  isLoading: boolean;
+  activeTab: CatalogTab;
 }
 
-function InventoryGrid({
+function MainGrid({
   services,
   selectedServiceId,
   onSelect,
   onDelete,
-}: InventoryGridProps) {
+  onImport,
+  isLoading,
+  activeTab,
+}: MainGridProps) {
   if (services.length === 0) {
     return (
-      <SpatialCard depth={1} variant="glass" className="p-16">
-        <div className="flex flex-col items-center text-center">
-          <div className="w-20 h-20 rounded-3xl bg-indigo-50 border border-indigo-200/60 flex items-center justify-center mb-6">
-            <CubeIcon size={40} weight="duotone" className="text-indigo-500" />
+      <div className="h-full flex items-center justify-center p-8">
+        <div className="text-center">
+          <div className="w-12 h-12 rounded-lg bg-slate-100 border border-slate-200/60 flex items-center justify-center mx-auto mb-3">
+            <PackageIcon size={24} className="text-slate-400" />
           </div>
-          <h3 className="text-xl font-black text-slate-900 mb-2">
-            Inventaire vide
-          </h3>
-          <p className="text-sm text-slate-400 max-w-md">
-            Créez votre premier service ou importez-en depuis les Services
-            Plateforme pour constituer votre catalogue.
+          <p className="text-sm font-medium text-slate-600 mb-1">
+            Aucun service trouvé
+          </p>
+          <p className="text-xs text-slate-400">
+            {activeTab === "INVENTORY"
+              ? "Créez votre premier service"
+              : "Aucun service disponible"}
           </p>
         </div>
-      </SpatialCard>
+      </div>
     );
   }
 
   return (
-    <motion.div
-      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-    >
-      {services.map((service) => (
-        <motion.div key={service.id} variants={itemVariants}>
-          <ServiceCard
-            service={service}
-            isActive={selectedServiceId === service.id}
-            onClick={() => onSelect(service.id)}
-            onDelete={(e) => {
-              e.stopPropagation();
-              if (confirm("Supprimer ce service ?")) onDelete(service.id);
-            }}
-          />
-        </motion.div>
-      ))}
-    </motion.div>
-  );
-}
-
-// ─── Marketplace Grid ───
-
-interface MarketplaceGridProps {
-  services: CatalogService[];
-  onImport: (id: string) => Promise<void>;
-  isLoading: boolean;
-}
-
-function MarketplaceGrid({ services, onImport, isLoading }: MarketplaceGridProps) {
-  const [importingId, setImportingId] = useState<string | null>(null);
-
-  const handleImport = async (id: string) => {
-    setImportingId(id);
-    await onImport(id);
-    setImportingId(null);
-  };
-
-  if (services.length === 0) {
-    return (
-      <SpatialCard depth={1} variant="glass" className="p-16">
-        <div className="flex flex-col items-center text-center">
-          <div className="w-20 h-20 rounded-3xl bg-amber-50 border border-amber-200/60 flex items-center justify-center mb-6">
-            <StorefrontIcon
-              size={40}
-              weight="duotone"
-              className="text-amber-500"
-            />
-          </div>
-          <h3 className="text-xl font-black text-slate-900 mb-2">
-            Aucun service disponible
-          </h3>
-          <p className="text-sm text-slate-400 max-w-md">
-            La plateforme ne propose aucun service pour le moment.
-          </p>
-        </div>
-      </SpatialCard>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      {/* Section header */}
-      <SectionHeader
-        icon={<StorefrontIcon size={20} weight="duotone" />}
-        label={`${services.length} services disponibles — Sélectionnez pour ajouter à votre inventaire`}
-        iconBg="bg-amber-50 text-amber-500"
-      />
-
-      <motion.div
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        {services.map((service) => (
-          <motion.div key={service.id} variants={itemVariants}>
-            <PlatformServiceCard
-              service={service}
-              onImport={() => handleImport(service.id)}
-              isImporting={importingId === service.id}
-            />
-          </motion.div>
-        ))}
-      </motion.div>
+    <div className="h-full overflow-y-auto p-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+        <AnimatePresence mode="popLayout">
+          {services.map((service, index) => (
+            <motion.div
+              key={service.id}
+              layout
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              transition={{
+                duration: 0.15,
+                delay: index * 0.02,
+                ease: EASE_OUT_EXPO,
+              }}
+            >
+              {activeTab === "INVENTORY" ? (
+                <BentoServiceCard
+                  service={service}
+                  isSelected={selectedServiceId === service.id}
+                  onClick={() => onSelect(service.id)}
+                  onDelete={(e) => {
+                    e.stopPropagation();
+                    if (confirm("Supprimer ce service ?")) onDelete(service.id);
+                  }}
+                />
+              ) : (
+                <BentoPlatformCard
+                  service={service}
+                  onImport={() => onImport(service.id)}
+                  isImporting={isLoading}
+                />
+              )}
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
 
-// ─── Section Header ───
+// ═══════════════════════════════════════════════════════════════════════════════
+// BENTO SERVICE CARD - Unité de données compacte
+// ═══════════════════════════════════════════════════════════════════════════════
 
-interface SectionHeaderProps {
-  icon: React.ReactNode;
-  label: string;
-  iconBg: string;
+interface BentoServiceCardProps {
+  service: CatalogService;
+  isSelected: boolean;
+  onClick: () => void;
+  onDelete: (e: React.MouseEvent) => void;
 }
 
-function SectionHeader({ icon, label, iconBg }: SectionHeaderProps) {
+function BentoServiceCard({
+  service,
+  isSelected,
+  onClick,
+  onDelete,
+}: BentoServiceCardProps) {
+  const categoryColors: Record<string, { bg: string; text: string }> = {
+    GENERAL: { bg: "bg-slate-100", text: "text-slate-600" },
+    TECHNIC: { bg: "bg-blue-50", text: "text-blue-600" },
+    CONSULTING: { bg: "bg-purple-50", text: "text-purple-600" },
+    SUBSCRIPTION: { bg: "bg-emerald-50", text: "text-emerald-600" },
+  };
+
+  const catStyle = categoryColors[service.category] || categoryColors.GENERAL;
+
   return (
-    <div className="flex items-center gap-3 px-1">
-      <div className={cn("p-2 rounded-xl", iconBg)}>{icon}</div>
-      <h2 className="font-bold uppercase tracking-[0.2em] text-[11px] text-slate-400">
-        {label}
-      </h2>
+    <div
+      onClick={onClick}
+      className={cn(
+        DS.card,
+        "rounded-lg p-3 cursor-pointer transition-all hover:border-slate-300",
+        isSelected && "border-indigo-400/60 bg-indigo-50/30",
+      )}
+    >
+      {/* Header: Badge + Status */}
+      <div className="flex items-center justify-between mb-2">
+        <span
+          className={cn(
+            "px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider",
+            catStyle.bg,
+            catStyle.text,
+          )}
+        >
+          {service.category}
+        </span>
+        <div className="flex items-center gap-1">
+          {isSelected && (
+            <CheckCircleIcon
+              size={12}
+              className="text-indigo-500"
+              weight="bold"
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Body: Title + Description */}
+      <h3 className="font-bold text-sm text-slate-900 mb-1 line-clamp-1 leading-tight">
+        {service.title}
+      </h3>
+      <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed mb-3">
+        {service.subtitle || "Aucune description"}
+      </p>
+
+      {/* Footer: Price + Actions */}
+      <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+        <div className="flex items-baseline gap-0.5">
+          <span className={cn(DS.mono, "text-base font-bold text-slate-900")}>
+            {formatCompact(service.unitPrice || 0)}
+          </span>
+          <span className={cn(DS.mono, "text-[9px] text-slate-400")}>XOF</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className={cn(DS.mono, "text-[9px] text-slate-400")}>
+            #{service.id.slice(0, 4)}
+          </span>
+          <button
+            onClick={onDelete}
+            className="p-1 rounded hover:bg-rose-50 text-slate-300 hover:text-rose-500 transition-colors"
+          >
+            <span className="sr-only">Supprimer</span>
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+              <path
+                d="M2.5 2.5L7.5 7.5M7.5 2.5L2.5 7.5"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// BENTO PLATFORM CARD - Pour Marketplace
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface BentoPlatformCardProps {
+  service: CatalogService;
+  onImport: () => void;
+  isImporting: boolean;
+}
+
+function BentoPlatformCard({
+  service,
+  onImport,
+  isImporting,
+}: BentoPlatformCardProps) {
+  const categoryColors: Record<string, { bg: string; text: string }> = {
+    GENERAL: { bg: "bg-slate-100", text: "text-slate-600" },
+    TECHNIC: { bg: "bg-blue-50", text: "text-blue-600" },
+    CONSULTING: { bg: "bg-purple-50", text: "text-purple-600" },
+    SUBSCRIPTION: { bg: "bg-emerald-50", text: "text-emerald-600" },
+  };
+
+  const catStyle = categoryColors[service.category] || categoryColors.GENERAL;
+
+  return (
+    <div
+      className={cn(
+        DS.card,
+        "rounded-lg p-3 transition-all hover:border-amber-300",
+      )}
+    >
+      {/* Header: Badge + Icon */}
+      <div className="flex items-center justify-between mb-2">
+        <span
+          className={cn(
+            "px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider",
+            catStyle.bg,
+            catStyle.text,
+          )}
+        >
+          {service.category}
+        </span>
+        <StorefrontIcon size={12} className="text-amber-500" />
+      </div>
+
+      {/* Body: Title + Description */}
+      <h3 className="font-bold text-sm text-slate-900 mb-1 line-clamp-1 leading-tight">
+        {service.title}
+      </h3>
+      <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed mb-3">
+        {service.subtitle || "Service disponible sur la plateforme"}
+      </p>
+
+      {/* Footer: Price + Import */}
+      <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+        <div className="flex items-baseline gap-0.5">
+          <span className={cn(DS.mono, "text-base font-bold text-slate-900")}>
+            {formatCompact(service.unitPrice || 0)}
+          </span>
+          <span className={cn(DS.mono, "text-[9px] text-slate-400")}>XOF</span>
+        </div>
+        <button
+          onClick={onImport}
+          disabled={isImporting}
+          className="flex items-center gap-1 px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/60 rounded text-[9px] font-bold uppercase transition-all disabled:opacity-50"
+        >
+          {isImporting ? (
+            <span className="w-3 h-3 border border-amber-300 border-t-amber-600 rounded-full animate-spin" />
+          ) : (
+            <>
+              <ArrowRightIcon size={10} weight="bold" />
+              Importer
+            </>
+          )}
+        </button>
+      </div>
     </div>
   );
 }

@@ -19,8 +19,43 @@ import {
 } from "@phosphor-icons/react";
 import { upsertClient } from "@/actions/client-action";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
-import { SpatialInput } from "@/features/settings/components/spatial-input"; // Using standard spatial input if possible, or style similar
+function SpatialInput({
+  name,
+  label,
+  type = "text",
+  placeholder,
+  required,
+  icon,
+}: {
+  name: string;
+  label: string;
+  type?: string;
+  placeholder?: string;
+  required?: boolean;
+  icon?: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
+        {label}
+      </label>
+      <div className="relative group">
+        {icon && (
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-400 transition-colors [&>svg]:w-3.5 [&>svg]:h-3.5">
+            {icon}
+          </div>
+        )}
+        <input
+          name={name}
+          type={type}
+          required={required}
+          placeholder={placeholder}
+          className="w-full bg-white border border-slate-200 hover:border-slate-300 focus:border-indigo-400 rounded-lg pl-9 pr-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 outline-none transition-all"
+        />
+      </div>
+    </div>
+  );
+}
 
 export function CreateClientDialog() {
   const [open, setOpen] = useState(false);
@@ -50,93 +85,91 @@ export function CreateClientDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="group flex items-center gap-2.5 px-7 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl text-[11px] font-bold uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-indigo-600/25 hover:shadow-indigo-500/40">
-            <Plus size={16} weight="bold" />
-            Ajouter un client
+        <button className="flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all active:scale-95 shadow-sm shadow-indigo-600/20">
+          <Plus size={13} weight="bold" />
+          Nouveau client
         </button>
       </DialogTrigger>
 
-      <DialogContent className="max-w-[480px] p-0 overflow-hidden bg-[#0A0E1A]/90 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-2xl text-white">
-        
+      <DialogContent className="max-w-[440px] p-0 overflow-hidden bg-white border border-slate-200/60 rounded-xl shadow-xl">
         {/* HEADER */}
-        <DialogHeader className="p-6 border-b border-white/5 bg-white/[0.02]">
-          <div className="flex items-center gap-4">
-              <div className="h-10 w-10 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center border border-indigo-500/30">
-                <UserPlus size={20} weight="fill" />
-              </div>
-              <div>
-                <DialogTitle className="text-sm font-black uppercase tracking-widest text-white">
-                  Nouveau Client
-                </DialogTitle>
-                <div className="text-[10px] text-slate-400 font-medium mt-0.5">
-                  Création d'une nouvelle fiche partenaire
-                </div>
-              </div>
+        <DialogHeader className="px-5 py-4 border-b border-slate-100">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-lg bg-indigo-50 text-indigo-500 flex items-center justify-center border border-indigo-200/60">
+              <UserPlus size={15} weight="duotone" />
+            </div>
+            <div>
+              <DialogTitle className="text-sm font-black text-slate-900 tracking-tight">
+                Nouveau Client
+              </DialogTitle>
+              <p className="text-[9px] text-slate-400 font-medium uppercase tracking-wider mt-0.5">
+                Nouvelle fiche partenaire
+              </p>
+            </div>
           </div>
         </DialogHeader>
 
         {/* FORM */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
-           
-           <SpatialInput 
-                name="name" 
-                label="Nom / Raison Sociale" 
-                required 
-                placeholder="Ex: Acme Corp"
-                icon={<IdentificationCard />}
-           />
+        <form onSubmit={handleSubmit} className="px-5 py-4 space-y-3">
+          <SpatialInput
+            name="name"
+            label="Nom / Raison Sociale"
+            required
+            placeholder="Ex: Acme Corp"
+            icon={<IdentificationCard />}
+          />
 
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <SpatialInput 
-                    name="email" 
-                    label="Email" 
-                    type="email" 
-                    placeholder="contact@acme.com"
-                    icon={<Envelope />}
-                />
-                <SpatialInput 
-                    name="phone" 
-                    label="Téléphone" 
-                    placeholder="+33 6..."
-                    icon={<Phone />}
-                />
-           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <SpatialInput
+              name="email"
+              label="Email"
+              type="email"
+              placeholder="contact@acme.com"
+              icon={<Envelope />}
+            />
+            <SpatialInput
+              name="phone"
+              label="Téléphone"
+              placeholder="+33 6..."
+              icon={<Phone />}
+            />
+          </div>
 
-           <SpatialInput 
-                name="siret" 
-                label="Identifiant Fiscal / SIRET" 
-                placeholder="000 000 000"
-                icon={<Hash />}
-           />
+          <SpatialInput
+            name="siret"
+            label="Identifiant Fiscal / SIRET"
+            placeholder="000 000 000"
+            icon={<Hash />}
+          />
 
-           <div className="space-y-2">
-              <label className="text-[9px] font-bold uppercase tracking-widest text-slate-500 ml-1">Adresse</label>
-              <div className="relative group">
-                  <div className="absolute left-3 top-3 text-slate-400 group-focus-within:text-indigo-400 transition-colors">
-                      <MapPin size={16} />
-                  </div>
-                  <textarea 
-                      name="address"
-                      rows={3}
-                      className="w-full bg-white/[0.03] border border-white/[0.05] rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder:text-slate-600 outline-none focus:border-indigo-500/50 focus:bg-indigo-500/5 transition-all resize-none"
-                      placeholder="Adresse complète..."
-                  />
+          <div className="space-y-1.5">
+            <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
+              Adresse
+            </label>
+            <div className="relative group">
+              <div className="absolute left-3 top-2.5 text-slate-400 group-focus-within:text-indigo-400 transition-colors">
+                <MapPin size={13} />
               </div>
-           </div>
+              <textarea
+                name="address"
+                rows={2}
+                className="w-full bg-white border border-slate-200 hover:border-slate-300 focus:border-indigo-400 rounded-lg pl-9 pr-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 outline-none transition-all resize-none"
+                placeholder="Adresse complète..."
+              />
+            </div>
+          </div>
 
-           {/* FOOTER ACTIONS */}
-           <div className="pt-2 flex flex-col gap-3">
-              <button 
-                  type="submit" 
-                  disabled={isPending}
-                  className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-900/20"
-              >
-                  {isPending ? "Création..." : "Enregistrer le client"}
-              </button>
-           </div>
-
+          {/* FOOTER */}
+          <div className="pt-1">
+            <button
+              type="submit"
+              disabled={isPending}
+              className="w-full py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[10px] uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+            >
+              {isPending ? "Création..." : "Enregistrer le client"}
+            </button>
+          </div>
         </form>
-
       </DialogContent>
     </Dialog>
   );

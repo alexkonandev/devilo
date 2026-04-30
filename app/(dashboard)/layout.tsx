@@ -23,11 +23,14 @@ export default function SoftwareLayout({ children }: SoftwareLayoutProps) {
       <SpatialStatusBar />
       <SpatialDock />
 
-      {/* ═══ APP CONTENT LAYER ═══ */}
-      <main className="relative z-10 h-full w-full overflow-y-auto scroll-smooth pl-24">
-        <div className="pt-20 pb-24 min-h-full max-w-[1300px] mx-auto px-8">
-          {children}
-        </div>
+      {/* ═══ APP CONTENT LAYER ═══
+          - h-[calc(100vh-2.5rem)] : viewport strict moins la top bar h-10
+          - pt-10 : sous la Top Bar h-10
+          - pl-16 : rail sidebar w-16
+          - overflow-hidden : pas de scroll global, scroll segmenté dans les panneaux
+      */}
+      <main className="relative z-10 h-full w-full overflow-hidden pt-10 pl-16">
+        {children}
       </main>
     </div>
   );

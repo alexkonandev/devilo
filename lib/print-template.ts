@@ -17,11 +17,71 @@ export const generateQuoteHTML = (
   const currency = quote?.currency || "XOF";
   const dueDate = quoteInfo?.dueDate;
   const validityDays = quote?.validityDays || 30;
-  // Coordonnées bancaires (snapshot)
-  const bankName = quote?.bankName || "";
-  const bankIBAN = quote?.bankIBAN || "";
-  const bankSWIFT = quote?.bankSWIFT || "";
-  const bankBIC = quote?.bankBIC || "";
+  // Coordonnées bancaires (snapshot géo-spécifique)
+  const showBankDetails = quote?.showBankDetails ?? true;
+  const paymentZone = (quote?.paymentZone || "AFRI") as "USA" | "EUR" | "AFRI";
+  const bankName = (quote?.bankName || "").slice(0, 50);
+  const bankIBAN = (quote?.bankIBAN || "").replace(/\s/g, "").toUpperCase();
+  const bankSWIFT = (quote?.bankSWIFT || "").toUpperCase();
+  const bankBIC = (quote?.bankBIC || "").toUpperCase();
+  const bankRoutingNumber = quote?.bankRoutingNumber || "";
+  const bankAccountNumber = quote?.bankAccountNumber || "";
+
+  const getPaymentBlock = (): string => {
+    if (!showBankDetails) return "";
+    const hasData = bankName || bankIBAN || bankSWIFT || bankRoutingNumber;
+    if (!hasData)
+      return `<div class="mt-4 pt-3 border-t border-slate-100 text-center"><span class="text-[8px] text-slate-400 italic">Aucune coordonnée bancaire configurée</span></div>`;
+
+    let detailsHtml = "";
+    if (paymentZone === "USA") {
+      detailsHtml = [
+        bankRoutingNumber
+          ? `<p class="text-[8px] font-mono text-slate-600 bg-white px-2 py-1 rounded border border-slate-200 truncate">Routing: ${bankRoutingNumber}</p>`
+          : "",
+        bankAccountNumber
+          ? `<p class="text-[8px] font-mono text-slate-600 bg-white px-2 py-1 rounded border border-slate-200 truncate">Acc: ${bankAccountNumber}</p>`
+          : "",
+      ]
+        .filter(Boolean)
+        .join("");
+    } else if (paymentZone === "EUR") {
+      const formattedIBAN = bankIBAN.replace(/(.{4})/g, "$1 ").trim();
+      detailsHtml = [
+        bankIBAN
+          ? `<p class="text-[8px] font-mono text-slate-600 bg-white px-2 py-1 rounded border border-slate-200 truncate">IBAN: ${formattedIBAN}</p>`
+          : "",
+        bankBIC
+          ? `<p class="text-[8px] font-mono text-slate-600 bg-white px-2 py-1 rounded border border-slate-200 truncate">BIC: ${bankBIC}</p>`
+          : "",
+      ]
+        .filter(Boolean)
+        .join("");
+    } else {
+      detailsHtml = [
+        bankSWIFT
+          ? `<p class="text-[8px] font-mono text-slate-600 bg-white px-2 py-1 rounded border border-slate-200 truncate">SWIFT: ${bankSWIFT}</p>`
+          : "",
+        bankAccountNumber
+          ? `<p class="text-[8px] font-mono text-slate-600 bg-white px-2 py-1 rounded border border-slate-200 truncate">Acc: ${bankAccountNumber}</p>`
+          : "",
+      ]
+        .filter(Boolean)
+        .join("");
+    }
+
+    return `
+      <div class="mt-4 pt-3 border-t border-slate-200 bg-slate-50/50 rounded-lg px-3 py-2">
+        <span class="text-[8px] font-black uppercase tracking-[0.15em] text-slate-600 block mb-2">
+          Coordonnées bancaires
+        </span>
+        <div class="space-y-1">
+          ${bankName ? `<p class="text-[9px] font-semibold text-slate-700 truncate">${bankName}</p>` : ""}
+          <div class="flex flex-wrap gap-x-4 gap-y-1">${detailsHtml}</div>
+        </div>
+      </div>
+    `;
+  };
 
   // --- CALCULS ---
   const subTotal = items.reduce(
@@ -185,31 +245,7 @@ export const generateQuoteHTML = (
             <p class="text-[7px] text-slate-400 leading-relaxed italic uppercase">
               ${quoteInfo?.terms || `Paiement à réception. Validité : ${validityDays} jours.`}
             </p>
-            ${
-              bankIBAN || bankSWIFT
-                ? `
-            <div class="mt-4 pt-3 border-t border-slate-200 bg-slate-50/50 rounded-lg px-3 py-2">
-              <span class="text-[8px] font-black uppercase tracking-[0.15em] text-slate-600 block mb-2 flex items-center gap-1.5">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-indigo-500">
-                  <rect x="2" y="5" width="20" height="14" rx="2"/>
-                  <line x1="2" y1="10" x2="22" y2="10"/>
-                </svg>
-                Coordonnées bancaires
-              </span>
-              <div class="space-y-1">
-                ${bankName ? `<p class="text-[9px] font-semibold text-slate-700">${bankName}</p>` : ""}
-                <div class="flex flex-wrap gap-x-4 gap-y-1">
-                  ${bankIBAN ? `<p class="text-[8px] font-mono text-slate-600 bg-white px-2 py-1 rounded border border-slate-200">IBAN: ${bankIBAN}</p>` : ""}
-                  ${bankSWIFT ? `<p class="text-[8px] font-mono text-slate-600 bg-white px-2 py-1 rounded border border-slate-200">SWIFT: ${bankSWIFT}</p>` : ""}
-                  ${bankBIC ? `<p class="text-[8px] font-mono text-slate-600 bg-white px-2 py-1 rounded border border-slate-200">BIC: ${bankBIC}</p>` : ""}
-                </div>
-              </div>
-            </div>
-            `
-                : `<div class="mt-4 pt-3 border-t border-slate-100 text-center">
-                    <span class="text-[8px] text-slate-400 italic">Aucune coordonnée bancaire configurée</span>
-                   </div>`
-            }
+            ${getPaymentBlock()}
           </div>
           <div class="text-right">
              <p class="text-[8px] font-black uppercase text-slate-900 tracking-tighter italic">Généré via Instance OS</p>

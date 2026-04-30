@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useRef, useMemo, useEffect, useState } from "react";
+import React, {
+  useRef,
+  useMemo,
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useKernelStore } from "@/hooks/use-kernel-store";
@@ -100,9 +106,7 @@ export default function CreateQuoteClient({
         company: {
           name: user.companyName ?? "",
           email: user.companyEmail ?? "",
-          address: `${user.companyCity || ""} ${
-            user.companyDistrict || ""
-          }`.trim(),
+          address: user.companyCity || "",
           taxId: user.taxId ?? "",
           taxIdLabel: user.taxIdLabel ?? "NCC",
           website: user.companyWebsite ?? "",
@@ -136,6 +140,8 @@ export default function CreateQuoteClient({
     mounted,
     user,
     initialQuoteData,
+    activeQuote,
+    activeThemeId,
     setSettings,
     setActiveQuote,
     setActiveThemeId,
@@ -144,43 +150,54 @@ export default function CreateQuoteClient({
 
   // --- LOGIQUE DE SAUVEGARDE ---
 
-  const handleSave = async (showToast = false) => {
-    if (!activeQuote?.client.name || isSaving) return false;
+  const handleSave = useCallback(
+    async (showToast = false) => {
+      if (!activeQuote?.client.name || isSaving) return false;
 
-    setIsSaving(true);
-    try {
-      const result = await upsertQuoteAction(
-        activeQuote,
-        activeQuote.id || existingQuoteId,
-      );
+      setIsSaving(true);
+      try {
+        const result = await upsertQuoteAction(
+          activeQuote,
+          activeQuote.id || existingQuoteId,
+        );
 
-      if (result.success && result.data) {
-        setIsDirty(false);
+        if (result.success && result.data) {
+          setIsDirty(false);
 
-        // On met juste à jour l'ID dans le store pour savoir que
-        // ce document existe maintenant en DB
-        if (!activeQuote.id && result.data.id) {
-          setActiveQuote({ ...activeQuote, id: result.data.id });
+          // On met juste à jour l'ID dans le store pour savoir que
+          // ce document existe maintenant en DB
+          if (!activeQuote.id && result.data.id) {
+            setActiveQuote({ ...activeQuote, id: result.data.id });
+          }
+
+          // ✅ SUPPRESSION DE LA REDIRECTION window.history.replaceState
+          // On se contente de rafraîchir les données en arrière-plan
+          router.refresh();
+
+          if (showToast) toast.success("Devis enregistré en base de données");
+          return true;
+        } else {
+          toast.error("Erreur de sauvegarde", { description: result.error });
+          return false;
         }
-
-        // ✅ SUPPRESSION DE LA REDIRECTION window.history.replaceState
-        // On se contente de rafraîchir les données en arrière-plan
-        router.refresh();
-
-        if (showToast) toast.success("Devis enregistré en base de données");
-        return true;
-      } else {
-        toast.error("Erreur de sauvegarde", { description: result.error });
+      } catch (error) {
+        console.error("Save error:", error);
+        toast.error("Erreur réseau");
         return false;
+      } finally {
+        setIsSaving(false);
       }
-    } catch (error) {
-      console.error("Save error:", error);
-      toast.error("Erreur réseau");
-      return false;
-    } finally {
-      setIsSaving(false);
-    }
-  };
+    },
+    [
+      activeQuote,
+      isSaving,
+      existingQuoteId,
+      router,
+      setActiveQuote,
+      setIsDirty,
+      setIsSaving,
+    ],
+  );
   // ═══════════════════════════════════════════════════════════════
   // NOUVELLES ACTIONS : TOP BAR (CENTRE)
   // ═══════════════════════════════════════════════════════════════
@@ -236,6 +253,7 @@ export default function CreateQuoteClient({
         toast.error("Erreur", { description: res.error });
       }
     } catch (error) {
+      console.error("Erreur suppression:", error);
       toast.error("Une erreur est survenue lors de la suppression");
     } finally {
       setIsSaving(false);
@@ -251,7 +269,7 @@ export default function CreateQuoteClient({
     }, 2000);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [activeQuote, isDirty, isSaving]);
+  }, [activeQuote, isDirty, isSaving, handleSave]);
 
   // 6. Calculs des totaux
   const totals = useMemo(() => {
@@ -289,6 +307,7 @@ export default function CreateQuoteClient({
       window.open(url, "_blank");
       toast.success("PDF prêt", { id: toastId });
     } catch (error) {
+      console.error("Erreur génération PDF:", error);
       toast.error("Échec génération", { id: toastId });
     }
   };

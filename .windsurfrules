@@ -1,0 +1,14 @@
+# 🎯 Principes de Développement
+- **Stack :** Priorise Next.js (App Router), TypeScript, Prisma et Tailwind CSS.
+- **Architecture :** Utilise exclusivement des Server Actions pour les mutations. Pas d'API routes sauf nécessité absolue.
+- **Zéro Redondance :** Si une fonction existe déjà dans les utilitaires ou les hooks, réutilise-la.
+- **Design System :** Applique une esthétique "Modern SaaS". Le layout doit être collé aux bords de l'écran (edge-to-edge), éviter les espacements flottants excessifs, et utiliser des bordures fines (slate-200/800).
+
+# 🛠 Règles Techniques
+- **Prisma :** Toujours vérifier `schema.prisma` avant de suggérer une mutation. Utilise des transactions pour les opérations complexes.
+- **TypeScript :** Typage strict. Pas de `any`. Utilise Zod pour la validation des données d'entrée.
+- **Performance :** Optimise les composants avec `use memo` ou `use callback` uniquement là où c'est nécessaire.
+
+# 🔄 Workflow de Cascade
+- Avant de modifier un fichier, analyse l'impact sur les dépendances (imports/exports).
+- Après chaque modification majeure, propose un plan de test rapide ou vérifie les types (`tsc`).

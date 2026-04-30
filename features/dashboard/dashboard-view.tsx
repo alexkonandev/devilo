@@ -4,29 +4,72 @@ import React, { useMemo } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
-  ClockIcon,
   CheckCircleIcon,
-  ReceiptIcon,
-  CrownIcon,
-  HandCoinsIcon,
-  ShieldCheckIcon,
   TimerIcon,
-  PlusIcon,
-  FileTextIcon,
-  CalendarBlankIcon,
   TrendUpIcon,
+  CurrencyCircleDollarIcon,
+  UsersThreeIcon,
+  FileTextIcon,
+  ArrowRightIcon,
+  PlusIcon,
+  ClockIcon,
   ArrowUpRightIcon,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { QuoteStatus } from "@/app/generated/prisma/enums";
 import { Profession, BusinessModel } from "@/types/dashboard";
 
-import { SpatialCard } from "./components/spatial-card";
-import { AnimatedCounter } from "./components/animated-counter";
+// ═══════════════════════════════════════════════════════════════════════════════
+// DESIGN SYSTEM - Source de Vérité (extrait de la page Quotes)
+// ═══════════════════════════════════════════════════════════════════════════════
 
-// ═══════════════════════════════════════════════════════════════
+const DS = {
+  text: {
+    xs: "text-[11px] font-medium",
+    sm: "text-[13px] font-medium",
+    mono: "font-mono text-[11px]",
+    micro: "text-[9px] font-bold uppercase tracking-wider",
+  },
+  card: "bg-white border border-slate-200 rounded-lg",
+  status: {
+    PAID: {
+      bg: "bg-emerald-100",
+      text: "text-emerald-700",
+      border: "border-emerald-200",
+      dot: "bg-emerald-500",
+    },
+    SENT: {
+      bg: "bg-blue-100",
+      text: "text-blue-700",
+      border: "border-blue-200",
+      dot: "bg-blue-500",
+    },
+    ACCEPTED: {
+      bg: "bg-indigo-100",
+      text: "text-indigo-700",
+      border: "border-indigo-200",
+      dot: "bg-indigo-500",
+    },
+    DRAFT: {
+      bg: "bg-amber-100",
+      text: "text-amber-700",
+      border: "border-amber-200",
+      dot: "bg-amber-500",
+    },
+    REJECTED: {
+      bg: "bg-rose-100",
+      text: "text-rose-700",
+      border: "border-rose-200",
+      dot: "bg-rose-500",
+    },
+  },
+};
+
+const EASE_OUT_EXPO: [number, number, number, number] = [0.22, 1, 0.36, 1];
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════════
 
 interface DashboardProps {
   data: {
@@ -59,474 +102,435 @@ interface DashboardProps {
   };
 }
 
-// ═══════════════════════════════════════════════════════════════
-// STAGGER ANIMATION VARIANTS
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════════
+// UTILITY FUNCTIONS
+// ═══════════════════════════════════════════════════════════════════════════════
 
-const EASE_OUT_EXPO: [number, number, number, number] = [0.22, 1, 0.36, 1];
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.08, delayChildren: 0.2 },
-  },
+const formatCFA = (amount: number) => {
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "XOF",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
 };
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 20, scale: 0.97 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: { duration: 0.5, ease: EASE_OUT_EXPO },
-  },
+const formatCompact = (amount: number) => {
+  if (amount >= 1000000) return `${(amount / 1000000).toFixed(1)}M`;
+  if (amount >= 1000) return `${(amount / 1000).toFixed(0)}k`;
+  return amount.toString();
 };
 
-// ═══════════════════════════════════════════════════════════════
-// MAIN COMPONENT
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════════
+// MAIN COMPONENT - Command Center Design
+// ═══════════════════════════════════════════════════════════════════════════════
 
 export function DashboardView({ data }: DashboardProps) {
   const { kpis, fluxRecent, portefeuilleStrategique } = data;
 
   const totalValeurPortefeuille = useMemo(
     () => portefeuilleStrategique.reduce((acc, c) => acc + c.valeurCumulee, 0),
-    [portefeuilleStrategique]
+    [portefeuilleStrategique],
   );
 
-  return (
-    <div className="relative min-h-[80vh] font-sans">
-      {/* ═══ Z=1+ : CONTENT LAYERS ═══ */}
+  // Sparkline data simulation (would come from API in real app)
+  const sparklineData = [
+    12, 18, 15, 25, 22, 30, 28, 35, 40, 38, 45, 50, 48, 55, 60, 58, 65, 70, 68,
+    75, 80, 78, 85, 90, 88, 95, 100, 98, 105, 110,
+  ];
+  const maxValue = Math.max(...sparklineData);
+  const sparklinePath = sparklineData
+    .map((value, i) => {
+      const x = (i / (sparklineData.length - 1)) * 60;
+      const y = 20 - (value / maxValue) * 20;
+      return `${i === 0 ? "M" : "L"} ${x} ${y}`;
+    })
+    .join(" ");
 
-      <main className="relative z-10 max-w-[1600px] mx-auto  py-8 space-y-10">
-        {/* ─── HEADER ─── */}
-        <motion.header
-          className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-8 border-b border-slate-200/60"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse shadow-[0_0_8px_rgba(99,102,241,0.4)]" />
-              <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-slate-400">
-                Spatial Intelligence
+  return (
+    <div className="h-full flex flex-col bg-slate-50 overflow-hidden">
+      {/* ═══════════════════════════════════════════════════════════════════════
+          PHASE 1: TOP TELEMETRY ROW (Style Quotes Page)
+          ═══════════════════════════════════════════════════════════════════════ */}
+      <div className="grid grid-cols-4 gap-0 border-b border-slate-200 bg-white">
+        {/* KPI 1: CA Global */}
+        <div className="flex items-center gap-3 p-3 border-r border-slate-200">
+          <div className="w-8 h-8 rounded-md bg-emerald-50 flex items-center justify-center">
+            <CurrencyCircleDollarIcon
+              size={16}
+              className="text-emerald-600"
+              weight="bold"
+            />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-baseline gap-1">
+              <span className="text-lg font-bold text-slate-900 tabular-nums truncate">
+                {formatCompact(kpis.chiffreAffairesTotal)}
+              </span>
+              <span className="text-[10px] text-slate-400">XOF</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className={DS.text.micro + " text-slate-500"}>
+                CA Global
+              </span>
+              <span className="text-[9px] text-slate-400">·</span>
+              <span className="text-[9px] text-emerald-600 font-medium">
+                +12%
               </span>
             </div>
-            <h1 className="text-5xl font-black tracking-tighter text-slate-900 italic">
-              Console<span className="text-indigo-500">.</span>
-            </h1>
           </div>
+        </div>
 
-          <div className="flex items-center gap-3">
-            <Link
-              href="/quotes/new"
-              className="group flex items-center gap-2.5 px-7 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl text-[11px] font-bold uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-indigo-600/25 hover:shadow-indigo-500/40"
-            >
-              <PlusIcon size={16} weight="bold" />
-              Nouveau Devis
-              <ArrowUpRightIcon
-                size={14}
-                weight="bold"
-                className="opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all"
+        {/* KPI 2: En Attente Signature */}
+        <div className="flex items-center gap-3 p-3 border-r border-slate-200">
+          <div className="w-8 h-8 rounded-md bg-blue-50 flex items-center justify-center">
+            <ClockIcon size={16} className="text-blue-600" weight="bold" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-baseline gap-1">
+              <span className="text-lg font-bold text-slate-900 tabular-nums truncate">
+                {formatCompact(kpis.enAttentePaiement)}
+              </span>
+              <span className="text-[10px] text-slate-400">XOF</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className={DS.text.micro + " text-slate-500"}>
+                En Attente
+              </span>
+              <span className="text-[9px] text-slate-400">·</span>
+              <span className="text-[9px] text-blue-600 font-medium">
+                {kpis.devisActifs} devis
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* KPI 3: Taux Conversion */}
+        <div className="flex items-center gap-3 p-3 border-r border-slate-200">
+          <div className="w-8 h-8 rounded-md bg-indigo-50 flex items-center justify-center">
+            <TrendUpIcon size={16} className="text-indigo-600" weight="bold" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-baseline gap-1">
+              <span className="text-lg font-bold text-slate-900 tabular-nums">
+                {kpis.tauxConversion.toFixed(1)}
+              </span>
+              <span className="text-[10px] text-slate-400">%</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className={DS.text.micro + " text-slate-500"}>
+                Conversion
+              </span>
+              <span className="text-[9px] text-slate-400">·</span>
+              <span className="text-[9px] text-indigo-600 font-medium">
+                Global
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* KPI 4: Sparkline + Nouveaux */}
+        <div className="flex items-center gap-3 p-3">
+          <div className="flex-1">
+            <div className="flex items-center justify-between mb-1">
+              <span className={DS.text.micro + " text-slate-500"}>
+                Activité 30j
+              </span>
+              <span className="text-[10px] font-bold text-slate-900">
+                {portefeuilleStrategique.length}
+              </span>
+            </div>
+            <svg width="60" height="20" className="text-indigo-500">
+              <path
+                d={sparklinePath}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
+            </svg>
+          </div>
+          <div className="w-8 h-8 rounded-md bg-indigo-600 flex items-center justify-center">
+            <ArrowUpRightIcon size={14} className="text-white" weight="bold" />
+          </div>
+        </div>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          PHASE 2: BENTO GRID LAYOUT
+          ═══════════════════════════════════════════════════════════════════════ */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* ═══ PANNEAU PRINCIPAL GAUCHE (65%) ═══ */}
+        <div className="w-[65%] flex flex-col border-r border-slate-200 bg-white">
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-slate-50/50">
+            <div className="flex items-center gap-2">
+              <TrendUpIcon size={14} className="text-indigo-500" />
+              <span className={DS.text.micro + " text-slate-600"}>
+                Activité Récente
+              </span>
+            </div>
+            <Link
+              href="/quotes"
+              className="flex items-center gap-1 text-[10px] font-medium text-indigo-600 hover:text-indigo-700"
+            >
+              Voir tout
+              <ArrowRightIcon size={10} weight="bold" />
             </Link>
           </div>
-        </motion.header>
 
-        {/* ─── KPI HERO — Z=2 Main Surface ─── */}
-        <SpatialCard depth={1} variant="glass" className="p-10 lg:p-14" mountDelay={0.1}>
-          {/* Ghost icon */}
-          <div className="absolute -top-8 -right-8 opacity-[0.03] pointer-events-none">
-            <ReceiptIcon size={350} weight="duotone" />
-          </div>
-
-          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            {/* Hero value */}
-            <div className="lg:col-span-7">
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.3em] mb-6">
-                Volume Financier Total
-              </p>
-              <AnimatedCounter
-                value={kpis.chiffreAffairesTotal}
-                format="currency"
-                currencySuffix="XOF"
-                className="text-[6rem] lg:text-[7rem] font-black tracking-tighter text-slate-900 leading-none"
-                suffixClassName="text-2xl lg:text-3xl font-black text-indigo-500 uppercase italic"
-              />
-            </div>
-
-            {/* Secondary KPIs */}
-            <motion.div
-              className="lg:col-span-5 grid grid-cols-2 gap-y-10 gap-x-8 lg:border-l lg:border-slate-200/60 lg:pl-12"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-            >
-              <motion.div variants={itemVariants}>
-                <KpiMini
-                  label="En attente"
-                  value={kpis.enAttentePaiement}
-                  format="currency"
-                  color="text-amber-500"
-                  icon={<ClockIcon size={22} weight="duotone" />}
+          {/* Zone Graphique (placeholder pour Area Chart) */}
+          <div className="h-48 border-b border-slate-200 bg-slate-50 p-4">
+            <div className="h-full flex items-end gap-1">
+              {sparklineData.slice(-20).map((value, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ height: 0 }}
+                  animate={{ height: `${(value / maxValue) * 100}%` }}
+                  transition={{ duration: 0.5, delay: i * 0.02 }}
+                  className="flex-1 bg-indigo-200 hover:bg-indigo-400 rounded-t-sm transition-colors cursor-pointer"
                 />
-              </motion.div>
-              <motion.div variants={itemVariants}>
-                <KpiMini
-                  label="Devis actifs"
-                  value={kpis.devisActifs}
-                  format="count"
-                  color="text-indigo-500"
-                  icon={<FileTextIcon size={22} weight="duotone" />}
-                />
-              </motion.div>
-              <motion.div variants={itemVariants}>
-                <KpiMini
-                  label="Conversion"
-                  value={kpis.tauxConversion}
-                  format="percent"
-                  color="text-emerald-500"
-                  icon={<ShieldCheckIcon size={22} weight="duotone" />}
-                />
-              </motion.div>
-              <motion.div variants={itemVariants}>
-                <KpiMini
-                  label="Tendance"
-                  value={kpis.chiffreAffairesTotal}
-                  format="currency"
-                  color="text-slate-900"
-                  icon={<TrendUpIcon size={22} weight="duotone" />}
-                />
-              </motion.div>
-            </motion.div>
-          </div>
-        </SpatialCard>
-
-        {/* ─── DUAL ZONE : FLUX + PORTEFEUILLE ─── */}
-        <div className="grid grid-cols-12 gap-8">
-          {/* FLUX OPÉRATIONNEL — 7 cols */}
-          <div className="col-span-12 lg:col-span-7 space-y-6">
-            <SectionHeader
-              icon={<HandCoinsIcon size={20} weight="duotone" />}
-              label="Flux Opérationnel"
-              iconBg="bg-indigo-50 text-indigo-500"
-            />
-
-            <SpatialCard
-              depth={2}
-              variant="glass"
-              className="p-4 lg:p-6"
-              mountDelay={0.2}
-            >
-              <div className="divide-y divide-slate-100">
-                {fluxRecent.map((item, i) => (
-                  <FluxItem key={item.id} item={item} index={i} />
-                ))}
-              </div>
-            </SpatialCard>
-          </div>
-
-          {/* PORTEFEUILLE STRATÉGIQUE — 5 cols */}
-          <div className="col-span-12 lg:col-span-5 space-y-6">
-            <SectionHeader
-              icon={<CrownIcon size={20} weight="duotone" />}
-              label="Actifs Stratégiques"
-              iconBg="bg-amber-50 text-amber-500"
-            />
-
-            <motion.div
-              className="space-y-4"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-            >
-              {portefeuilleStrategique.map((client, index) => (
-                <motion.div key={client.id} variants={itemVariants}>
-                  <PortfolioCard
-                    client={client}
-                    index={index}
-                    totalValeur={totalValeurPortefeuille}
-                  />
-                </motion.div>
               ))}
-            </motion.div>
-          </div>
-        </div>
-      </main>
-    </div>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════
-// SUB-COMPONENTS (Zero `any`)
-// ═══════════════════════════════════════════════════════════════
-
-interface SectionHeaderProps {
-  icon: React.ReactNode;
-  label: string;
-  iconBg: string;
-}
-
-function SectionHeader({ icon, label, iconBg }: SectionHeaderProps) {
-  return (
-    <div className="flex items-center gap-3 px-1">
-      <div className={cn("p-2 rounded-xl", iconBg)}>{icon}</div>
-      <h2 className="font-bold uppercase tracking-[0.2em] text-[11px] text-slate-400">
-        {label}
-      </h2>
-    </div>
-  );
-}
-
-// ─── KPI Mini ───
-
-interface KpiMiniProps {
-  label: string;
-  value: number;
-  format: "currency" | "percent" | "count";
-  color: string;
-  icon: React.ReactNode;
-}
-
-function KpiMini({ label, value, format, color, icon }: KpiMiniProps) {
-  return (
-    <div className="flex items-start gap-4 group">
-      <div
-        className={cn(
-          "w-11 h-11 rounded-2xl flex items-center justify-center bg-slate-50 border border-slate-200/60 transition-colors group-hover:bg-slate-100",
-          color
-        )}
-      >
-        {icon}
-      </div>
-      <div>
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-1">
-          {label}
-        </p>
-        <AnimatedCounter
-          value={value}
-          format={format}
-          className={cn(
-            "font-mono text-3xl font-black tracking-tighter italic leading-none",
-            color
-          )}
-          duration={1.8}
-        />
-      </div>
-    </div>
-  );
-}
-
-// ─── Flux Item ───
-
-interface FluxItemData {
-  id: string;
-  clientNom: string;
-  projetTitre: string;
-  montant: number;
-  statut: QuoteStatus;
-  date: string;
-}
-
-interface FluxItemProps {
-  item: FluxItemData;
-  index: number;
-}
-
-function FluxItem({ item, index }: FluxItemProps) {
-  return (
-    <Link
-      href="/quotes"
-      className="group flex items-center justify-between p-5 hover:bg-slate-50 transition-all rounded-2xl cursor-pointer active:scale-[0.995]"
-    >
-      <div className="flex items-center gap-5">
-        <motion.div
-          className={cn(
-            "w-12 h-12 rounded-2xl flex items-center justify-center transition-all",
-            item.statut === "PAID"
-              ? "bg-emerald-50 text-emerald-500"
-              : "bg-slate-50 text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-500"
-          )}
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.3 + index * 0.06 }}
-        >
-          {item.statut === "PAID" ? (
-            <CheckCircleIcon size={24} weight="bold" />
-          ) : (
-            <TimerIcon size={24} weight="duotone" />
-          )}
-        </motion.div>
-
-        <div>
-          <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mb-1">
-            {item.clientNom}
-          </p>
-          <h4 className="text-sm font-bold text-slate-800 leading-tight tracking-tight">
-            {item.projetTitre}
-          </h4>
-          <div className="flex items-center gap-1.5 mt-1.5">
-            <CalendarBlankIcon
-              size={11}
-              weight="bold"
-              className="text-slate-300"
-            />
-            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">
-              {item.date}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <div className="text-right">
-        <p className="font-mono font-black text-lg text-slate-800 tracking-tighter">
-          {(item.montant / 1000).toFixed(1)}k
-        </p>
-        <StatusBadge status={item.statut} />
-      </div>
-    </Link>
-  );
-}
-
-// ─── Portfolio Card ───
-
-interface PortfolioClientData {
-  id: string;
-  nom: string;
-  valeurCumulee: number;
-  nombreDevis: number;
-  scoreSante: "EXCELLENT" | "GOOD" | "SLOW";
-  delaiMoyen: number;
-}
-
-interface PortfolioCardProps {
-  client: PortfolioClientData;
-  index: number;
-  totalValeur: number;
-}
-
-function PortfolioCard({ client, index, totalValeur }: PortfolioCardProps) {
-  const isTopClient = index === 0;
-  const partDuCA =
-    totalValeur > 0 ? (client.valeurCumulee / totalValeur) * 100 : 0;
-
-  return (
-    <SpatialCard
-      depth={isTopClient ? 3 : 2}
-      variant={isTopClient ? "glow" : "glass"}
-      className="p-6"
-      mountDelay={0.3 + index * 0.1}
-    >
-      <Link href={`/clients?id=${client.id}`} className="block">
-        <div className="flex justify-between items-start mb-6">
-          <div className="flex items-center gap-4">
-            <div
-              className={cn(
-                "w-11 h-11 rounded-2xl flex items-center justify-center font-black text-sm transition-all",
-                isTopClient
-                  ? "bg-indigo-50 text-indigo-600 border border-indigo-200/60"
-                  : "bg-slate-50 text-slate-500 border border-slate-200/60"
-              )}
-            >
-              {client.nom.slice(0, 2).toUpperCase()}
             </div>
-            <div>
-              <h4 className="font-bold text-slate-800 uppercase text-sm tracking-tight">
-                {client.nom}
-              </h4>
-              <div className="flex items-center gap-2 mt-1">
-                <div
-                  className={cn(
-                    "w-1.5 h-1.5 rounded-full shadow-sm",
-                    client.scoreSante === "EXCELLENT"
-                      ? "bg-emerald-400 shadow-emerald-400/50"
-                      : client.scoreSante === "GOOD"
-                      ? "bg-amber-400 shadow-amber-400/50"
-                      : "bg-rose-400 shadow-rose-400/50"
-                  )}
-                />
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                  {client.delaiMoyen}j délai
+          </div>
+
+          {/* Tableau Dense des 5 dernières actions */}
+          <div className="flex-1 overflow-y-auto">
+            <table className="w-full">
+              <thead className="bg-slate-50 sticky top-0">
+                <tr className="border-b border-slate-200">
+                  <th className="text-left py-2 px-4 text-[9px] font-bold uppercase tracking-wider text-slate-500">
+                    Action
+                  </th>
+                  <th className="text-left py-2 px-4 text-[9px] font-bold uppercase tracking-wider text-slate-500">
+                    Client
+                  </th>
+                  <th className="text-right py-2 px-4 text-[9px] font-bold uppercase tracking-wider text-slate-500">
+                    Montant
+                  </th>
+                  <th className="text-center py-2 px-4 text-[9px] font-bold uppercase tracking-wider text-slate-500">
+                    Statut
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {fluxRecent.map((item, index) => (
+                  <motion.tr
+                    key={item.id}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="hover:bg-slate-50 cursor-pointer group"
+                  >
+                    <td className="py-2.5 px-4">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={cn(
+                            "w-6 h-6 rounded flex items-center justify-center",
+                            item.statut === "PAID"
+                              ? "bg-emerald-100 text-emerald-600"
+                              : "bg-slate-100 text-slate-500",
+                          )}
+                        >
+                          {item.statut === "PAID" ? (
+                            <CheckCircleIcon size={12} weight="bold" />
+                          ) : (
+                            <FileTextIcon size={12} />
+                          )}
+                        </div>
+                        <span className="text-[12px] font-medium text-slate-900 truncate max-w-[200px]">
+                          {item.projetTitre}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-2.5 px-4">
+                      <span className="text-[11px] text-slate-600">
+                        {item.clientNom}
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-4 text-right">
+                      <span className="text-[12px] font-mono font-bold text-slate-900 tabular-nums">
+                        {formatCFA(item.montant)}
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-4 text-center">
+                      <StatusBadge status={item.statut} />
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* ═══ PANNEAU SECONDAIRE DROIT (35%) ═══ */}
+        <div className="w-[35%] flex flex-col bg-slate-50">
+          {/* Section: Pipeline / Brouillons */}
+          <div className="flex-1 flex flex-col border-b border-slate-200 bg-white">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-slate-50/50">
+              <div className="flex items-center gap-2">
+                <FileTextIcon size={14} className="text-amber-500" />
+                <span className={DS.text.micro + " text-slate-600"}>
+                  Brouillons en cours
                 </span>
               </div>
+              <Link
+                href="/quotes/new"
+                className="flex items-center gap-1 px-2 py-1 bg-indigo-600 text-white rounded text-[10px] font-bold hover:bg-indigo-700 transition-colors"
+              >
+                <PlusIcon size={10} weight="bold" />
+                Créer
+              </Link>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-3 space-y-2">
+              {fluxRecent
+                .filter((item) => item.statut === "DRAFT")
+                .slice(0, 4)
+                .map((item, index) => (
+                  <Link
+                    key={item.id}
+                    href={`/quotes?id=${item.id}`}
+                    className="block p-2.5 rounded-md border border-slate-200 bg-white hover:border-indigo-300 hover:shadow-sm transition-all group"
+                  >
+                    <div className="flex items-start justify-between mb-1">
+                      <span className="text-[11px] font-bold text-slate-900 truncate max-w-[140px]">
+                        {item.projetTitre}
+                      </span>
+                      <span className="text-[10px] font-mono font-bold text-slate-700 tabular-nums">
+                        {formatCompact(item.montant)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-slate-500">
+                        {item.clientNom}
+                      </span>
+                      <span className="text-[9px] text-slate-400">
+                        {item.date}
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+              {fluxRecent.filter((item) => item.statut === "DRAFT").length ===
+                0 && (
+                <div className="text-center py-8">
+                  <p className="text-[11px] text-slate-400">Aucun brouillon</p>
+                  <p className="text-[10px] text-slate-300 mt-1">
+                    Créez un nouveau devis
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
-          <p className="font-mono text-xl font-black tracking-tighter italic text-slate-800">
-            {(client.valeurCumulee / 1000).toFixed(0)}k
-          </p>
-        </div>
+          {/* Section: Top Clients */}
+          <div className="flex-1 flex flex-col bg-white">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-slate-50/50">
+              <div className="flex items-center gap-2">
+                <UsersThreeIcon size={14} className="text-indigo-500" />
+                <span className={DS.text.micro + " text-slate-600"}>
+                  Top Clients
+                </span>
+              </div>
+              <span className="text-[10px] font-mono text-slate-500">
+                {formatCompact(totalValeurPortefeuille)}
+              </span>
+            </div>
 
-        {/* Progress bar */}
-        <div className="space-y-2">
-          <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-slate-300">
-            <span>Poids Portefeuille</span>
-            <span className={isTopClient ? "text-indigo-500" : "text-slate-400"}>
-              {partDuCA.toFixed(1)}%
-            </span>
-          </div>
-          <div className="h-1 w-full rounded-full overflow-hidden bg-slate-100">
-            <motion.div
-              className={cn(
-                "h-full rounded-full",
-                isTopClient
-                  ? "bg-gradient-to-r from-indigo-600 to-indigo-400"
-                  : "bg-slate-300"
-              )}
-              initial={{ width: 0 }}
-              animate={{ width: `${partDuCA}%` }}
-              transition={{
-                duration: 1.2,
-                delay: 0.5 + index * 0.1,
-                ease: [0.22, 1, 0.36, 1],
-              }}
-            />
+            <div className="flex-1 overflow-y-auto p-3 space-y-2">
+              {portefeuilleStrategique.map((client, index) => {
+                const partDuCA =
+                  totalValeurPortefeuille > 0
+                    ? (client.valeurCumulee / totalValeurPortefeuille) * 100
+                    : 0;
+                const isTop = index === 0;
+
+                return (
+                  <Link
+                    key={client.id}
+                    href={`/clients?id=${client.id}`}
+                    className="block p-2.5 rounded-md border border-slate-200 bg-white hover:border-indigo-300 transition-all"
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <div
+                        className={cn(
+                          "w-7 h-7 rounded flex items-center justify-center text-[10px] font-bold",
+                          isTop
+                            ? "bg-indigo-100 text-indigo-600"
+                            : "bg-slate-100 text-slate-500",
+                        )}
+                      >
+                        {client.nom.slice(0, 2).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[11px] font-bold text-slate-900 truncate">
+                          {client.nom}
+                        </p>
+                        <p className="text-[9px] text-slate-500">
+                          {client.nombreDevis} devis · {client.delaiMoyen}j
+                          paiement
+                        </p>
+                      </div>
+                      <span className="text-[11px] font-mono font-bold text-slate-700 tabular-nums">
+                        {formatCompact(client.valeurCumulee)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                        <motion.div
+                          className={cn(
+                            "h-full rounded-full",
+                            isTop ? "bg-indigo-500" : "bg-slate-300",
+                          )}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${partDuCA}%` }}
+                          transition={{
+                            duration: 0.5,
+                            delay: 0.1 + index * 0.05,
+                          }}
+                        />
+                      </div>
+                      <span className="text-[9px] font-bold text-slate-400 w-8 text-right">
+                        {partDuCA.toFixed(0)}%
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
           </div>
         </div>
-      </Link>
-    </SpatialCard>
+      </div>
+    </div>
   );
 }
 
-// ─── Status Badge ───
+// ═══════════════════════════════════════════════════════════════════════════════
+// SUB-COMPONENTS
+// ═══════════════════════════════════════════════════════════════════════════════
 
 function StatusBadge({ status }: { status: QuoteStatus }) {
-  const config: Record<
-    QuoteStatus,
-    { label: string; className: string }
-  > = {
-    PAID: {
-      label: "Encaissé",
-      className: "text-emerald-600 bg-emerald-50 border-emerald-200",
-    },
-    SENT: {
-      label: "Envoyé",
-      className: "text-indigo-600 bg-indigo-50 border-indigo-200",
-    },
-    ACCEPTED: {
-      label: "Signé",
-      className: "text-amber-600 bg-amber-50 border-amber-200",
-    },
-    DRAFT: {
-      label: "Brouillon",
-      className: "text-slate-500 bg-slate-50 border-slate-200",
-    },
-    REJECTED: {
-      label: "Refusé",
-      className: "text-rose-600 bg-rose-50 border-rose-200",
-    },
+  const style = DS.status[status];
+  const labels: Record<QuoteStatus, string> = {
+    PAID: "Payé",
+    SENT: "Envoyé",
+    ACCEPTED: "Signé",
+    DRAFT: "Brouillon",
+    REJECTED: "Refusé",
   };
 
   return (
     <span
       className={cn(
-        "text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-xl border mt-1 inline-block",
-        config[status].className
+        "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border",
+        style.bg,
+        style.text,
+        style.border,
       )}
     >
-      {config[status].label}
+      <span className={cn("w-1 h-1 rounded-full", style.dot)} />
+      {labels[status]}
     </span>
   );
 }
