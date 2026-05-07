@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useTransition, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
@@ -10,13 +10,11 @@ import {
   EyeIcon,
   EyeSlashIcon,
   WarningIcon,
-  TrashIcon,
   ActivityIcon,
   GlobeIcon,
 } from "@phosphor-icons/react";
 import {
   revokeSession,
-  deleteAccountSecure,
   type SecurityProfile,
   type ParsedSession,
 } from "@/actions/security-action";
@@ -38,9 +36,8 @@ let zxcvbnInitialized = false;
 async function getZxcvbn() {
   const { zxcvbn, zxcvbnOptions } = await import("@zxcvbn-ts/core");
   if (!zxcvbnInitialized) {
-    const { adjacencyGraphs, dictionary } = await import(
-      "@zxcvbn-ts/language-common"
-    );
+    const { adjacencyGraphs, dictionary } =
+      await import("@zxcvbn-ts/language-common");
     zxcvbnOptions.setOptions({ graphs: adjacencyGraphs, dictionary });
     zxcvbnInitialized = true;
   }
@@ -89,6 +86,7 @@ export function BentoSecurityCard({
   const sp = securityProfile;
   const [sessions, setSessions] = useState<ParsedSession[]>(sp.sessions);
   const [revoking, setRevoking] = useState<string | null>(null);
+  const [renderTime] = useState(() => Date.now());
 
   const [pwdValue, setPwdValue] = useState("");
   const [pwdScore, setPwdScore] = useState<0 | 1 | 2 | 3 | 4>(0);
@@ -220,7 +218,11 @@ export function BentoSecurityCard({
             </div>
             {pwdValue && !pwdPending && (
               <span
-                className={cn(DS.mono, "text-[10px]", PWD_TEXT_COLORS[pwdScore])}
+                className={cn(
+                  DS.mono,
+                  "text-[10px]",
+                  PWD_TEXT_COLORS[pwdScore],
+                )}
               >
                 {PWD_LABELS[pwdScore]}
               </span>
@@ -249,9 +251,7 @@ export function BentoSecurityCard({
             )}
             {sessions.map((s) => {
               const ago = new Date(s.lastActiveAt);
-              const diffMin = Math.floor(
-                (Date.now() - ago.getTime()) / 60000,
-              );
+              const diffMin = Math.floor((renderTime - ago.getTime()) / 60000);
               const timeLabel =
                 diffMin < 1
                   ? "Maintenant"
@@ -315,6 +315,22 @@ export function BentoSecurityCard({
   );
 }
 
+// ─── ScoreRow (déclaré hors composant pour éviter la recréation au render) ────
+function ScoreRow({ ok, label }: { ok: boolean; label: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      {ok ? (
+        <CheckCircleIcon size={10} className="text-emerald-500 shrink-0" />
+      ) : (
+        <XCircleIcon size={10} className="text-rose-400 shrink-0" />
+      )}
+      <span className={cn("text-xs", ok ? "text-slate-600" : "text-slate-400")}>
+        {label}
+      </span>
+    </div>
+  );
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // BentoSecurityTelemetry
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -329,8 +345,7 @@ export function BentoSecurityTelemetry({
   className,
 }: BentoSecurityTelemetryProps) {
   const sp = securityProfile;
-  const currentSession =
-    sp.sessions.find((s) => s.isCurrent) ?? sp.sessions[0];
+  const currentSession = sp.sessions.find((s) => s.isCurrent) ?? sp.sessions[0];
 
   const scoreColor =
     sp.score >= 75
@@ -352,23 +367,6 @@ export function BentoSecurityTelemetry({
       : sp.score >= 50
         ? "bg-amber-400"
         : "bg-rose-400";
-
-  function ScoreRow({ ok, label }: { ok: boolean; label: string }) {
-    return (
-      <div className="flex items-center gap-2">
-        {ok ? (
-          <CheckCircleIcon size={10} className="text-emerald-500 shrink-0" />
-        ) : (
-          <XCircleIcon size={10} className="text-rose-400 shrink-0" />
-        )}
-        <span
-          className={cn("text-xs", ok ? "text-slate-600" : "text-slate-400")}
-        >
-          {label}
-        </span>
-      </div>
-    );
-  }
 
   return (
     <div className={cn(DS.card, "rounded-lg p-4", className)}>
@@ -398,9 +396,8 @@ export function BentoSecurityTelemetry({
             />
           </div>
           <div className="space-y-1">
-            <ScoreRow ok={sp.emailVerified} label="Email vérifié (+25 pts)" />
-            <ScoreRow ok={sp.twoFactorEnabled} label="2FA activé (+50 pts)" />
-            <ScoreRow ok={sp.score >= 75} label="Profil complet (+25 pts)" />
+            <ScoreRow ok={sp.emailVerified} label="Email vérifié (+50 pts)" />
+            <ScoreRow ok={sp.score >= 75} label="Profil complet (+50 pts)" />
           </div>
         </div>
 
@@ -434,16 +431,6 @@ export function BentoSecurityTelemetry({
               </span>
             </div>
           </>
-        )}
-
-        {!sp.twoFactorEnabled && (
-          <div className="p-2 bg-amber-50 rounded border border-amber-100 flex items-start gap-2">
-            <WarningIcon size={11} className="text-amber-500 mt-0.5 shrink-0" />
-            <p className="text-[10px] text-amber-700">
-              Activez le 2FA pour +50 pts et sécuriser votre compte contre les
-              accès non autorisés.
-            </p>
-          </div>
         )}
       </div>
     </div>

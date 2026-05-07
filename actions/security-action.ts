@@ -4,7 +4,6 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import db from "@/lib/prisma";
-import { headers } from "next/headers";
 
 // ─── Types exportés vers le client ───────────────────────────────────────────
 
@@ -67,16 +66,15 @@ export async function getSecurityProfile(): Promise<SecurityProfile> {
     clerkUser.emailAddresses[0]?.verification?.status === "verified";
   const twoFactorEnabled = clerkUser.twoFactorEnabled ?? false;
 
-  // Score : 25 pts email vérifié + 50 pts 2FA + 25 pts profil complet
+  // Score : 50 pts email vérifié + 50 pts profil complet
   let score = 0;
-  if (emailVerified) score += 25;
-  if (twoFactorEnabled) score += 50;
+  if (emailVerified) score += 50;
   // Bonus profil : si l'user a un nom de société configuré en BDD
   const user = await db.user.findUnique({
     where: { id: userId },
     select: { companyName: true },
   });
-  if (user?.companyName) score += 25;
+  if (user?.companyName) score += 50;
 
   return {
     sessions: parsedSessions,
@@ -98,8 +96,11 @@ export async function revokeSession(sessionId: string) {
     await client.sessions.revokeSession(sessionId);
     revalidatePath("/settings");
     return { success: true };
-  } catch (e: any) {
-    return { success: false, error: e.message };
+  } catch (e: unknown) {
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : "Erreur inconnue",
+    };
   }
 }
 
@@ -132,7 +133,7 @@ export async function deleteAccountSecure(confirmEmail: string) {
     await db.user.delete({ where: { id: userId } });
 
     console.log(`[ACCOUNT_TERMINATED]: User ${userId} purged.`);
-  } catch (e: any) {
+  } catch (e: unknown) {
     // Rollback soft-delete si quoi que ce soit échoue
     await db.user
       .update({
@@ -140,7 +141,10 @@ export async function deleteAccountSecure(confirmEmail: string) {
         data: { deletedAt: null },
       })
       .catch(() => {});
-    return { success: false, error: e.message };
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : "Erreur inconnue",
+    };
   }
 
   revalidatePath("/");

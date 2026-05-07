@@ -1,202 +1,897 @@
 "use client";
 
-import React from "react";
-import { motion } from "framer-motion";
-import {
-  ShieldCheck,
-  Lightning,
-  Crown,
-  CheckCircle,
-  CrownSimple,
-  LockKey,
-} from "@phosphor-icons/react";
+import React, { useTransition, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { SpatialCard } from "@/features/dashboard/components/spatial-card";
-import { AnimatedCounter } from "@/features/dashboard/components/animated-counter";
+import {
+  DS_BENTO_CARD,
+  DS_SECTION_HEADER,
+  DS_ICON_WRAPPER,
+  DS_MICRO,
+  DS_LABEL,
+  DS_MONO,
+  DS_BADGE_ACTIVE,
+  DS_BADGE_SUCCESS,
+  DS_BADGE_WARNING,
+  DS_BADGE_DANGER,
+  DS_TEL_BLOCK,
+  DS_PROGRESS_TRACK,
+  DS_PROGRESS_BAR,
+  DS_BUTTON,
+  DS_ICON_SM,
+  DS_PAGE_SHELL,
+  DS_PAGE_GRID,
+} from "@/lib/design-system";
+import {
+  CrownSimpleIcon,
+  LightningIcon,
+  CheckCircleIcon,
+  ShieldCheckIcon,
+  CreditCardIcon,
+  ReceiptIcon,
+  ArrowSquareOutIcon,
+  SpinnerIcon,
+  LockKeyIcon,
+  CalendarIcon,
+  ChartBarIcon,
+  TrendUpIcon,
+  FileTextIcon,
+  CurrencyCircleDollarIcon,
+} from "@phosphor-icons/react";
+import { toast } from "sonner";
+import { useKernelStore } from "@/hooks/use-kernel-store";
+import {
+  type BillingProfile,
+  createCheckoutSession,
+  createPortalSession,
+} from "@/actions/billing-action";
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MAIN VIEW
+// ═══════════════════════════════════════════════════════════════════════════════
 
 interface SpatialBillingViewProps {
-  estPro: boolean;
-  quotaUtilise: number;
+  billingProfile: BillingProfile;
 }
 
-const LIMITE_GRATUITE = 5;
-const PRIX_PRO = 12500;
-
 export function SpatialBillingView({
-  estPro,
-  quotaUtilise,
+  billingProfile,
 }: SpatialBillingViewProps) {
-  const usagePercent = Math.min((quotaUtilise / LIMITE_GRATUITE) * 100, 100);
+  const setBilling = useKernelStore((s) => s.setBilling);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // Sync store Zustand au montage
+  useEffect(() => {
+    setBilling({
+      plan: billingProfile.plan,
+      quotaUsed: billingProfile.quotaUsed,
+      quotaLimit: billingProfile.quotaLimit,
+    });
+  }, [billingProfile, setBilling]);
+
+  // Détection retour Stripe (?success=true) → refresh données
+  useEffect(() => {
+    if (searchParams.get("success") === "true") {
+      toast.success("Paiement réussi", {
+        description: "Votre abonnement PRO est en cours d'activation…",
+      });
+      router.replace("/billing");
+      router.refresh();
+    }
+    if (searchParams.get("canceled") === "true") {
+      toast.info("Paiement annulé", {
+        description: "Vous pouvez réessayer à tout moment.",
+      });
+      router.replace("/billing");
+    }
+  }, [searchParams, router]);
+
+  const isPro =
+    billingProfile.plan === "PRO" || billingProfile.plan === "ENTERPRISE";
+  const hasStripe = !!billingProfile.stripeCustomerId;
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8 lg:gap-16 min-h-[600px] items-center justify-center p-6">
-      
-      {/* ─── LEFT: LICENSE TICKET ─── */}
-      <div className="perspective-[2000px] z-10">
-        <SpatialCard
-          depth={3}
-          variant={estPro ? "glow" : "glass"}
-          className={cn(
-            "w-full max-w-[420px] aspect-[4/5] p-8 relative flex flex-col justify-between overflow-hidden",
-            estPro ? "border-indigo-300" : "border-slate-200"
+    <div className={cn(DS_PAGE_SHELL, "px-8 py-4")}>
+      <div className="w-full">
+        <div className={DS_PAGE_GRID}>
+          {/* Row 1 — Statut + Analytics */}
+          <BentoPlanStatus
+            billingProfile={billingProfile}
+            className="col-span-12 lg:col-span-5"
+          />
+          <BentoAnalytics
+            billingProfile={billingProfile}
+            className="col-span-12 lg:col-span-7"
+          />
+
+          {/* Row 2 — Manage/Upgrade + Financial Lifecycle */}
+          {isPro ? (
+            <BentoManage
+              hasStripe={hasStripe}
+              className="col-span-12 lg:col-span-5"
+            />
+          ) : (
+            <BentoUpgrade className="col-span-12 lg:col-span-5" />
           )}
-        >
+          <BentoFinancialLifecycle
+            billingProfile={billingProfile}
+            isPro={isPro}
+            className="col-span-12 lg:col-span-7"
+          />
 
-          {/* HEADER */}
-          <div className="relative space-y-2">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-50 border border-slate-200/60 backdrop-blur-md">
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500">
-                      Licence UEMOA
-                    </span>
-                </div>
-                <div className="w-12 h-12 rounded-full border border-slate-200 flex items-center justify-center bg-slate-50">
-                    <Lightning size={24} weight="fill" className={estPro ? "text-amber-500" : "text-slate-300"} />
-                </div>
-            </div>
-            
-            <h1 className="text-4xl font-black text-slate-900 italic tracking-tighter mt-6">
-                {estPro ? "PRO ACCESS" : "STANDARD"}
-            </h1>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
-                {estPro ? "Validité Illimitée" : "Usage Restreint"}
-            </p>
-          </div>
-
-          {/* MIDDLE: USAGE GAUGE */}
-          <div className="relative py-12">
-            <div className="flex justify-between items-end mb-4">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                    Consommation Quota
-                </span>
-                <div className="text-right">
-                     <span className={cn("text-3xl font-black italic", estPro ? "text-indigo-500" : "text-slate-900")}>
-                        {estPro ? "∞" : quotaUtilise}
-                     </span>
-                     <span className="text-sm font-bold text-slate-400">/{estPro ? "∞" : LIMITE_GRATUITE}</span>
-                </div>
-            </div>
-
-            {/* Bar */}
-            <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200/60">
-                <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: estPro ? "100%" : `${usagePercent}%` }}
-                    transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
-                    className={cn(
-                        "h-full relative",
-                        estPro ? "bg-indigo-500" : usagePercent > 80 ? "bg-rose-500" : "bg-emerald-500"
-                    )}
-                >
-                    <div className="absolute inset-0 bg-white/30 w-full h-full animate-shine" />
-                </motion.div>
-            </div>
-            {!estPro && (
-                <p className="text-[10px] text-right mt-2 font-bold uppercase tracking-wider text-amber-500">
-                    {usagePercent >= 80 && "Approche Critique"}
-                </p>
-            )}
-          </div>
-
-          {/* FOOTER */}
-          <div className="relative">
-             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/60 flex items-center justify-between">
-                <div>
-                    <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-1">
-                        Prochaine Facture
-                    </p>
-                    <p className="text-sm font-bold text-slate-800">
-                        {estPro ? "30 Mars 2026" : "Jamais (Gratuit)"}
-                    </p>
-                </div>
-                {estPro && <div className="text-indigo-500"><CheckCircle size={24} weight="fill" /></div>}
-             </div>
-             
-             {/* ID */}
-             <div className="mt-6 flex justify-between items-end opacity-30">
-                <div className="space-y-1">
-                    <div className="w-24 h-[2px] bg-slate-300" />
-                    <div className="w-16 h-[2px] bg-slate-300" />
-                    <div className="w-8 h-[2px] bg-slate-300" />
-                </div>
-                <div className="font-mono text-[8px] text-slate-500">
-                    Key: {estPro ? "PRO_88X_LVR" : "STD_001_F4"}
-                </div>
-             </div>
-          </div>
-
-        </SpatialCard>
+          {/* Row 3 — Paiement (FREE only) + Factures */}
+          {!isPro && (
+            <BentoPaymentAction
+              isPro={false}
+              hasStripe={hasStripe}
+              className="col-span-12 lg:col-span-5"
+            />
+          )}
+          <BentoInvoices
+            invoices={billingProfile.invoices}
+            className={isPro ? "col-span-12" : "col-span-12 lg:col-span-7"}
+          />
+        </div>
       </div>
-
-      {/* ─── RIGHT: UPGRADE / PROMO (If not Pro) ─── */}
-      {!estPro && (
-        <div className="max-w-md w-full animate-fade-in-left">
-            <h2 className="text-3xl font-black italic tracking-tight text-slate-900 mb-6">
-                Débloquez le <span className="text-indigo-500">Plein Potentiel.</span>
-            </h2>
-            
-            <div className="space-y-4 mb-10">
-                <FeatureRow label="Devis Illimités" />
-                <FeatureRow label="Suppression filigrane" />
-                <FeatureRow label="Export PDF Haute Définition" />
-                <FeatureRow label="Support Prioritaire 24/7" />
-            </div>
-
-            <div className="p-1 rounded-[20px] bg-gradient-to-b from-indigo-500 to-indigo-700 shadow-[0_20px_40px_-10px_rgba(99,102,241,0.3)]">
-                <button className="w-full bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl py-4 px-6 relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    
-                    <div className="relative z-10 flex items-center justify-between">
-                        <div className="text-left">
-                           <span className="block text-[10px] font-bold uppercase tracking-widest text-indigo-100 group-hover:text-white/80">
-                               Accès Immédiat
-                           </span>
-                           <span className="text-xl font-black text-white italic">
-                               12 500 FCFA <span className="text-sm not-italic opacity-70">/mois</span>
-                           </span>
-                        </div>
-                        <div className="h-10 w-10 bg-white text-indigo-600 rounded-full flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform">
-                            <CrownSimple size={20} weight="fill" />
-                        </div>
-                    </div>
-                </button>
-            </div>
-            
-            <p className="text-center mt-6 text-[10px] font-bold uppercase tracking-widest text-slate-400 flex items-center justify-center gap-2">
-                <LockKey size={12} weight="fill" /> Paiement Sécurisé SSL
-            </p>
-        </div>
-      )}
-
-      {/* ─── RIGHT: PRO DASHBOARD (If Pro) ─── */}
-      {estPro && (
-        <div className="max-w-md w-full animate-fade-in text-center lg:text-left">
-            <div className="inline-block p-4 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-500 mb-6">
-                <Crown size={32} weight="fill" />
-            </div>
-            <h2 className="text-3xl font-black italic tracking-tight text-slate-900 mb-4">
-                Mode Élite Activé
-            </h2>
-            <p className="text-slate-400 text-sm leading-relaxed mb-8">
-                Votre espace est optimisé pour la performance. Aucune limite ne s'applique à votre croissance. Profitez de votre suite d'outils complète.
-            </p>
-            <button className="px-8 py-3 rounded-xl bg-slate-100 border border-slate-200 hover:bg-slate-50 text-xs font-bold uppercase tracking-widest text-slate-700 transition-colors">
-                Gérer l'abonnement
-            </button>
-        </div>
-      )}
-
     </div>
   );
 }
 
-function FeatureRow({ label }: { label: string }) {
-    return (
-        <div className="flex items-center gap-4">
-            <div className="w-6 h-6 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500 shrink-0">
-                <CheckCircle size={14} weight="fill" />
-            </div>
-            <span className="text-sm font-bold text-slate-600">{label}</span>
+// ═══════════════════════════════════════════════════════════════════════════════
+// TUILE A — Statut du plan
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function BentoPlanStatus({
+  billingProfile,
+  className,
+}: {
+  billingProfile: BillingProfile;
+  className?: string;
+}) {
+  const isPro =
+    billingProfile.plan === "PRO" || billingProfile.plan === "ENTERPRISE";
+  const usagePercent =
+    billingProfile.quotaLimit === Infinity
+      ? 100
+      : Math.min(
+          (billingProfile.quotaUsed / billingProfile.quotaLimit) * 100,
+          100,
+        );
+  const isNearLimit = !isPro && usagePercent >= 80;
+
+  return (
+    <div className={cn(DS_BENTO_CARD, className)}>
+      {/* Header */}
+      <div className={DS_SECTION_HEADER}>
+        <div className="flex items-center gap-2">
+          <div
+            className={cn(
+              DS_ICON_WRAPPER,
+              isPro ? "bg-indigo-50" : "bg-slate-50",
+            )}
+          >
+            <CrownSimpleIcon
+              size={DS_ICON_SM}
+              className={isPro ? "text-indigo-500" : "text-slate-400"}
+            />
+          </div>
+          <span className={cn(DS_MICRO, "text-slate-600")}>
+            Statut Abonnement
+          </span>
         </div>
-    )
+        <span className={isPro ? DS_BADGE_ACTIVE : DS_BADGE_WARNING}>
+          {billingProfile.plan}
+        </span>
+      </div>
+
+      {/* Plan name */}
+      <div className="mb-6">
+        <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+          {isPro ? "Plein Potentiel" : "Plan Gratuit"}
+        </h2>
+        <p className={cn(DS_LABEL, "mt-1")}>
+          {isPro
+            ? "Accès illimité à toutes les fonctionnalités"
+            : "Usage limité — upgrade disponible"}
+        </p>
+      </div>
+
+      {/* Quota gauge */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <span className={DS_LABEL}>Consommation Quota</span>
+          <span className={cn(DS_MONO, "text-slate-700")}>
+            {isPro ? "∞" : billingProfile.quotaUsed}/
+            {isPro ? "∞" : billingProfile.quotaLimit}
+          </span>
+        </div>
+        <div className={DS_PROGRESS_TRACK}>
+          <div
+            className={cn(
+              DS_PROGRESS_BAR,
+              isPro
+                ? "bg-indigo-500"
+                : isNearLimit
+                  ? "bg-rose-500"
+                  : "bg-emerald-500",
+            )}
+            style={{ width: `${usagePercent}%` }}
+          />
+        </div>
+        {isNearLimit && (
+          <p className="text-[10px] font-bold text-amber-600">
+            ⚠ Approche de la limite — passez en PRO pour continuer
+          </p>
+        )}
+      </div>
+
+      {/* Telemetry block */}
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <div className={DS_TEL_BLOCK}>
+          <div className="flex items-center gap-2 mb-1">
+            <CalendarIcon size={DS_ICON_SM} className="text-slate-400" />
+            <span className={cn(DS_LABEL, "text-slate-500")}>
+              Renouvellement
+            </span>
+          </div>
+          <span className={cn(DS_MONO, "text-slate-700")}>
+            {billingProfile.subscriptionEndsAt
+              ? new Date(billingProfile.subscriptionEndsAt).toLocaleDateString(
+                  "fr-FR",
+                )
+              : isPro
+                ? "Automatique"
+                : "—"}
+          </span>
+        </div>
+        <div
+          className={cn(
+            DS_TEL_BLOCK,
+            isPro ? "bg-emerald-50 border-emerald-100" : "",
+          )}
+        >
+          <div className="flex items-center gap-2 mb-1">
+            <ShieldCheckIcon
+              size={DS_ICON_SM}
+              className={isPro ? "text-emerald-500" : "text-slate-400"}
+            />
+            <span
+              className={cn(
+                DS_LABEL,
+                isPro ? "text-emerald-600" : "text-slate-500",
+              )}
+            >
+              État
+            </span>
+          </div>
+          <span
+            className={cn(
+              DS_MONO,
+              isPro ? "text-emerald-700" : "text-slate-700",
+            )}
+          >
+            {isPro ? "ACTIF" : "LIMITÉ"}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TUILE — Analytics (consommation mensuelle)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function BentoAnalytics({
+  billingProfile,
+  className,
+}: {
+  billingProfile: BillingProfile;
+  className?: string;
+}) {
+  const { monthlyStats } = billingProfile;
+  const isPro =
+    billingProfile.plan === "PRO" || billingProfile.plan === "ENTERPRISE";
+
+  const stats = [
+    {
+      label: "Devis ce mois",
+      value: monthlyStats.quotesThisMonth,
+      icon: FileTextIcon,
+      color: "text-indigo-500",
+      bg: "bg-indigo-50",
+      barColor: "bg-indigo-400",
+    },
+    {
+      label: "Acceptés / Payés",
+      value: monthlyStats.quotesAccepted,
+      icon: CheckCircleIcon,
+      color: "text-emerald-500",
+      bg: "bg-emerald-50",
+      barColor: "bg-emerald-400",
+    },
+    {
+      label: "Total historique",
+      value: monthlyStats.quotesTotal,
+      icon: ChartBarIcon,
+      color: "text-slate-500",
+      bg: "bg-slate-50",
+      barColor: "bg-slate-400",
+    },
+  ];
+
+  const maxVal = Math.max(...stats.map((s) => s.value), 1);
+
+  return (
+    <div className={cn(DS_BENTO_CARD, className)}>
+      <div className={DS_SECTION_HEADER}>
+        <div className="flex items-center gap-2">
+          <div className={cn(DS_ICON_WRAPPER, "bg-indigo-50")}>
+            <TrendUpIcon size={DS_ICON_SM} className="text-indigo-500" />
+          </div>
+          <span className={cn(DS_MICRO, "text-slate-600")}>
+            Activité Mensuelle
+          </span>
+        </div>
+        <span className={cn(DS_MONO, "text-[9px] text-slate-400")}>
+          {new Date().toLocaleDateString("fr-FR", {
+            month: "long",
+            year: "numeric",
+          })}
+        </span>
+      </div>
+
+      {/* Revenue highlight */}
+      {isPro && (
+        <div
+          className={cn(DS_TEL_BLOCK, "bg-emerald-50 border-emerald-100 mb-4")}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <span className={cn(DS_LABEL, "text-emerald-500")}>
+                Revenu HT ce mois
+              </span>
+              <div className="flex items-baseline gap-1 mt-1">
+                <span className="text-xl font-black text-emerald-700">
+                  {monthlyStats.revenueThisMonth.toLocaleString("fr-FR")}
+                </span>
+                <span className={cn(DS_MONO, "text-emerald-500")}>
+                  {billingProfile.nextPayment?.currency ?? "XOF"}
+                </span>
+              </div>
+            </div>
+            <CurrencyCircleDollarIcon size={20} className="text-emerald-300" />
+          </div>
+        </div>
+      )}
+
+      {/* Mini bar chart */}
+      <div className="space-y-3">
+        {stats.map((s) => {
+          const Icon = s.icon;
+          const barWidth = Math.max((s.value / maxVal) * 100, 4);
+          return (
+            <div key={s.label}>
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <div className={cn(DS_ICON_WRAPPER, s.bg)}>
+                    <Icon size={DS_ICON_SM} className={s.color} />
+                  </div>
+                  <span className={cn(DS_LABEL, "text-slate-500")}>
+                    {s.label}
+                  </span>
+                </div>
+                <span className={cn(DS_MONO, "text-slate-800 font-bold")}>
+                  {s.value}
+                </span>
+              </div>
+              <div className={DS_PROGRESS_TRACK}>
+                <div
+                  className={cn(DS_PROGRESS_BAR, s.barColor)}
+                  style={{ width: `${barWidth}%` }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TUILE B — Upgrade (plan FREE)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const PRO_FEATURES = [
+  "Devis Illimités",
+  "Suppression filigrane",
+  "Export PDF Haute Définition",
+  "Support Prioritaire 24/7",
+  "Thèmes Premium",
+  "Historique complet",
+];
+
+function BentoUpgrade({ className }: { className?: string }) {
+  return (
+    <div className={cn(DS_BENTO_CARD, className)}>
+      {/* Header */}
+      <div className={DS_SECTION_HEADER}>
+        <div className="flex items-center gap-2">
+          <div className={cn(DS_ICON_WRAPPER, "bg-indigo-50")}>
+            <LightningIcon size={DS_ICON_SM} className="text-indigo-500" />
+          </div>
+          <span className={cn(DS_MICRO, "text-slate-600")}>Offre Premium</span>
+        </div>
+        <span className={DS_BADGE_ACTIVE}>RECOMMANDÉ</span>
+      </div>
+
+      <h3 className="text-lg font-black text-slate-900 tracking-tight mb-1">
+        Plein Potentiel
+      </h3>
+      <p className={cn(DS_LABEL, "mb-4")}>
+        Débloquez toutes les fonctionnalités pour 12 500 FCFA/mois
+      </p>
+
+      {/* Features checklist — style identique aux checkmarks SecuritySection */}
+      <div className="space-y-2.5 mb-6">
+        {PRO_FEATURES.map((f) => (
+          <div key={f} className="flex items-center gap-2">
+            <div className={cn(DS_ICON_WRAPPER, "bg-emerald-50")}>
+              <CheckCircleIcon size={DS_ICON_SM} className="text-emerald-500" />
+            </div>
+            <span className="text-xs font-medium text-slate-700">{f}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Price block */}
+      <div className={cn(DS_TEL_BLOCK, "bg-indigo-50 border-indigo-100")}>
+        <div className="flex items-center justify-between">
+          <div>
+            <span className={cn(DS_LABEL, "text-indigo-500")}>
+              Tarif mensuel
+            </span>
+            <div className="flex items-baseline gap-1 mt-1">
+              <span className="text-xl font-black text-indigo-700">12 500</span>
+              <span className={cn(DS_MONO, "text-indigo-500")}>FCFA/mois</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-1 text-indigo-400">
+            <LockKeyIcon size={DS_ICON_SM} />
+            <span className={cn(DS_MONO, "text-[9px]")}>SSL</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TUILE B-alt — Manage (plan PRO)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function BentoManage({
+  hasStripe,
+  className,
+}: {
+  hasStripe: boolean;
+  className?: string;
+}) {
+  const [isPending, startTransition] = useTransition();
+
+  const handlePortal = () => {
+    startTransition(async () => {
+      const res = await createPortalSession();
+      if (res.success && res.url) {
+        window.location.href = res.url;
+      } else {
+        toast.error("Erreur", { description: res.error });
+      }
+    });
+  };
+
+  return (
+    <div className={cn(DS_BENTO_CARD, className)}>
+      <div className={DS_SECTION_HEADER}>
+        <div className="flex items-center gap-2">
+          <div className={cn(DS_ICON_WRAPPER, "bg-emerald-50")}>
+            <CreditCardIcon size={DS_ICON_SM} className="text-emerald-500" />
+          </div>
+          <span className={cn(DS_MICRO, "text-slate-600")}>
+            Gestion &amp; Paiement
+          </span>
+        </div>
+        <span className={DS_BADGE_SUCCESS}>ACTIF</span>
+      </div>
+
+      <p className="text-xs text-slate-600 leading-relaxed mb-4">
+        {hasStripe
+          ? "Gérez votre moyen de paiement, modifiez ou annulez votre abonnement depuis le portail sécurisé Stripe."
+          : "Votre plan PRO est actif. Le portail de gestion sera disponible une fois la synchronisation Stripe terminée."}
+      </p>
+
+      <div className={cn(DS_TEL_BLOCK, "mb-4")}>
+        <div className="flex items-center gap-2 mb-1">
+          <ShieldCheckIcon size={DS_ICON_SM} className="text-emerald-500" />
+          <span className={cn(DS_LABEL, "text-emerald-600")}>
+            Abonnement Plein Potentiel
+          </span>
+        </div>
+        <span className={cn(DS_MONO, "text-slate-700")}>
+          12 500 FCFA / mois — renouvellement automatique
+        </span>
+      </div>
+
+      {hasStripe && (
+        <button
+          onClick={handlePortal}
+          disabled={isPending}
+          className={cn(
+            DS_BUTTON,
+            "w-full justify-center bg-slate-700 hover:bg-slate-600",
+          )}
+        >
+          {isPending ? (
+            <SpinnerIcon size={DS_ICON_SM} className="animate-spin" />
+          ) : (
+            <ArrowSquareOutIcon size={DS_ICON_SM} />
+          )}
+          {isPending ? "Ouverture..." : "Gérer mon abonnement"}
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TUILE — Financial Lifecycle
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const PLAN_COMPARISON = [
+  { feature: "Devis", free: "5 max", pro: "Illimités" },
+  { feature: "Filigrane", free: "Oui", pro: "Non" },
+  { feature: "Export PDF", free: "Standard", pro: "Haute Définition" },
+  { feature: "Support", free: "Email", pro: "Prioritaire 24/7" },
+  { feature: "Thèmes", free: "Basiques", pro: "Premium inclus" },
+  { feature: "Historique", free: "30 jours", pro: "Complet" },
+];
+
+function BentoFinancialLifecycle({
+  billingProfile,
+  isPro,
+  className,
+}: {
+  billingProfile: BillingProfile;
+  isPro: boolean;
+  className?: string;
+}) {
+  const { nextPayment } = billingProfile;
+
+  return (
+    <div className={cn(DS_BENTO_CARD, className)}>
+      <div className={DS_SECTION_HEADER}>
+        <div className="flex items-center gap-2">
+          <div className={cn(DS_ICON_WRAPPER, "bg-violet-50")}>
+            <CalendarIcon size={DS_ICON_SM} className="text-violet-500" />
+          </div>
+          <span className={cn(DS_MICRO, "text-slate-600")}>
+            Cycle de Facturation
+          </span>
+        </div>
+        {isPro && nextPayment && (
+          <span className={DS_BADGE_SUCCESS}>AUTOMATIQUE</span>
+        )}
+      </div>
+
+      {/* Next payment block */}
+      {isPro && nextPayment && nextPayment.date ? (
+        <div className="space-y-3 mb-4">
+          <div className={cn(DS_TEL_BLOCK, "bg-violet-50 border-violet-100")}>
+            <span className={cn(DS_LABEL, "text-violet-500")}>
+              Prochain prélèvement
+            </span>
+            <div className="flex items-center justify-between mt-1.5">
+              <div>
+                <span className="text-lg font-black text-violet-700">
+                  {nextPayment.amount.toLocaleString("fr-FR")}{" "}
+                  {nextPayment.currency}
+                </span>
+                <span className={cn(DS_MONO, "text-violet-400 ml-2")}>
+                  le{" "}
+                  {new Date(nextPayment.date).toLocaleDateString("fr-FR", {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card info */}
+          {nextPayment.cardLast4 && (
+            <div className={DS_TEL_BLOCK}>
+              <div className="flex items-center gap-2">
+                <CreditCardIcon size={DS_ICON_SM} className="text-slate-400" />
+                <span className={cn(DS_LABEL, "text-slate-500")}>
+                  Moyen de paiement
+                </span>
+              </div>
+              <div className="flex items-center gap-2 mt-1.5">
+                <span className={cn(DS_MONO, "text-slate-800 font-bold")}>
+                  {(nextPayment.cardBrand ?? "carte").toUpperCase()}
+                </span>
+                <span className={cn(DS_MONO, "text-slate-500")}>
+                  •••• {nextPayment.cardLast4}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : isPro ? (
+        <div className={cn(DS_TEL_BLOCK, "mb-4")}>
+          <p className="text-xs text-slate-500">
+            Aucune information de paiement liée. Connectez votre compte Stripe
+            pour suivre vos prélèvements.
+          </p>
+        </div>
+      ) : null}
+
+      {/* Plan comparator */}
+      <div>
+        <span className={cn(DS_LABEL, "text-slate-500 mb-2 block")}>
+          {isPro ? "Ce que vous avez débloqué" : "Comparatif des plans"}
+        </span>
+        <div className="rounded border border-slate-100 overflow-hidden">
+          <div className="grid grid-cols-3 bg-slate-50 px-2.5 py-1.5">
+            <span className={cn(DS_LABEL, "text-slate-400")}>
+              Fonctionnalité
+            </span>
+            <span className={cn(DS_LABEL, "text-slate-400 text-center")}>
+              Free
+            </span>
+            <span className={cn(DS_LABEL, "text-indigo-500 text-center")}>
+              Pro
+            </span>
+          </div>
+          {PLAN_COMPARISON.map((row) => (
+            <div
+              key={row.feature}
+              className="grid grid-cols-3 px-2.5 py-1.5 border-t border-slate-50 hover:bg-slate-50/50 transition-colors"
+            >
+              <span className="text-[10px] font-medium text-slate-600">
+                {row.feature}
+              </span>
+              <span
+                className={cn(
+                  DS_MONO,
+                  "text-center",
+                  isPro ? "text-slate-300 line-through" : "text-slate-500",
+                )}
+              >
+                {row.free}
+              </span>
+              <span
+                className={cn(
+                  DS_MONO,
+                  "text-center font-bold",
+                  isPro ? "text-emerald-600" : "text-indigo-600",
+                )}
+              >
+                {row.pro}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TUILE C — Action paiement
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function BentoPaymentAction({
+  isPro,
+  hasStripe,
+  className,
+}: {
+  isPro: boolean;
+  hasStripe: boolean;
+  className?: string;
+}) {
+  const [isPending, startTransition] = useTransition();
+
+  const handleCheckout = () => {
+    startTransition(async () => {
+      const res = await createCheckoutSession();
+      if (res.success && res.url) {
+        window.location.href = res.url;
+      } else {
+        toast.error("Erreur Stripe", { description: res.error });
+      }
+    });
+  };
+
+  const handlePortal = () => {
+    startTransition(async () => {
+      const res = await createPortalSession();
+      if (res.success && res.url) {
+        window.location.href = res.url;
+      } else {
+        toast.error("Erreur", { description: res.error });
+      }
+    });
+  };
+
+  return (
+    <div className={cn(DS_BENTO_CARD, className)}>
+      <div className={DS_SECTION_HEADER}>
+        <div className="flex items-center gap-2">
+          <div className={cn(DS_ICON_WRAPPER, "bg-indigo-50")}>
+            <CreditCardIcon size={DS_ICON_SM} className="text-indigo-500" />
+          </div>
+          <span className={cn(DS_MICRO, "text-slate-600")}>Paiement</span>
+        </div>
+      </div>
+
+      {isPro ? (
+        <div className="space-y-4">
+          <p className="text-xs text-slate-600 leading-relaxed">
+            {hasStripe
+              ? "Gérez votre moyen de paiement, changez de plan ou annulez depuis le portail sécurisé Stripe."
+              : "Votre plan PRO est actif. Connectez Stripe pour gérer votre abonnement."}
+          </p>
+          <button
+            onClick={hasStripe ? handlePortal : handleCheckout}
+            disabled={isPending}
+            className={cn(DS_BUTTON, "w-full justify-center")}
+          >
+            {isPending ? (
+              <SpinnerIcon size={DS_ICON_SM} className="animate-spin" />
+            ) : (
+              <ArrowSquareOutIcon size={DS_ICON_SM} />
+            )}
+            {isPending
+              ? "Ouverture..."
+              : hasStripe
+                ? "Portail Stripe"
+                : "Connecter Stripe"}
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <p className="text-xs text-slate-600 leading-relaxed">
+            Passez en PRO pour débloquer toutes les fonctionnalités. Paiement
+            sécurisé via Stripe.
+          </p>
+          <button
+            onClick={handleCheckout}
+            disabled={isPending}
+            className={cn(DS_BUTTON, "w-full justify-center")}
+          >
+            {isPending ? (
+              <SpinnerIcon size={DS_ICON_SM} className="animate-spin" />
+            ) : (
+              <CrownSimpleIcon size={DS_ICON_SM} />
+            )}
+            {isPending ? "Redirection..." : "Passer en PRO — 12 500 FCFA/mois"}
+          </button>
+          <div className="flex items-center justify-center gap-1.5 text-slate-400">
+            <LockKeyIcon size={10} />
+            <span className="text-[9px] font-bold uppercase tracking-wider">
+              Paiement Sécurisé SSL
+            </span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TUILE D — Historique factures
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function BentoInvoices({
+  invoices,
+  className,
+}: {
+  invoices: BillingProfile["invoices"];
+  className?: string;
+}) {
+  return (
+    <div className={cn(DS_BENTO_CARD, className)}>
+      <div className={DS_SECTION_HEADER}>
+        <div className="flex items-center gap-2">
+          <div className={cn(DS_ICON_WRAPPER, "bg-slate-50")}>
+            <ReceiptIcon size={DS_ICON_SM} className="text-slate-400" />
+          </div>
+          <span className={cn(DS_MICRO, "text-slate-600")}>
+            Historique Factures
+          </span>
+        </div>
+        <span className={cn(DS_MONO, "text-[9px] text-slate-400")}>
+          {invoices.length} facture{invoices.length !== 1 ? "s" : ""}
+        </span>
+      </div>
+
+      {invoices.length === 0 ? (
+        <div className="py-8 text-center">
+          <div
+            className={cn(
+              DS_ICON_WRAPPER,
+              "bg-slate-50 mx-auto mb-3 w-10 h-10",
+            )}
+          >
+            <ReceiptIcon size={16} className="text-slate-300" />
+          </div>
+          <p className="text-xs text-slate-400 mb-1">Aucune facture</p>
+          <p className="text-[10px] text-slate-300">
+            Vos factures apparaîtront ici après votre premier paiement.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {invoices.map((inv) => (
+            <div
+              key={inv.id}
+              className="flex items-center justify-between p-2.5 rounded border border-slate-100 hover:bg-slate-50/50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className={cn(DS_ICON_WRAPPER, "bg-slate-50")}>
+                  <ReceiptIcon size={DS_ICON_SM} className="text-slate-400" />
+                </div>
+                <div>
+                  <span className={cn(DS_MONO, "text-slate-700 block")}>
+                    {new Date(inv.date).toLocaleDateString("fr-FR", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </span>
+                  <span className="text-[9px] text-slate-400">
+                    {inv.id.slice(0, 16)}...
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className={cn(DS_MONO, "text-slate-900 font-bold")}>
+                  {inv.amount.toLocaleString("fr-FR")} {inv.currency}
+                </span>
+                <span
+                  className={
+                    inv.status === "paid"
+                      ? DS_BADGE_SUCCESS
+                      : inv.status === "open"
+                        ? DS_BADGE_WARNING
+                        : DS_BADGE_DANGER
+                  }
+                >
+                  {inv.status === "paid"
+                    ? "PAYÉ"
+                    : inv.status === "open"
+                      ? "EN ATTENTE"
+                      : inv.status.toUpperCase()}
+                </span>
+                {inv.pdfUrl && (
+                  <a
+                    href={inv.pdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-indigo-500 hover:text-indigo-600"
+                  >
+                    <ArrowSquareOutIcon size={DS_ICON_SM} />
+                  </a>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }

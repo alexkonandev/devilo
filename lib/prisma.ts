@@ -13,18 +13,29 @@ const getDb = () => {
   if (!global.__db) {
     const pool = new Pool({
       connectionString,
-      max: 10, // Limite basse pour Neon Free Tier (évite la saturation)
-      connectionTimeoutMillis: 5000,
-      // Réduire l'idle timeout : Neon coupe agressivement les connexions inactives
-      idleTimeoutMillis: 30000,
-      // Vérifier la validité de la connexion avant usage
-      allowExitOnIdle: true,
+      max: 5, // Réduit pour Neon Free Tier (évite les limites de connexions)
+      // Timeout augmenté pour les connexions lentes à Neon
+      connectionTimeoutMillis: 10000,
+      // Fermer les connexions inactives rapidement (Neon coupe à ~30s)
+      idleTimeoutMillis: 15000,
+      // Ne JAMAIS fermer complètement le pool (évite les timeouts aléatoires)
+      allowExitOnIdle: false,
+      // Recycler les connexions après N requêtes (évite les connexions "zombie")
+      maxUses: 100,
     });
 
-    // Gestion d'erreur sur le pool pour éviter de faire crash le process node
+    // Gestion d'erreurs du pool avec reconnexion automatique
     pool.on("error", (err) => {
-      console.error("Unexpected error on idle client", err);
-      global.__db = undefined; // Forcer la recréation au prochain appel
+      console.error("[DB Pool Error]", err.message);
+      // Ne pas reset global.__db immédiatement — laisser le pool se rétablir
+    });
+
+    pool.on("connect", () => {
+      console.log("[DB Pool] New connection established");
+    });
+
+    pool.on("remove", () => {
+      console.log("[DB Pool] Connection removed (idle/timeout)");
     });
 
     const adapter = new PrismaPg(pool);

@@ -24,12 +24,11 @@ export default function SoftwareLayout({ children }: SoftwareLayoutProps) {
       <SpatialDock />
 
       {/* ═══ APP CONTENT LAYER ═══
-          - h-[calc(100vh-2.5rem)] : viewport strict moins la top bar h-10
           - pt-10 : sous la Top Bar h-10
           - pl-16 : rail sidebar w-16
-          - overflow-hidden : pas de scroll global, scroll segmenté dans les panneaux
+          - overflow-y-auto : scroll vertical libre, KPIs sticky dans les pages
       */}
-      <main className="relative z-10 h-full w-full overflow-hidden pt-10 pl-16">
+      <main className="relative z-10 h-full w-full overflow-y-auto pt-10 pl-16">
         {children}
       </main>
     </div>

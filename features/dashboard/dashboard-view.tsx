@@ -5,7 +5,6 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   CheckCircleIcon,
-  TimerIcon,
   TrendUpIcon,
   CurrencyCircleDollarIcon,
   UsersThreeIcon,
@@ -14,58 +13,31 @@ import {
   PlusIcon,
   ClockIcon,
   ArrowUpRightIcon,
+  SquaresFourIcon,
+  type IconProps,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
+import {
+  DS_MICRO,
+  DS_LABEL,
+  DS_MONO,
+  DS_BENTO_CARD,
+  DS_SECTION_HEADER,
+  DS_ICON_WRAPPER,
+  DS_ICON_SM,
+  DS_BADGE_ACTIVE,
+  DS_BADGE_SUCCESS,
+  DS_BADGE_WARNING,
+  DS_BADGE_DANGER,
+  DS_TEL_BLOCK,
+  DS_PROGRESS_TRACK,
+  DS_PROGRESS_BAR,
+  DS_BUTTON,
+  DS_PAGE_SHELL,
+  DS_PAGE_GRID,
+} from "@/lib/design-system";
 import { QuoteStatus } from "@/app/generated/prisma/enums";
 import { Profession, BusinessModel } from "@/types/dashboard";
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// DESIGN SYSTEM - Source de Vérité (extrait de la page Quotes)
-// ═══════════════════════════════════════════════════════════════════════════════
-
-const DS = {
-  text: {
-    xs: "text-[11px] font-medium",
-    sm: "text-[13px] font-medium",
-    mono: "font-mono text-[11px]",
-    micro: "text-[9px] font-bold uppercase tracking-wider",
-  },
-  card: "bg-white border border-slate-200 rounded-lg",
-  status: {
-    PAID: {
-      bg: "bg-emerald-100",
-      text: "text-emerald-700",
-      border: "border-emerald-200",
-      dot: "bg-emerald-500",
-    },
-    SENT: {
-      bg: "bg-blue-100",
-      text: "text-blue-700",
-      border: "border-blue-200",
-      dot: "bg-blue-500",
-    },
-    ACCEPTED: {
-      bg: "bg-indigo-100",
-      text: "text-indigo-700",
-      border: "border-indigo-200",
-      dot: "bg-indigo-500",
-    },
-    DRAFT: {
-      bg: "bg-amber-100",
-      text: "text-amber-700",
-      border: "border-amber-200",
-      dot: "bg-amber-500",
-    },
-    REJECTED: {
-      bg: "bg-rose-100",
-      text: "text-rose-700",
-      border: "border-rose-200",
-      dot: "bg-rose-500",
-    },
-  },
-};
-
-const EASE_OUT_EXPO: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -133,7 +105,6 @@ export function DashboardView({ data }: DashboardProps) {
     [portefeuilleStrategique],
   );
 
-  // Sparkline data simulation (would come from API in real app)
   const sparklineData = [
     12, 18, 15, 25, 22, 30, 28, 35, 40, 38, 45, 50, 48, 55, 60, 58, 65, 70, 68,
     75, 80, 78, 85, 90, 88, 95, 100, 98, 105, 110,
@@ -148,99 +119,96 @@ export function DashboardView({ data }: DashboardProps) {
     .join(" ");
 
   return (
-    <div className="h-full flex flex-col bg-slate-50 overflow-hidden">
-      {/* ═══════════════════════════════════════════════════════════════════════
-          PHASE 1: TOP TELEMETRY ROW (Style Quotes Page)
-          ═══════════════════════════════════════════════════════════════════════ */}
-      <div className="grid grid-cols-4 gap-0 border-b border-slate-200 bg-white">
-        {/* KPI 1: CA Global */}
-        <div className="flex items-center gap-3 p-3 border-r border-slate-200">
-          <div className="w-8 h-8 rounded-md bg-emerald-50 flex items-center justify-center">
+    <div className={cn(DS_PAGE_SHELL, "px-4 py-3")}>
+      <div className={cn(DS_PAGE_GRID)}>
+        {/* ROW 0 — KPI Bento (4 cellules × col-span-3) */}
+        <div
+          className={cn(DS_BENTO_CARD, "col-span-3 flex items-center gap-3")}
+        >
+          <div className={cn(DS_ICON_WRAPPER, "bg-indigo-50")}>
             <CurrencyCircleDollarIcon
-              size={16}
-              className="text-emerald-600"
+              size={DS_ICON_SM}
+              className="text-indigo-600"
               weight="bold"
             />
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-baseline gap-1">
-              <span className="text-lg font-bold text-slate-900 tabular-nums truncate">
+              <span className="text-lg font-bold text-slate-900 tabular-nums">
                 {formatCompact(kpis.chiffreAffairesTotal)}
               </span>
-              <span className="text-[10px] text-slate-400">XOF</span>
+              <span className={cn(DS_LABEL, "text-slate-400")}>XOF</span>
             </div>
             <div className="flex items-center gap-1">
-              <span className={DS.text.micro + " text-slate-500"}>
-                CA Global
-              </span>
-              <span className="text-[9px] text-slate-400">·</span>
-              <span className="text-[9px] text-emerald-600 font-medium">
-                +12%
-              </span>
+              <span className={cn(DS_MICRO, "text-slate-500")}>CA Global</span>
+              <span className={cn(DS_MICRO, "text-slate-300")}>·</span>
+              <span className={cn(DS_MICRO, "text-indigo-500")}>+12%</span>
             </div>
           </div>
         </div>
-
-        {/* KPI 2: En Attente Signature */}
-        <div className="flex items-center gap-3 p-3 border-r border-slate-200">
-          <div className="w-8 h-8 rounded-md bg-blue-50 flex items-center justify-center">
-            <ClockIcon size={16} className="text-blue-600" weight="bold" />
+        <div
+          className={cn(DS_BENTO_CARD, "col-span-3 flex items-center gap-3")}
+        >
+          <div className={cn(DS_ICON_WRAPPER, "bg-indigo-50")}>
+            <ClockIcon
+              size={DS_ICON_SM}
+              className="text-indigo-600"
+              weight="bold"
+            />
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-baseline gap-1">
-              <span className="text-lg font-bold text-slate-900 tabular-nums truncate">
+              <span className="text-lg font-bold text-slate-900 tabular-nums">
                 {formatCompact(kpis.enAttentePaiement)}
               </span>
-              <span className="text-[10px] text-slate-400">XOF</span>
+              <span className={cn(DS_LABEL, "text-slate-400")}>XOF</span>
             </div>
             <div className="flex items-center gap-1">
-              <span className={DS.text.micro + " text-slate-500"}>
-                En Attente
-              </span>
-              <span className="text-[9px] text-slate-400">·</span>
-              <span className="text-[9px] text-blue-600 font-medium">
+              <span className={cn(DS_MICRO, "text-slate-500")}>En Attente</span>
+              <span className={cn(DS_MICRO, "text-slate-300")}>·</span>
+              <span className={cn(DS_MICRO, "text-indigo-600")}>
                 {kpis.devisActifs} devis
               </span>
             </div>
           </div>
         </div>
-
-        {/* KPI 3: Taux Conversion */}
-        <div className="flex items-center gap-3 p-3 border-r border-slate-200">
-          <div className="w-8 h-8 rounded-md bg-indigo-50 flex items-center justify-center">
-            <TrendUpIcon size={16} className="text-indigo-600" weight="bold" />
+        <div
+          className={cn(DS_BENTO_CARD, "col-span-3 flex items-center gap-3")}
+        >
+          <div className={cn(DS_ICON_WRAPPER, "bg-indigo-50")}>
+            <TrendUpIcon
+              size={DS_ICON_SM}
+              className="text-indigo-600"
+              weight="bold"
+            />
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-baseline gap-1">
               <span className="text-lg font-bold text-slate-900 tabular-nums">
                 {kpis.tauxConversion.toFixed(1)}
               </span>
-              <span className="text-[10px] text-slate-400">%</span>
+              <span className={cn(DS_LABEL, "text-slate-400")}>%</span>
             </div>
             <div className="flex items-center gap-1">
-              <span className={DS.text.micro + " text-slate-500"}>
-                Conversion
-              </span>
-              <span className="text-[9px] text-slate-400">·</span>
-              <span className="text-[9px] text-indigo-600 font-medium">
-                Global
-              </span>
+              <span className={cn(DS_MICRO, "text-slate-500")}>Conversion</span>
+              <span className={cn(DS_MICRO, "text-slate-300")}>·</span>
+              <span className={cn(DS_MICRO, "text-indigo-600")}>Global</span>
             </div>
           </div>
         </div>
-
-        {/* KPI 4: Sparkline + Nouveaux */}
-        <div className="flex items-center gap-3 p-3">
+        <div
+          className={cn(DS_BENTO_CARD, "col-span-3 flex items-center gap-3")}
+        >
           <div className="flex-1">
             <div className="flex items-center justify-between mb-1">
-              <span className={DS.text.micro + " text-slate-500"}>
+              <span className={cn(DS_MICRO, "text-slate-500")}>
                 Activité 30j
               </span>
-              <span className="text-[10px] font-bold text-slate-900">
+              <span className={cn(DS_MONO, "font-bold text-slate-900")}>
                 {portefeuilleStrategique.length}
               </span>
             </div>
-            <svg width="60" height="20" className="text-indigo-500">
+            <svg width="100%" height="20" className="text-indigo-400">
               <path
                 d={sparklinePath}
                 fill="none"
@@ -251,110 +219,127 @@ export function DashboardView({ data }: DashboardProps) {
               />
             </svg>
           </div>
-          <div className="w-8 h-8 rounded-md bg-indigo-600 flex items-center justify-center">
-            <ArrowUpRightIcon size={14} className="text-white" weight="bold" />
-          </div>
         </div>
-      </div>
 
-      {/* ═══════════════════════════════════════════════════════════════════════
-          PHASE 2: BENTO GRID LAYOUT
-          ═══════════════════════════════════════════════════════════════════════ */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* ═══ PANNEAU PRINCIPAL GAUCHE (65%) ═══ */}
-        <div className="w-[65%] flex flex-col border-r border-slate-200 bg-white">
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-slate-50/50">
-            <div className="flex items-center gap-2">
-              <TrendUpIcon size={14} className="text-indigo-500" />
-              <span className={DS.text.micro + " text-slate-600"}>
-                Activité Récente
+        {/* ROW 1 — Activité + Brouillons */}
+        <div className="col-span-8 space-y-3">
+          {/* CARD 1 — Graphique Activité (compact) */}
+          <div className={cn(DS_BENTO_CARD, "p-0 overflow-hidden")}>
+            <div
+              className={cn(
+                DS_SECTION_HEADER,
+                "px-3 py-2 border-b border-slate-100/60 bg-slate-50/50 mb-0",
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <div className={cn(DS_ICON_WRAPPER, "bg-indigo-50")}>
+                  <TrendUpIcon size={DS_ICON_SM} className="text-indigo-500" />
+                </div>
+                <span className={cn(DS_MICRO, "text-slate-600")}>
+                  Activité Récente
+                </span>
+              </div>
+              <Link
+                href="/quotes"
+                className="flex items-center gap-1 text-[10px] font-medium text-indigo-600 hover:text-indigo-700"
+              >
+                Voir tout
+                <ArrowRightIcon size={DS_ICON_SM} weight="bold" />
+              </Link>
+            </div>
+            <div className={cn(DS_TEL_BLOCK, "h-24 rounded-none border-0")}>
+              <div className="h-full flex items-end gap-1">
+                {sparklineData.slice(-20).map((value, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ height: 0 }}
+                    animate={{ height: `${(value / maxValue) * 100}%` }}
+                    transition={{ duration: 0.5, delay: i * 0.02 }}
+                    className="flex-1 bg-indigo-200 hover:bg-indigo-400 rounded-t-sm transition-colors cursor-pointer"
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* CARD 2 — Table Dernières Actions */}
+          <div className={cn(DS_BENTO_CARD, "p-0 overflow-hidden bg-white")}>
+            <div
+              className={cn(
+                DS_SECTION_HEADER,
+                "px-3 py-2 border-b border-slate-100/60 mb-0",
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <div className={cn(DS_ICON_WRAPPER, "bg-slate-100")}>
+                  <FileTextIcon size={DS_ICON_SM} className="text-slate-500" />
+                </div>
+                <span className={cn(DS_MICRO, "text-slate-600")}>
+                  Dernières Actions
+                </span>
+              </div>
+              <span className={cn(DS_MONO, "text-slate-400")}>
+                {fluxRecent.length} entrées
               </span>
             </div>
-            <Link
-              href="/quotes"
-              className="flex items-center gap-1 text-[10px] font-medium text-indigo-600 hover:text-indigo-700"
-            >
-              Voir tout
-              <ArrowRightIcon size={10} weight="bold" />
-            </Link>
-          </div>
-
-          {/* Zone Graphique (placeholder pour Area Chart) */}
-          <div className="h-48 border-b border-slate-200 bg-slate-50 p-4">
-            <div className="h-full flex items-end gap-1">
-              {sparklineData.slice(-20).map((value, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ height: 0 }}
-                  animate={{ height: `${(value / maxValue) * 100}%` }}
-                  transition={{ duration: 0.5, delay: i * 0.02 }}
-                  className="flex-1 bg-indigo-200 hover:bg-indigo-400 rounded-t-sm transition-colors cursor-pointer"
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Tableau Dense des 5 dernières actions */}
-          <div className="flex-1 overflow-y-auto">
             <table className="w-full">
-              <thead className="bg-slate-50 sticky top-0">
-                <tr className="border-b border-slate-200">
-                  <th className="text-left py-2 px-4 text-[9px] font-bold uppercase tracking-wider text-slate-500">
+              <thead>
+                <tr className="border-b border-slate-100/60 bg-slate-50/80">
+                  <th className={cn(DS_LABEL, "text-left py-2 px-4")}>
                     Action
                   </th>
-                  <th className="text-left py-2 px-4 text-[9px] font-bold uppercase tracking-wider text-slate-500">
+                  <th className={cn(DS_LABEL, "text-left py-2 px-4")}>
                     Client
                   </th>
-                  <th className="text-right py-2 px-4 text-[9px] font-bold uppercase tracking-wider text-slate-500">
+                  <th className={cn(DS_LABEL, "text-right py-2 px-4")}>
                     Montant
                   </th>
-                  <th className="text-center py-2 px-4 text-[9px] font-bold uppercase tracking-wider text-slate-500">
+                  <th className={cn(DS_LABEL, "text-center py-2 px-4")}>
                     Statut
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100/60">
                 {fluxRecent.map((item, index) => (
                   <motion.tr
                     key={item.id}
                     initial={{ opacity: 0, y: 4 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className="hover:bg-slate-50 cursor-pointer group"
+                    className="hover:bg-slate-50/50 cursor-pointer group"
                   >
-                    <td className="py-2.5 px-4">
+                    <td className="py-2 px-4">
                       <div className="flex items-center gap-2">
                         <div
                           className={cn(
-                            "w-6 h-6 rounded flex items-center justify-center",
+                            DS_ICON_WRAPPER,
                             item.statut === "PAID"
-                              ? "bg-emerald-100 text-emerald-600"
-                              : "bg-slate-100 text-slate-500",
+                              ? "bg-indigo-50 text-indigo-600"
+                              : "bg-slate-50 text-slate-500",
                           )}
                         >
                           {item.statut === "PAID" ? (
-                            <CheckCircleIcon size={12} weight="bold" />
+                            <CheckCircleIcon size={DS_ICON_SM} weight="bold" />
                           ) : (
-                            <FileTextIcon size={12} />
+                            <FileTextIcon size={DS_ICON_SM} />
                           )}
                         </div>
-                        <span className="text-[12px] font-medium text-slate-900 truncate max-w-[200px]">
+                        <span className="text-xs font-medium text-slate-900 truncate max-w-[200px]">
                           {item.projetTitre}
                         </span>
                       </div>
                     </td>
-                    <td className="py-2.5 px-4">
-                      <span className="text-[11px] text-slate-600">
+                    <td className="py-2 px-4">
+                      <span className={cn(DS_MONO, "text-slate-600")}>
                         {item.clientNom}
                       </span>
                     </td>
-                    <td className="py-2.5 px-4 text-right">
-                      <span className="text-[12px] font-mono font-bold text-slate-900 tabular-nums">
+                    <td className="py-2 px-4 text-right">
+                      <span className={cn(DS_MONO, "font-bold text-slate-900")}>
                         {formatCFA(item.montant)}
                       </span>
                     </td>
-                    <td className="py-2.5 px-4 text-center">
+                    <td className="py-2 px-4 text-center">
                       <StatusBadge status={item.statut} />
                     </td>
                   </motion.tr>
@@ -364,49 +349,60 @@ export function DashboardView({ data }: DashboardProps) {
           </div>
         </div>
 
-        {/* ═══ PANNEAU SECONDAIRE DROIT (35%) ═══ */}
-        <div className="w-[35%] flex flex-col bg-slate-50">
-          {/* Section: Pipeline / Brouillons */}
-          <div className="flex-1 flex flex-col border-b border-slate-200 bg-white">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-slate-50/50">
+        {/* COLONNE DROITE (4 cols) */}
+        <div className="col-span-4 space-y-3">
+          {/* CARD 3 — Brouillons */}
+          <div className={cn(DS_BENTO_CARD, "p-0 overflow-hidden")}>
+            <div
+              className={cn(
+                DS_SECTION_HEADER,
+                "px-3 py-2 border-b border-slate-100/60 bg-slate-50/50 mb-0",
+              )}
+            >
               <div className="flex items-center gap-2">
-                <FileTextIcon size={14} className="text-amber-500" />
-                <span className={DS.text.micro + " text-slate-600"}>
+                <div className={cn(DS_ICON_WRAPPER, "bg-indigo-50")}>
+                  <FileTextIcon size={DS_ICON_SM} className="text-indigo-500" />
+                </div>
+                <span className={cn(DS_MICRO, "text-slate-600")}>
                   Brouillons en cours
                 </span>
               </div>
-              <Link
-                href="/quotes/new"
-                className="flex items-center gap-1 px-2 py-1 bg-indigo-600 text-white rounded text-[10px] font-bold hover:bg-indigo-700 transition-colors"
-              >
-                <PlusIcon size={10} weight="bold" />
+              <Link href="/quotes/new" className={DS_BUTTON}>
+                <PlusIcon size={DS_ICON_SM} weight="bold" />
                 Créer
               </Link>
             </div>
-
-            <div className="flex-1 overflow-y-auto p-3 space-y-2">
+            <div className="max-h-48 overflow-y-auto p-2 space-y-1.5">
               {fluxRecent
                 .filter((item) => item.statut === "DRAFT")
-                .slice(0, 4)
-                .map((item, index) => (
+                .slice(0, 6)
+                .map((item) => (
                   <Link
                     key={item.id}
                     href={`/quotes?id=${item.id}`}
-                    className="block p-2.5 rounded-md border border-slate-200 bg-white hover:border-indigo-300 hover:shadow-sm transition-all group"
+                    className={cn(
+                      DS_BENTO_CARD,
+                      "block hover:border-indigo-300 hover:shadow-sm transition-all",
+                    )}
                   >
                     <div className="flex items-start justify-between mb-1">
-                      <span className="text-[11px] font-bold text-slate-900 truncate max-w-[140px]">
+                      <span
+                        className={cn(
+                          DS_MONO,
+                          "font-bold text-slate-900 truncate max-w-[140px]",
+                        )}
+                      >
                         {item.projetTitre}
                       </span>
-                      <span className="text-[10px] font-mono font-bold text-slate-700 tabular-nums">
+                      <span className={cn(DS_MONO, "font-bold text-slate-700")}>
                         {formatCompact(item.montant)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] text-slate-500">
+                      <span className={cn(DS_LABEL, "text-slate-500")}>
                         {item.clientNom}
                       </span>
-                      <span className="text-[9px] text-slate-400">
+                      <span className={cn(DS_MICRO, "text-slate-400")}>
                         {item.date}
                       </span>
                     </div>
@@ -415,8 +411,10 @@ export function DashboardView({ data }: DashboardProps) {
               {fluxRecent.filter((item) => item.statut === "DRAFT").length ===
                 0 && (
                 <div className="text-center py-8">
-                  <p className="text-[11px] text-slate-400">Aucun brouillon</p>
-                  <p className="text-[10px] text-slate-300 mt-1">
+                  <p className={cn(DS_MONO, "text-slate-400")}>
+                    Aucun brouillon
+                  </p>
+                  <p className={cn(DS_LABEL, "text-slate-300 mt-1")}>
                     Créez un nouveau devis
                   </p>
                 </div>
@@ -424,21 +422,30 @@ export function DashboardView({ data }: DashboardProps) {
             </div>
           </div>
 
-          {/* Section: Top Clients */}
-          <div className="flex-1 flex flex-col bg-white">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-slate-50/50">
+          {/* CARD 4 — Top Clients */}
+          <div className={cn(DS_BENTO_CARD, "p-0 overflow-hidden")}>
+            <div
+              className={cn(
+                DS_SECTION_HEADER,
+                "px-3 py-2 border-b border-slate-100/60 bg-slate-50/50 mb-0",
+              )}
+            >
               <div className="flex items-center gap-2">
-                <UsersThreeIcon size={14} className="text-indigo-500" />
-                <span className={DS.text.micro + " text-slate-600"}>
+                <div className={cn(DS_ICON_WRAPPER, "bg-indigo-50")}>
+                  <UsersThreeIcon
+                    size={DS_ICON_SM}
+                    className="text-indigo-500"
+                  />
+                </div>
+                <span className={cn(DS_MICRO, "text-slate-600")}>
                   Top Clients
                 </span>
               </div>
-              <span className="text-[10px] font-mono text-slate-500">
+              <span className={cn(DS_MONO, "text-slate-500")}>
                 {formatCompact(totalValeurPortefeuille)}
               </span>
             </div>
-
-            <div className="flex-1 overflow-y-auto p-3 space-y-2">
+            <div className="max-h-64 overflow-y-auto p-2 space-y-1.5">
               {portefeuilleStrategique.map((client, index) => {
                 const partDuCA =
                   totalValeurPortefeuille > 0
@@ -450,37 +457,46 @@ export function DashboardView({ data }: DashboardProps) {
                   <Link
                     key={client.id}
                     href={`/clients?id=${client.id}`}
-                    className="block p-2.5 rounded-md border border-slate-200 bg-white hover:border-indigo-300 transition-all"
+                    className={cn(
+                      DS_BENTO_CARD,
+                      "block hover:border-indigo-300 transition-all",
+                    )}
                   >
                     <div className="flex items-center gap-2 mb-2">
                       <div
                         className={cn(
-                          "w-7 h-7 rounded flex items-center justify-center text-[10px] font-bold",
+                          DS_ICON_WRAPPER,
+                          "text-[10px] font-bold",
                           isTop
-                            ? "bg-indigo-100 text-indigo-600"
-                            : "bg-slate-100 text-slate-500",
+                            ? "bg-indigo-50 text-indigo-600"
+                            : "bg-slate-50 text-slate-500",
                         )}
                       >
                         {client.nom.slice(0, 2).toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[11px] font-bold text-slate-900 truncate">
+                        <p
+                          className={cn(
+                            DS_MONO,
+                            "font-bold text-slate-900 truncate",
+                          )}
+                        >
                           {client.nom}
                         </p>
-                        <p className="text-[9px] text-slate-500">
+                        <p className={cn(DS_MICRO, "text-slate-500")}>
                           {client.nombreDevis} devis · {client.delaiMoyen}j
                           paiement
                         </p>
                       </div>
-                      <span className="text-[11px] font-mono font-bold text-slate-700 tabular-nums">
+                      <span className={cn(DS_MONO, "font-bold text-slate-700")}>
                         {formatCompact(client.valeurCumulee)}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                      <div className={cn(DS_PROGRESS_TRACK, "flex-1")}>
                         <motion.div
                           className={cn(
-                            "h-full rounded-full",
+                            DS_PROGRESS_BAR,
                             isTop ? "bg-indigo-500" : "bg-slate-300",
                           )}
                           initial={{ width: 0 }}
@@ -491,7 +507,12 @@ export function DashboardView({ data }: DashboardProps) {
                           }}
                         />
                       </div>
-                      <span className="text-[9px] font-bold text-slate-400 w-8 text-right">
+                      <span
+                        className={cn(
+                          DS_MICRO,
+                          "text-slate-400 w-8 text-right",
+                        )}
+                      >
                         {partDuCA.toFixed(0)}%
                       </span>
                     </div>
@@ -510,27 +531,66 @@ export function DashboardView({ data }: DashboardProps) {
 // SUB-COMPONENTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function StatusBadge({ status }: { status: QuoteStatus }) {
-  const style = DS.status[status];
-  const labels: Record<QuoteStatus, string> = {
-    PAID: "Payé",
-    SENT: "Envoyé",
-    ACCEPTED: "Signé",
-    DRAFT: "Brouillon",
-    REJECTED: "Refusé",
-  };
-
+function KpiCell({
+  icon: Icon,
+  iconBg,
+  iconColor,
+  value,
+  unit,
+  label,
+  detail,
+  detailColor,
+  border,
+}: {
+  icon: React.ComponentType<IconProps>;
+  iconBg: string;
+  iconColor: string;
+  value: string;
+  unit: string;
+  label: string;
+  detail: string;
+  detailColor: string;
+  border?: boolean;
+}) {
   return (
-    <span
+    <div
       className={cn(
-        "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border",
-        style.bg,
-        style.text,
-        style.border,
+        "flex items-center gap-3 p-3",
+        border && "border-r border-slate-100/60",
       )}
     >
-      <span className={cn("w-1 h-1 rounded-full", style.dot)} />
-      {labels[status]}
-    </span>
+      <div className={cn(DS_ICON_WRAPPER, iconBg)}>
+        <Icon size={DS_ICON_SM} className={iconColor} weight="bold" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline gap-1">
+          <span className="text-lg font-bold text-slate-900 tabular-nums truncate">
+            {value}
+          </span>
+          <span className={cn(DS_LABEL, "text-slate-400")}>{unit}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className={cn(DS_MICRO, "text-slate-500")}>{label}</span>
+          <span className={cn(DS_MICRO, "text-slate-300")}>·</span>
+          <span className={cn(DS_MICRO, detailColor)}>{detail}</span>
+        </div>
+      </div>
+    </div>
   );
+}
+
+const STATUS_BADGE_MAP: Record<
+  QuoteStatus,
+  { className: string; label: string }
+> = {
+  PAID: { className: DS_BADGE_SUCCESS, label: "Payé" },
+  SENT: { className: DS_BADGE_ACTIVE, label: "Envoyé" },
+  ACCEPTED: { className: DS_BADGE_ACTIVE, label: "Signé" },
+  DRAFT: { className: DS_BADGE_WARNING, label: "Brouillon" },
+  REJECTED: { className: DS_BADGE_DANGER, label: "Refusé" },
+};
+
+function StatusBadge({ status }: { status: QuoteStatus }) {
+  const config = STATUS_BADGE_MAP[status];
+  return <span className={config.className}>{config.label}</span>;
 }

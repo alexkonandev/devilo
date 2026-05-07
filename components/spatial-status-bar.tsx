@@ -247,33 +247,7 @@ export function SpatialStatusBar() {
           </button>
         </div>
 
-        {/* Quick Actions Contextuelles */}
-        <div className="flex items-center h-full border-l border-slate-200">
-          {/* Bouton + Création rapide */}
-          <div className="flex items-center gap-0.5 px-2">
-            <button
-              onClick={() => router.push("/quotes/new")}
-              className="flex items-center gap-1 px-2 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-[10px] font-semibold transition-colors"
-            >
-              <PlusIcon size={12} weight="bold" />
-              <span>Devis</span>
-            </button>
-            {draftCount > 0 && (
-              <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[9px] font-bold rounded">
-                {draftCount}
-              </span>
-            )}
-          </div>
-
-          {/* Bouton + Client */}
-          <button
-            onClick={() => router.push("/clients")}
-            className="flex items-center gap-1 px-2 py-1 ml-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded text-[10px] font-medium transition-colors"
-          >
-            <UsersThreeIcon size={12} />
-            <span>Client</span>
-          </button>
-        </div>
+        
       </div>
     </motion.header>
   );

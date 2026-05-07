@@ -67,11 +67,11 @@ const TOP_NAV_ITEMS: NavItem[] = [
   { label: "Devis", href: "/quotes", icon: FileTextIcon, badge: "drafts" },
   { label: "Clients", href: "/clients", icon: UsersThreeIcon },
   { label: "Catalogue", href: "/catalog", icon: PackageIcon },
+  { label: "Facturation", href: "/billing", icon: CreditCardIcon },
 ];
 
 const BOTTOM_NAV_ITEMS: NavItem[] = [
   { label: "Nouveau Devis", href: "/quotes/new", icon: PlusIcon },
-  { label: "Facturation", href: "/billing", icon: CreditCardIcon },
   { label: "Paramètres", href: "/settings", icon: GearSixIcon },
 ];
 
@@ -80,10 +80,6 @@ const BOTTOM_NAV_ITEMS: NavItem[] = [
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export function SpatialDock() {
-  const { stats } = useSafeQuotes();
-
-  // Get draft count for badge
-  const draftCount = stats.countByStatus?.DRAFT || 0;
 
   return (
     <motion.aside
@@ -98,7 +94,6 @@ export function SpatialDock() {
           <RailIcon
             key={item.href}
             {...item}
-            badgeValue={item.badge === "drafts" ? draftCount : undefined}
           />
         ))}
       </nav>

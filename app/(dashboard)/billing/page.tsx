@@ -1,19 +1,22 @@
-"use client";
-
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
+import { getBillingProfile } from "@/actions/billing-action";
 import { SpatialBillingView } from "@/features/billing/spatial-billing-view";
 
-interface BillingPageProps {
-  estPro?: boolean;
-  quotaUtilise?: number;
-}
+export const metadata = {
+  title: "Billing | Kernel System",
+  description: "Gestion de votre abonnement et facturation.",
+};
 
-export default function BillingPage({
-  estPro = false,
-  quotaUtilise = 3, // Mock value for demonstration
-}: BillingPageProps) {
+export default async function BillingPage() {
+  const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
+
+  const billingProfile = await getBillingProfile();
+
   return (
-    <div className="w-full pt-10">
-      <SpatialBillingView estPro={estPro} quotaUtilise={quotaUtilise} />
+    <div className="h-full w-full">
+      <SpatialBillingView billingProfile={billingProfile} />
     </div>
   );
 }

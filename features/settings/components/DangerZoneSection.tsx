@@ -55,7 +55,7 @@ export function DangerZoneCard({ userEmail, className }: DangerZoneCardProps) {
         )}
       >
         <div className="flex items-start gap-3">
-          <div className="w-7 h-7 rounded bg-rose-100 flex items-center justify-center shrink-0">
+          <div className="w-6 h-6 rounded bg-rose-100 flex items-center justify-center shrink-0">
             <WarningIcon size={12} className="text-rose-500" weight="bold" />
           </div>
           <div className="flex-1">
@@ -84,7 +84,11 @@ export function DangerZoneCard({ userEmail, className }: DangerZoneCardProps) {
           <div className="bg-white rounded-xl border border-rose-200 shadow-2xl w-full max-w-md p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-9 h-9 rounded-full bg-rose-100 flex items-center justify-center shrink-0">
-                <WarningIcon size={18} className="text-rose-600" weight="bold" />
+                <WarningIcon
+                  size={16}
+                  className="text-rose-600"
+                  weight="bold"
+                />
               </div>
               <div>
                 <h2 className="text-sm font-bold text-slate-900">

@@ -41,6 +41,9 @@ interface ClientMasterListProps {
   selectedId: string | null;
   onSelect: (client: ClientListItem | null) => void;
   onCreate: () => void;
+  searchQuery?: string;
+  onSearch?: (query: string) => void;
+  isLoading?: boolean;
 }
 
 export function ClientMasterList({
@@ -48,19 +51,14 @@ export function ClientMasterList({
   selectedId,
   onSelect,
   onCreate,
+  searchQuery = "",
+  onSearch,
+  isLoading,
 }: ClientMasterListProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-
-  // Filter clients
-  const filteredClients = useMemo(() => {
-    if (!searchQuery.trim()) return clients;
-    const q = searchQuery.toLowerCase();
-    return clients.filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) ||
-        c.email?.toLowerCase().includes(q)
-    );
-  }, [clients, searchQuery]);
+  // Local state for uncontrolled mode (backward compat)
+  const [localSearch, setLocalSearch] = useState("");
+  const effectiveQuery = onSearch ? searchQuery : localSearch;
+  const handleSearch = onSearch ? onSearch : setLocalSearch;
 
   return (
     // ═══════════════════════════════════════════════════════════════════════════
@@ -68,18 +66,22 @@ export function ClientMasterList({
     // grid-template-rows: [Header] auto [Search] auto [List] 1fr
     // ═══════════════════════════════════════════════════════════════════════════
     <div className="h-full w-[300px] bg-white border-r border-slate-200/60 grid grid-rows-[auto_auto_1fr] overflow-hidden">
-      
       {/* ═══ LIGNE 1: HEADER (auto) ═══ */}
       <header className="px-3 py-2.5 border-b border-slate-200/60 bg-slate-50/30">
         <div className="grid grid-cols-[1fr_auto] items-center gap-2">
           {/* Titre + Compteur */}
           <div className="flex items-center gap-1.5 min-w-0">
-            <UsersIcon size={13} className="text-indigo-500 shrink-0" weight="bold" />
+            <UsersIcon
+              size={13}
+              className="text-indigo-500 shrink-0"
+              weight="bold"
+            />
             <h2 className={cn(DS.micro, "text-slate-600 truncate")}>
               CARNET D&apos;ADRESSES
             </h2>
             <span className={cn(DS.mono, "text-slate-400 shrink-0")}>
-              {filteredClients.length}
+              {clients.length}
+              {isLoading && <span className="ml-1">⟳</span>}
             </span>
           </div>
 
@@ -104,8 +106,8 @@ export function ClientMasterList({
           />
           <input
             type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={effectiveQuery}
+            onChange={(e) => handleSearch(e.target.value)}
             placeholder="Rechercher un client..."
             className="w-full h-7 pl-8 pr-3 bg-slate-100 border border-slate-200/60 hover:border-slate-300 focus:border-indigo-400/60 focus:bg-white rounded-md text-xs font-medium text-slate-900 placeholder:text-slate-400 outline-none transition-all"
           />
@@ -115,7 +117,7 @@ export function ClientMasterList({
       {/* ═══ LIGNE 3: LIST (1fr) ═══ */}
       <div className="relative overflow-y-auto">
         <AnimatePresence mode="wait">
-          {filteredClients.length > 0 ? (
+          {clients.length > 0 ? (
             <motion.div
               key="list"
               initial={{ opacity: 0 }}
@@ -123,7 +125,7 @@ export function ClientMasterList({
               exit={{ opacity: 0 }}
               className="divide-y divide-slate-100"
             >
-              {filteredClients.map((client, index) => (
+              {clients.map((client, index) => (
                 <ClientListItemRow
                   key={client.id}
                   client={client}
@@ -148,7 +150,9 @@ export function ClientMasterList({
                 {searchQuery ? "Aucun résultat" : "Aucun client"}
               </p>
               <p className="text-[10px] text-slate-400 mt-0.5">
-                {searchQuery ? "Essayez une autre recherche" : "Ajoutez votre premier client"}
+                {searchQuery
+                  ? "Essayez une autre recherche"
+                  : "Ajoutez votre premier client"}
               </p>
             </motion.div>
           )}
@@ -182,12 +186,16 @@ function ClientListItemRow({
     <motion.div
       initial={{ opacity: 0, x: -8 }}
       animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.15, delay: index * 0.02, ease: [0.22, 1, 0.36, 1] }}
+      transition={{
+        duration: 0.15,
+        delay: index * 0.02,
+        ease: [0.22, 1, 0.36, 1],
+      }}
       onClick={onClick}
       className={cn(
         "group grid grid-cols-[auto_1fr_auto] items-center gap-2 px-3 py-1.5 cursor-pointer transition-all border-l-2",
         "hover:bg-slate-50/70 border-transparent",
-        isSelected && "bg-indigo-50/70 border-indigo-500"
+        isSelected && "bg-indigo-50/70 border-indigo-500",
       )}
     >
       {/* ═══ COLONNE 1: AVATAR ═══ */}
@@ -197,8 +205,8 @@ function ClientListItemRow({
           isSelected
             ? "bg-indigo-100 text-indigo-600"
             : isVIP
-            ? "bg-amber-50 text-amber-600 border border-amber-200/60"
-            : "bg-slate-100 text-slate-500 group-hover:bg-slate-200"
+              ? "bg-amber-50 text-amber-600 border border-amber-200/60"
+              : "bg-slate-100 text-slate-500 group-hover:bg-slate-200",
         )}
       >
         {client.name.slice(0, 2).toUpperCase()}
@@ -210,7 +218,7 @@ function ClientListItemRow({
           className={cn(
             "text-[12px] font-semibold truncate leading-tight",
             isSelected ? "text-indigo-900" : "text-slate-800",
-            "group-hover:text-indigo-700 transition-colors"
+            "group-hover:text-indigo-700 transition-colors",
           )}
         >
           {client.name}
@@ -230,14 +238,14 @@ function ClientListItemRow({
             size={9}
             className={cn(
               "shrink-0",
-              isVIP ? "text-amber-500" : "text-slate-400"
+              isVIP ? "text-amber-500" : "text-slate-400",
             )}
           />
           <span
             className={cn(
               DS.mono,
               "font-bold",
-              isVIP ? "text-amber-600" : "text-slate-700"
+              isVIP ? "text-amber-600" : "text-slate-700",
             )}
           >
             {formatCompact(client.totalSpent)}
@@ -246,10 +254,7 @@ function ClientListItemRow({
 
         {/* Devis Count - Monospace */}
         <div className="flex items-center gap-0.5 mt-0.5">
-          <FileTextIcon
-            size={8}
-            className="text-slate-300 shrink-0"
-          />
+          <FileTextIcon size={8} className="text-slate-300 shrink-0" />
           <span className={cn(DS.mono, "text-slate-400 text-[10px]")}>
             {client.quoteCount}d
           </span>
@@ -271,8 +276,7 @@ export function useClientSearch(clients: ClientListItem[]) {
     const q = searchQuery.toLowerCase();
     return clients.filter(
       (c) =>
-        c.name.toLowerCase().includes(q) ||
-        c.email?.toLowerCase().includes(q)
+        c.name.toLowerCase().includes(q) || c.email?.toLowerCase().includes(q),
     );
   }, [clients, searchQuery]);
 

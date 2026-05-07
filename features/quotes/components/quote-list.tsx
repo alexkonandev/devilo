@@ -33,8 +33,8 @@ const exportToCSV = (data: any[], statusKey: string) => {
     headers.join(","),
     ...data.map((q) =>
       [q.id, q.clientName, q.amount, STATUS_MAPPER[q.status] || q.status].join(
-        ","
-      )
+        ",",
+      ),
     ),
   ];
 
@@ -46,7 +46,7 @@ const exportToCSV = (data: any[], statusKey: string) => {
   a.setAttribute("href", url);
   a.setAttribute(
     "download",
-    `registre_${currentLabel.toLowerCase().replace(/ /g, "_")}.csv`
+    `registre_${currentLabel.toLowerCase().replace(/ /g, "_")}.csv`,
   );
   a.click();
   window.URL.revokeObjectURL(url);
@@ -143,8 +143,6 @@ export function QuoteList() {
           ))
         )}
       </div>
-
-      
     </div>
   );
 }

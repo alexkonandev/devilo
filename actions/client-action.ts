@@ -4,9 +4,120 @@ import db from "@/lib/prisma";
 import { getClerkUserId } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { ClientListItem } from "@/types/client";
+
+interface GetClientsPaginatedResult {
+  clients: ClientListItem[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 /**
- * RÉCUPÉRATION DES CLIENTS + KPIS
+ * RÉCUPÉRATION PAGINÉE DES CLIENTS + SEARCH
+ * Supporte pagination côté serveur pour scaler à 10K+ clients.
+ */
+export async function getClientsPaginated(
+  page: number = 1,
+  limit: number = 50,
+  search?: string,
+): Promise<GetClientsPaginatedResult> {
+  try {
+    const authId = await getClerkUserId();
+    if (!authId) return { clients: [], total: 0, page, limit, totalPages: 0 };
+
+    const skip = (page - 1) * limit;
+
+    // Build search filter
+    const whereClause: {
+      userId: string;
+      OR?: Array<{ [key: string]: { [key: string]: string } }>;
+    } = { userId: authId };
+    if (search && search.trim()) {
+      whereClause.OR = [
+        { name: { contains: search.trim(), mode: "insensitive" } },
+        { email: { contains: search.trim(), mode: "insensitive" } },
+        { taxId: { contains: search.trim(), mode: "insensitive" } },
+      ];
+    }
+
+    // Get total count for pagination
+    const total = await db.client.count({ where: whereClause });
+
+    const clients = await db.client.findMany({
+      where: whereClause,
+      skip,
+      take: limit,
+      include: {
+        _count: {
+          select: { quotes: true },
+        },
+        quotes: {
+          select: {
+            id: true,
+            number: true,
+            status: true,
+            createdAt: true,
+            lines: {
+              select: {
+                quantity: true,
+                unitPrice: true,
+              },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+        },
+      },
+      orderBy: { name: "asc" },
+    });
+
+    const mappedClients = clients.map((client) => {
+      const mappedQuotes = client.quotes.map((quote) => ({
+        id: quote.id,
+        number: quote.number,
+        status: quote.status,
+        createdAt: quote.createdAt,
+        totalAmount: quote.lines.reduce(
+          (sum, line) => sum + line.quantity * line.unitPrice,
+          0,
+        ),
+      }));
+
+      const totalSpent = mappedQuotes.reduce(
+        (acc, q) => acc + q.totalAmount,
+        0,
+      );
+
+      return {
+        id: client.id,
+        name: client.name,
+        email: client.email,
+        address: client.address,
+        taxId: client.taxId,
+        createdAt: client.createdAt,
+        quoteCount: client._count.quotes,
+        totalSpent: totalSpent,
+        quotes: mappedQuotes,
+      };
+    });
+
+    return {
+      clients: mappedClients,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  } catch (err) {
+    console.error("[GET_CLIENTS_PAGINATED_ERROR]:", err);
+    return { clients: [], total: 0, page, limit, totalPages: 0 };
+  }
+}
+
+/**
+ * RÉCUPÉRATION DES CLIENTS + KPIS (LEGACY - sans pagination)
  * Calcule le nombre de devis et le CA total par client pour l'UI.
+ * @deprecated Utiliser getClientsPaginated pour de nouvelles implémentations
  */
 export async function getClients(): Promise<ClientListItem[]> {
   try {
@@ -49,14 +160,14 @@ export async function getClients(): Promise<ClientListItem[]> {
         createdAt: quote.createdAt,
         totalAmount: quote.lines.reduce(
           (sum, line) => sum + line.quantity * line.unitPrice,
-          0
+          0,
         ),
       }));
 
       // Calcul du CA total (ROI direct pour le business)
       const totalSpent = mappedQuotes.reduce(
         (acc, q) => acc + q.totalAmount,
-        0
+        0,
       );
 
       return {

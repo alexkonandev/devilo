@@ -10,9 +10,15 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "utfs.io", // Domaine obligatoire pour Uploadthing
+        hostname: "utfs.io",
         port: "",
-        pathname: "/f/**", // On autorise tous les fichiers dans le répertoire /f/
+        pathname: "/f/**",
+      },
+      {
+        protocol: "https",
+        hostname: "*.ufs.sh",
+        port: "",
+        pathname: "/f/**",
       },
     ],
   },

@@ -7,9 +7,17 @@ import { EditorActiveQuote, EditorQuoteItem } from "@/types/editor";
 
 type FieldValue = string | number | boolean | null | Date;
 
+interface BillingState {
+  plan: "FREE" | "PRO" | "ENTERPRISE";
+  quotaUsed: number;
+  quotaLimit: number;
+}
+
 interface KernelState {
   userSettings: Partial<User> | null;
   setSettings: (settings: Partial<User>) => void;
+  billing: BillingState;
+  setBilling: (billing: BillingState) => void;
   _hasHydrated: boolean;
 
   activeQuote: EditorActiveQuote | null;
@@ -43,6 +51,7 @@ export const useKernelStore = create<KernelState>()(
     (set) => ({
       // --- ÉTATS ---
       userSettings: null,
+      billing: { plan: "FREE", quotaUsed: 0, quotaLimit: 5 },
       activeQuote: null,
       isDirty: false,
       isSaving: false,
@@ -53,6 +62,7 @@ export const useKernelStore = create<KernelState>()(
 
       // --- ACTIONS CONFIG ---
       setSettings: (settings) => set({ userSettings: settings }),
+      setBilling: (billing) => set({ billing }),
 
       // --- ACTIONS MÉTIER ---
       setActiveQuote: (quote) => set({ activeQuote: quote, isDirty: false }),
