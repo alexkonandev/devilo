@@ -92,6 +92,7 @@ export async function getClientsPaginated(
         id: client.id,
         name: client.name,
         email: client.email,
+        phone: client.phone,
         address: client.address,
         taxId: client.taxId,
         createdAt: client.createdAt,
@@ -174,8 +175,9 @@ export async function getClients(): Promise<ClientListItem[]> {
         id: client.id,
         name: client.name,
         email: client.email,
+        phone: client.phone,
         address: client.address,
-        taxId: client.taxId, // ✅ Mis à jour : taxId
+        taxId: client.taxId,
         createdAt: client.createdAt,
         quoteCount: client._count.quotes,
         totalSpent: totalSpent,
@@ -189,15 +191,23 @@ export async function getClients(): Promise<ClientListItem[]> {
 }
 
 /**
- * UPSERT CLIENT
- * Création ou mise à jour avec synchronisation du cache.
+ * UPSERT CLIENT (Rich Data)
+ * Création ou mise à jour complète avec tous les champs.
  */
 export async function upsertClient(data: {
   id?: string;
   name: string;
-  email?: string;
-  address?: string;
-  taxId?: string; // ✅ Mis à jour : taxId
+  email?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  addressLine2?: string | null;
+  city?: string | null;
+  postalCode?: string | null;
+  country?: string;
+  taxId?: string | null;
+  tvaNumber?: string | null;
+  notes?: string | null;
+  tags?: string[] | null;
 }) {
   try {
     const authId = await getClerkUserId();
@@ -206,8 +216,16 @@ export async function upsertClient(data: {
     const clientData = {
       name: data.name,
       email: data.email || null,
+      phone: data.phone || null,
       address: data.address || null,
-      taxId: data.taxId || null, // ✅ Mis à jour : taxId
+      addressLine2: data.addressLine2 || null,
+      city: data.city || null,
+      postalCode: data.postalCode || null,
+      country: data.country || "CI",
+      taxId: data.taxId || null,
+      tvaNumber: data.tvaNumber || null,
+      notes: data.notes || null,
+      tags: data.tags ? (data.tags as unknown as object) : undefined,
       userId: authId,
     };
 
@@ -218,7 +236,6 @@ export async function upsertClient(data: {
         })
       : await db.client.create({ data: clientData });
 
-    // Stratégie de revalidation : on nettoie les pages de listing et d'édition
     revalidatePath("/clients");
     revalidatePath("/quotes");
 
@@ -226,6 +243,48 @@ export async function upsertClient(data: {
   } catch (err) {
     console.error("[UPSERT_CLIENT_ERROR]:", err);
     return { success: false, error: "Erreur technique lors de la sauvegarde" };
+  }
+}
+
+/**
+ * GET CLIENT BY ID (Full data)
+ * Récupère un client complet avec tous les champs rich.
+ */
+export async function getClientById(clientId: string) {
+  try {
+    const authId = await getClerkUserId();
+    if (!authId) return null;
+
+    const client = await db.client.findFirst({
+      where: { id: clientId, userId: authId },
+      include: {
+        quotes: {
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            number: true,
+            status: true,
+            createdAt: true,
+            lines: {
+              select: {
+                quantity: true,
+                unitPrice: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!client) return null;
+
+    return {
+      ...client,
+      tags: client.tags ? JSON.parse(client.tags as string) : null,
+    };
+  } catch (err) {
+    console.error("[GET_CLIENT_BY_ID_ERROR]:", err);
+    return null;
   }
 }
 

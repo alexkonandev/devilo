@@ -16,9 +16,11 @@ export const DS_INPUT =
 export const DS_BUTTON =
   "flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-[9px] font-bold uppercase tracking-wider transition-all";
 
+export const DS_BUTTON_SECONDARY =
+  "flex items-center gap-1.5 px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded text-[9px] font-bold uppercase tracking-wider transition-all";
+
 // ─── BentoCard wrapper ──────────────────────────────────────────────────────
-export const DS_BENTO_CARD =
-  "bg-white border border-slate-200 rounded p-4";
+export const DS_BENTO_CARD = "bg-white border border-slate-200 rounded p-4";
 
 // ─── Section Header ─────────────────────────────────────────────────────────
 // Usage: <div className={DS_SECTION_HEADER}> <div className={DS_ICON_WRAPPER}> ...

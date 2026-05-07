@@ -102,10 +102,18 @@ model Client {
   userId    String
   name      String
   email     String?
+  phone     String?
   address   String?
+  addressLine2 String?
+  city      String?
+  postalCode String?
+  country   String   @default("CI") // Code pays ISO (CI, FR, SN, etc.)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  taxId     String?
+  taxId     String?  // SIRET / NCC / RCCM
+  tvaNumber String?  // Numéro TVA intracommunautaire
+  notes     String?  @db.Text
+  tags      Json?    // Array de strings: ["VIP", "Prospect", "Retard"]
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   quotes    Quote[]
 

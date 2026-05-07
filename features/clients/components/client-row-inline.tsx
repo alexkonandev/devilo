@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { ClientListItem } from "@/types/client";
 import { cn } from "@/lib/utils";
 import { DS_MONO, DS_MICRO } from "@/lib/design-system";
@@ -8,6 +8,9 @@ import {
   ArrowSquareOut,
   EnvelopeSimple,
   DotsThreeVertical,
+  PencilSimple,
+  Trash,
+  Check,
 } from "@phosphor-icons/react";
 import Link from "next/link";
 
@@ -15,6 +18,9 @@ interface ClientRowInlineProps {
   client: ClientListItem;
   isSelected?: boolean;
   onSelect?: (client: ClientListItem) => void;
+  onEdit?: (client: ClientListItem) => void;
+  onDelete?: (client: ClientListItem) => void;
+  onToggleSelect?: (clientId: string) => void;
 }
 
 function formatCompact(n: number) {
@@ -46,9 +52,13 @@ export function ClientRowInline({
   client,
   isSelected,
   onSelect,
+  onEdit,
+  onDelete,
+  onToggleSelect,
 }: ClientRowInlineProps) {
   const [copied, setCopied] = useState(false);
-  const [showActions, setShowActions] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const paid = (client.quotes || []).filter((q) => q.status === "PAID");
   const revenue = paid.reduce((s, q) => s + q.totalAmount, 0);
@@ -59,6 +69,17 @@ export function ClientRowInline({
   const score = healthScore(client);
   const hc = healthColor(score);
 
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const copyEmail = () => {
     if (client.email) {
       navigator.clipboard.writeText(client.email);
@@ -67,27 +88,49 @@ export function ClientRowInline({
     }
   };
 
+  const handleRowClick = (e: React.MouseEvent) => {
+    // Don't trigger if clicking checkbox, menu, or links
+    const target = e.target as HTMLElement;
+    if (
+      target.closest("[data-no-row-click]") ||
+      target.closest("[role='menu']") ||
+      target.closest("a") ||
+      target.closest("button")
+    ) {
+      return;
+    }
+    onSelect?.(client);
+  };
+
+  const handleCheckboxClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onToggleSelect?.(client.id);
+  };
+
   return (
     <div
       className={cn(
         "group flex items-center h-8 px-3 border-b border-slate-100",
-        "hover:bg-slate-50 transition-colors cursor-pointer select-none",
-        isSelected && "bg-indigo-50 hover:bg-indigo-100",
+        "hover:bg-slate-50 transition-colors cursor-pointer select-none relative",
+        isSelected && "bg-indigo-50/50 hover:bg-indigo-100",
       )}
-      onClick={() => onSelect?.(client)}
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => setShowActions(false)}
+      onClick={handleRowClick}
     >
-      {/* Checkbox */}
-      <div className="w-5 flex items-center mr-2">
-        <div
+      {/* Checkbox - Clickable */}
+      <div className="w-5 flex items-center mr-2" data-no-row-click>
+        <button
+          onClick={handleCheckboxClick}
           className={cn(
-            "w-4 h-4 border rounded",
+            "w-4 h-4 border rounded flex items-center justify-center transition-colors",
             isSelected
               ? "bg-indigo-600 border-indigo-600"
-              : "border-slate-300 group-hover:border-slate-400",
+              : "border-slate-300 hover:border-slate-400 bg-white",
           )}
-        />
+        >
+          {isSelected && (
+            <Check size={10} className="text-white" weight="bold" />
+          )}
+        </button>
       </div>
 
       {/* Pastille health */}
@@ -169,20 +212,61 @@ export function ClientRowInline({
       {/* Actions - affichées au hover */}
       <div
         className={cn(
-          "w-16 flex items-center justify-end gap-1 transition-opacity",
-          showActions ? "opacity-100" : "opacity-0",
+          "w-16 flex items-center justify-end gap-1",
+          showMenu ? "opacity-100" : "opacity-0 group-hover:opacity-100",
         )}
+        data-no-row-click
       >
-        <button
-          onClick={(e) => e.stopPropagation()}
-          className="p-1 hover:bg-slate-200 rounded"
-        >
-          <DotsThreeVertical size={14} className="text-slate-400" />
-        </button>
+        {/* Dropdown Menu */}
+        <div className="relative" ref={menuRef}>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowMenu(!showMenu);
+            }}
+            className="p-1 hover:bg-slate-200 rounded"
+            title="Actions"
+          >
+            <DotsThreeVertical size={14} className="text-slate-400" />
+          </button>
+
+          {/* Dropdown */}
+          {showMenu && (
+            <div
+              role="menu"
+              className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-50"
+            >
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowMenu(false);
+                  onEdit?.(client);
+                }}
+                className="w-full px-3 py-2 text-left text-[11px] font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+              >
+                <PencilSimple size={14} className="text-slate-400" />
+                Éditer
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowMenu(false);
+                  onDelete?.(client);
+                }}
+                className="w-full px-3 py-2 text-left text-[11px] font-medium text-rose-600 hover:bg-rose-50 flex items-center gap-2"
+              >
+                <Trash size={14} className="text-rose-400" />
+                Supprimer
+              </button>
+            </div>
+          )}
+        </div>
+
         <Link
           href={`/clients?id=${client.id}`}
           onClick={(e) => e.stopPropagation()}
           className="p-1 hover:bg-slate-200 rounded"
+          title="Voir la fiche"
         >
           <ArrowSquareOut size={14} className="text-slate-400" />
         </Link>

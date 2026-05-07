@@ -2,13 +2,14 @@ import { Client, QuoteStatus } from "@/app/generated/prisma/client";
 import { ActionResponse } from "./quote-editor";
 
 /**
- * Interface pour le store et les listes
- * Note : 'taxId' est utilisé à la place de 'siret' pour la cohérence Prisma/React
+ * Interface pour les listes (lightweight)
+ * Champs essentiels pour l'affichage en liste
  */
 export interface ClientListItem {
   id: string;
   name: string;
   email: string | null;
+  phone: string | null;
   taxId: string | null; // Identifiant fiscal (ex: RCCM, SIRET, etc.)
   address: string | null;
   totalSpent: number; // Calculé via agrégation pour le ROI business
@@ -26,15 +27,45 @@ export interface ClientListItem {
 }
 
 /**
- * Type pour le dialogue de création (EditorClient)
- * Utilisé dans StudioSidebarLeft et ClientFormDialog
+ * Interface complète pour la fiche client
+ * Inclut tous les champs rich data
  */
-export interface EditorClient {
-  id?: string; // Optionnel lors de la création
+export interface ClientFull {
+  id: string;
   name: string;
   email: string | null;
-  taxId: string | null;
+  phone: string | null;
   address: string | null;
+  addressLine2: string | null;
+  city: string | null;
+  postalCode: string | null;
+  country: string;
+  taxId: string | null; // SIRET / NCC / RCCM
+  tvaNumber: string | null; // TVA intracommunautaire
+  notes: string | null;
+  tags: string[] | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/**
+ * Type pour le formulaire d'édition/création
+ * Tous les champs optionnels sauf name
+ */
+export interface EditorClient {
+  id?: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  taxId: string | null;
+  tvaNumber: string | null;
+  address: string | null;
+  addressLine2: string | null;
+  city: string | null;
+  postalCode: string | null;
+  country: string;
+  notes: string | null;
+  tags: string[] | null;
 }
 
 export type ClientActionResponse = ActionResponse<Client>;

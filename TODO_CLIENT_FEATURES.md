@@ -81,33 +81,35 @@ getClientsAction({
 
 ### 4. Fiche client complète (rich data)
 
-**Status:** ⏳ À faire  
+**Status:** 🔄 **IN PROGRESS**  
 **Complexité:** High (2h)  
 **Valeur:** Conformité fiscale, facturation légale  
 **Dépend de:** Migration Prisma
 
 **Tâches:**
 
-- [ ] **Migration Prisma:** Ajouter champs au schéma `Client`
-  - `phone?: String`
-  - `address?: String` (multiline)
-  - `siret?: String`
-  - `tvaNumber?: String`
-  - `country?: String` (default: "FR")
-  - `notes?: String` (textarea)
-  - `tags?: String[]` (JSON array)
-- [ ] Créer `prisma/migrations/` ou `prisma migrate dev`
-- [ ] Mettre à jour type `ClientListItem` → `ClientFull`
-- [ ] UI formulaire édition avec sections:
-  - Coordonnées (nom, email, téléphone)
-  - Adresse fiscale (rue, CP, ville, pays)
-  - Info légale (SIRET, TVA intracommunautaire)
-  - Notes internes
-  - Tags/labels
+- [x] **Migration Prisma:** Ajouter champs au schéma `Client`
+  - [x] `phone?: String`
+  - [x] `addressLine2`, `city`, `postalCode`
+  - [x] `country?: String` (default: "CI")
+  - [x] `tvaNumber?: String`
+  - [x] `notes?: String` (textarea)
+  - [x] `tags?: Json` (JSON array)
+- [x] Mettre à jour types TypeScript (`ClientFull`, `EditorClient`)
+- [x] UI formulaire édition avec 4 onglets:
+  - [x] Coordonnées (nom, email, téléphone)
+  - [x] Adresse fiscale (rue, complément, CP, ville, pays)
+  - [x] Info légale (SIRET, TVA intracommunautaire)
+  - [x] Notes internes + Tags
+- [ ] **PENDING:** Intégrer le formulaire dans la liste (bouton Éditer)
+- [ ] **PENDING:** Appliquer migration à Neon (`prisma migrate dev`)
 
 **Fichiers:**
 
-- `prisma/schema.prisma`
+- `prisma/schema.prisma` ✅
+- `types/client.ts` ✅
+- `actions/client-action.ts` ✅
+- `features/clients/components/client-edit-form.tsx` ✅ (nouveau)
 - `types/client.ts`
 - `app/actions/client-actions.ts` (update/update)
 - `features/clients/client-form.tsx` (refactor)

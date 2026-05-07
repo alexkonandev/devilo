@@ -6,9 +6,11 @@ import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/layout/page-header";
 import { ClientRowInline } from "./components/client-row-inline";
 import { ClientPagination } from "./components/client-pagination";
-import { getClientsPaginated } from "@/actions/client-action";
+import { ClientEditForm } from "./components/client-edit-form";
+import { ClientInspector } from "./components/client-inspector";
+import { getClientsPaginated, deleteClient } from "@/actions/client-action";
+import { toast } from "sonner";
 import {
-  CurrencyCircleDollarIcon,
   FileTextIcon,
   TrendUpIcon,
   UsersIcon,
@@ -16,6 +18,7 @@ import {
   EnvelopeSimpleIcon,
   SparkleIcon,
   PlusIcon,
+  CurrencyCircleDollar as CurrencyCircleDollarIcon,
 } from "@phosphor-icons/react";
 
 import {
@@ -24,10 +27,10 @@ import {
   DS_INPUT,
   DS_BUTTON,
   DS_BENTO_CARD,
-  DS_ICON_WRAPPER,
-  DS_ICON_SM,
   DS_PAGE_SHELL,
   DS_PAGE_GRID,
+  DS_ICON_SM,
+  DS_ICON_WRAPPER,
 } from "@/lib/design-system";
 
 // ─── Utils ────────────────────────────────────────────────────────────────────
@@ -50,20 +53,9 @@ function healthScore(client: ClientListItem): number {
   return Math.round(rev * 0.5 + conv * 50);
 }
 
-function healthColor(score: number) {
-  if (score >= 80) return { text: "text-emerald-600", bg: "bg-emerald-500" };
-  if (score >= 50) return { text: "text-indigo-600", bg: "bg-indigo-500" };
-  if (score >= 30) return { text: "text-amber-600", bg: "bg-amber-500" };
-  return { text: "text-rose-600", bg: "bg-rose-500" };
-}
-
 // ─── Vue 1 : Liste registre ───────────────────────────────────────────────────
 
-function ClientListView({
-  onSelect,
-}: {
-  onSelect: (c: ClientListItem) => void;
-}) {
+function ClientListView() {
   // === Pagination State ===
   const [clients, setClients] = useState<ClientListItem[]>([]);
   const [page, setPage] = useState(1);
@@ -72,6 +64,20 @@ function ClientListView({
   const [totalPages, setTotalPages] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // === Selection State ===
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // === Detail View State ===
+  const [viewingClient, setViewingClient] = useState<ClientListItem | null>(
+    null,
+  );
+
+  // === Edit Modal State ===
+  const [editingClient, setEditingClient] = useState<ClientListItem | null>(
+    null,
+  );
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // === Feature 1: Feedback copie email ===
   const [copiedAll, setCopiedAll] = useState(false);
@@ -136,6 +142,69 @@ function ClientListView({
     window.URL.revokeObjectURL(url);
   }, [clients]);
 
+  // === Edit Modal Handlers ===
+  const handleEditClient = useCallback((client: ClientListItem) => {
+    setEditingClient(client);
+    setIsEditModalOpen(true);
+  }, []);
+
+  const handleCloseEdit = useCallback(() => {
+    setIsEditModalOpen(false);
+    setEditingClient(null);
+  }, []);
+
+  const handleSaveSuccess = useCallback(() => {
+    handleCloseEdit();
+    // Refresh clients list
+    const fetchClients = async () => {
+      const result = await getClientsPaginated(page, limit, searchQuery);
+      setClients(result.clients);
+      setTotal(result.total);
+      setTotalPages(result.totalPages);
+    };
+    fetchClients();
+  }, [handleCloseEdit, page, limit, searchQuery]);
+
+  // === Selection Handlers ===
+  const handleToggleSelect = useCallback((clientId: string) => {
+    setSelectedIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(clientId)) {
+        newSet.delete(clientId);
+      } else {
+        newSet.add(clientId);
+      }
+      return newSet;
+    });
+  }, []);
+
+  // === View Detail Handler ===
+  const handleViewClient = useCallback((client: ClientListItem) => {
+    setViewingClient(client);
+  }, []);
+
+  const handleCloseDetail = useCallback(() => {
+    setViewingClient(null);
+  }, []);
+
+  // === Delete Handler ===
+  const handleDeleteClient = useCallback(
+    async (client: ClientListItem) => {
+      if (!confirm(`Supprimer le client "${client.name}" ?`)) return;
+      try {
+        await deleteClient(client.id);
+        toast.success("Client supprimé");
+        // Refresh list
+        const result = await getClientsPaginated(page, limit, searchQuery);
+        setClients(result.clients);
+        setTotal(result.total);
+      } catch {
+        toast.error("Erreur lors de la suppression");
+      }
+    },
+    [page, limit, searchQuery],
+  );
+
   // Fetch paginated clients
   useEffect(() => {
     const fetchClients = async () => {
@@ -145,8 +214,8 @@ function ClientListView({
         setClients(result.clients);
         setTotal(result.total);
         setTotalPages(result.totalPages);
-      } catch (err) {
-        console.error("[FETCH_CLIENTS_ERROR]:", err);
+      } catch (_err) {
+        console.error("[FETCH_CLIENTS_ERROR]:", _err);
       } finally {
         setIsLoading(false);
       }
@@ -337,7 +406,7 @@ function ClientListView({
               </div>
 
               {/* Lignes inline */}
-              <div className="overflow-y-auto max-h-[calc(100vh-320px)]">
+              <div className="overflow-y-auto h-[420px]">
                 {isLoading && clients.length === 0 ? (
                   <div className="py-12 text-center">
                     <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
@@ -356,7 +425,11 @@ function ClientListView({
                     <ClientRowInline
                       key={client.id}
                       client={client}
-                      onSelect={onSelect}
+                      isSelected={selectedIds.has(client.id)}
+                      onSelect={handleViewClient}
+                      onEdit={handleEditClient}
+                      onDelete={handleDeleteClient}
+                      onToggleSelect={handleToggleSelect}
                     />
                   ))
                 )}
@@ -606,22 +679,38 @@ function ClientListView({
           </div>
         </div>
       </div>
+
+      {/* Detail View */}
+      {viewingClient && (
+        <div className="fixed top-10 left-16 right-0 bottom-0 z-40 bg-white">
+          <ClientInspector
+            client={viewingClient}
+            onBack={handleCloseDetail}
+            onEdit={handleEditClient}
+          />
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {isEditModalOpen && editingClient && (
+        <ClientEditForm
+          client={{
+            id: editingClient.id,
+            name: editingClient.name,
+            email: editingClient.email,
+            taxId: editingClient.taxId,
+            address: editingClient.address,
+          }}
+          onClose={handleCloseEdit}
+          onSuccess={handleSaveSuccess}
+        />
+      )}
     </div>
   );
 }
 
 // ─── MAIN EXPORT ────────────────────────────────────────────────────────────
 
-interface SpatialClientsViewProps {
-  initialData?: ClientListItem[];
-}
-
-export default function SpatialClientsView({
-  initialData,
-}: SpatialClientsViewProps) {
-  const [selectedClient, setSelectedClient] = useState<ClientListItem | null>(
-    null,
-  );
-
-  return <ClientListView onSelect={setSelectedClient} />;
+export default function SpatialClientsView() {
+  return <ClientListView />;
 }
