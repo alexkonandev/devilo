@@ -72,6 +72,11 @@ describe("Quote Actions - Business Logic Validation", () => {
     ).mockResolvedValue({
       id: "client_abc_123",
     });
+    // Évite le bruit stderr: l'action accède à quote.id après create()
+    (db.quote.create as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: "quote_1",
+    });
+    (db.user.update as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({});
     const input = createMockActiveQuote();
 
     await upsertQuoteAction(input, null);
@@ -79,8 +84,8 @@ describe("Quote Actions - Business Logic Validation", () => {
     expect(db.quote.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          number: "INV-2026-001",
           clientId: "client_abc_123",
+          userId: "user_nomad_123",
         }),
       })
     );

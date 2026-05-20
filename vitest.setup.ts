@@ -6,6 +6,10 @@ vi.mock("next/cache", () => ({
   revalidateTag: vi.fn(),
 }));
 
+vi.mock("@clerk/nextjs/server", () => ({
+  auth: vi.fn(),
+}));
+
 vi.mock("@/lib/auth", () => ({
   getClerkUserId: vi.fn(),
 }));
@@ -26,6 +30,20 @@ vi.mock("@/lib/prisma", () => ({
       update: vi.fn(),
       findMany: vi.fn(),
       findUnique: vi.fn(),
+      findFirst: vi.fn(),
+      count: vi.fn(),
+      delete: vi.fn(),
+      deleteMany: vi.fn(),
+    },
+    clientActivity: {
+      create: vi.fn(),
+      findMany: vi.fn(),
+    },
+    userService: {
+      create: vi.fn(),
+      update: vi.fn(),
+      findMany: vi.fn(),
+      delete: vi.fn(),
     },
     theme: { findMany: vi.fn(), create: vi.fn() },
     // AJOUTER CES DEUX LIGNES :

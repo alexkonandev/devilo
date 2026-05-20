@@ -20,6 +20,8 @@ import { Logo } from "@/components/ui/logo";
 import { cn } from "@/lib/utils";
 import { useQuotes } from "@/features/quotes/components/quote-context";
 import { QuoteRegistryStats } from "@/types/quote-registry";
+import { useReminders } from "@/features/reminders/use-reminders";
+import { ReminderPopover } from "@/features/reminders/reminder-popover";
 
 // Hook sécurisé pour récupérer les stats hors contexte QuoteProvider
 function useSafeQuotes() {
@@ -74,7 +76,8 @@ export function SpatialStatusBar() {
 
   // System health (simulated - in real app, this would come from a health check)
   const [systemHealth] = useState<"healthy" | "warning" | "error">("healthy");
-  const [unreadNotifications] = useState(0);
+  const { totalCount: unreadNotifications } = useReminders();
+  const [isReminderOpen, setIsReminderOpen] = useState(false);
 
   // Focus search when opened
   useEffect(() => {
@@ -236,15 +239,29 @@ export function SpatialStatusBar() {
             </span>
           </div>
 
-          {/* Notifications */}
-          <button className="relative flex items-center justify-center w-6 h-6 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded transition-all">
-            <BellIcon size={14} />
-            {unreadNotifications > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-rose-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center">
-                {unreadNotifications > 9 ? "9+" : unreadNotifications}
-              </span>
-            )}
-          </button>
+          {/* Notifications - Reminder Popover */}
+          <div className="relative">
+            <button
+              onClick={() => setIsReminderOpen((v) => !v)}
+              className={cn(
+                "relative flex items-center justify-center w-6 h-6 rounded transition-all",
+                isReminderOpen
+                  ? "text-indigo-600 bg-indigo-50"
+                  : "text-slate-400 hover:text-slate-600 hover:bg-slate-100",
+              )}
+            >
+              <BellIcon size={14} weight={isReminderOpen ? "fill" : "regular"} />
+              {unreadNotifications > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-3.5 px-1 bg-rose-500 text-white text-[7px] font-bold rounded-full flex items-center justify-center leading-none">
+                  {unreadNotifications > 9 ? "9+" : unreadNotifications}
+                </span>
+              )}
+            </button>
+            <ReminderPopover
+              isOpen={isReminderOpen}
+              onClose={() => setIsReminderOpen(false)}
+            />
+          </div>
         </div>
 
         

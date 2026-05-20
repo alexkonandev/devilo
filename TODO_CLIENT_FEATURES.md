@@ -81,7 +81,7 @@ getClientsAction({
 
 ### 4. Fiche client complète (rich data)
 
-**Status:** 🔄 **IN PROGRESS**  
+**Status:** ✅ **DONE**  
 **Complexité:** High (2h)  
 **Valeur:** Conformité fiscale, facturation légale  
 **Dépend de:** Migration Prisma
@@ -93,16 +93,19 @@ getClientsAction({
   - [x] `addressLine2`, `city`, `postalCode`
   - [x] `country?: String` (default: "CI")
   - [x] `tvaNumber?: String`
+  - [x] `legalForm?: String` (SARL, SAS, SA, EI...)
+  - [x] `representativeName?: String`
+  - [x] `representativePosition?: String`
   - [x] `notes?: String` (textarea)
   - [x] `tags?: Json` (JSON array)
 - [x] Mettre à jour types TypeScript (`ClientFull`, `EditorClient`)
 - [x] UI formulaire édition avec 4 onglets:
   - [x] Coordonnées (nom, email, téléphone)
   - [x] Adresse fiscale (rue, complément, CP, ville, pays)
-  - [x] Info légale (SIRET, TVA intracommunautaire)
+  - [x] Info légale (forme juridique, représentant, RCCM, TVA)
   - [x] Notes internes + Tags
-- [ ] **PENDING:** Intégrer le formulaire dans la liste (bouton Éditer)
-- [ ] **PENDING:** Appliquer migration à Neon (`prisma migrate dev`)
+- [x] Intégrer le formulaire dans la liste (bouton Éditer)
+- [x] Appliquer migration à Neon (`prisma db push`)
 
 **Fichiers:**
 
@@ -118,25 +121,25 @@ getClientsAction({
 
 ### 5. Import CSV clients
 
-**Status:** ⏳ À faire  
+**Status:** ✅ **DONE**  
 **Complexité:** High (2h)  
-**Valeur:** Migration depuis Excel — **critique pour adoption**  
-**Dépend de:** Fiche client complète (champs cibles connus)
+**Valeur:** Adoption rapide, migration depuis Excel/Salesforce  
+**Dépend de:** Feature #4 (rich data schema)
 
 **Tâches:**
 
-- [ ] Modal "Importer des clients"
-- [ ] Upload zone (drag & drop ou file input)
-- [ ] Parser CSV côté client (PapaParse)
-- [ ] Validation ligne par ligne:
-  - Email format valide
-  - Nom obligatoire
-  - SIRET format (14 chiffres) si présent
-  - Détection doublons (email existant)
-- [ ] Preview avant import (10 premières lignes)
-- [ ] Bouton "Importer X clients"
-- [ ] Action serveur `importClientsAction(csvData)`
-- [ ] Rapport post-import: success, erreurs, doublons ignorés
+- [x] Modal "Importer des clients"
+- [x] Upload zone (drag & drop ou file input)
+- [x] Parser CSV côté client (PapaParse)
+- [x] Validation ligne par ligne:
+  - [x] Email format valide
+  - [x] Nom obligatoire
+  - [x] Détection doublons (email existant)
+- [x] Preview avant import (10 premières lignes)
+- [x] Bouton "Importer X clients"
+- [x] Action serveur `importClientsAction(csvData)`
+- [x] Rapport post-import: success, erreurs, doublons ignorés
+- [x] Dépendances installées: `papaparse`, `react-dropzone`
 
 **Format CSV attendu:**
 
@@ -145,37 +148,29 @@ name,email,phone,address,siret,tvaNumber,tags
 "Acme Corp","contact@acme.com","+33123456789","12 rue de Paris","12345678901234","FR12345678901","VIP;Entreprise"
 ```
 
-**Fichiers:**
-
-- `features/clients/components/import-csv-modal.tsx` (new)
-- `app/actions/client-import-action.ts` (new)
-- Dépendance: `papaparse` (npm install)
-
 ---
 
-### 6. Bulk actions (actions de masse)
+### 6. Bulk Actions (Sélection multiple)
 
-**Status:** ⏳ À faire  
-**Complexité:** Medium (1h)  
-**Valeur:** Productivité admin, gestion à grande échelle  
-**Dépend de:** Pagination (sélection cohérente)
+**Status:** ✅ **DONE**  
+**Complexité:** Medium (30 min)  
+**Valeur:** Productivité, gestion de masse  
+**Dépend de:** Rien
 
 **Tâches:**
 
-- [ ] Checkbox en header de liste: "Sélectionner tous (cette page)"
-- [ ] Checkbox par ligne client
-- [ ] Barre d'actions flottante quand sélection:
-  - "Exporter sélection"
-  - "Supprimer" (avec confirmation)
-  - "Ajouter tag" (dropdown)
-- [ ] Action serveur `bulkDeleteClients(ids)`
-- [ ] Action serveur `bulkExportClients(ids)`
-- [ ] Toast confirmation "X clients supprimés"
+- [x] Checkbox "Tout sélectionner" dans le header de la liste
+- [x] Gestion du state `selectedIds` (Set de IDs)
+- [x] Toolbar conditionnelle quand sélection active
+- [x] Affichage compteur "X clients sélectionnés"
+- [x] Bouton "Supprimer" rouge avec confirmation
+- [x] Action serveur `deleteManyClients(ids[])`
+- [x] Refresh automatique après suppression
 
 **Fichiers:**
 
-- `features/clients/components/bulk-action-bar.tsx` (new)
-- `app/actions/client-bulk-actions.ts` (new)
+- `features/clients/spatial-clients-view.tsx` ✅
+- `actions/client-action.ts` ✅
 
 ---
 
@@ -183,17 +178,14 @@ name,email,phone,address,siret,tvaNumber,tags
 
 ### 7. Tags/catégories clients
 
-**Status:** ⏳ À faire  
+**Status:** 🚫 **HORS SPRINT**  
 **Complexité:** Low (30 min)  
 **Valeur:** Segmentation marketing, filtres rapides  
 **Dépend de:** Fiche client complète (champ tags existe)
 
 **Tâches:**
 
-- [ ] Stockage tags en JSON array (Prisma)
-- [ ] UI: input tags avec autocomplétion (comme GitHub labels)
-- [ ] Couleurs prédéfinies: VIP (gold), Prospect (blue), Retard (red), etc.
-- [ ] Filtre rapide dans toolbar: boutons "VIP", "Prospect", "Tous"
+- [ ] (retiré du sprint) Stockage tags / UI tags / filtres tags
 
 **Fichiers:**
 
@@ -204,7 +196,7 @@ name,email,phone,address,siret,tvaNumber,tags
 
 ### 8. Vue Kanban/Timeline (Pipeline client)
 
-**Status:** ⏳ À faire  
+**Status:** ✅ **DONE**  
 **Complexité:** High (3h)  
 **Valeur:** Vue métier visuelle du funnel
 
@@ -218,98 +210,117 @@ name,email,phone,address,siret,tvaNumber,tags
 
 **Tâches:**
 
-- [ ] Toggle vue: "Liste / Kanban" (icons dans toolbar)
-- [ ] Composant `ClientKanbanView`
-- [ ] Drag & drop entre colonnes (ou boutons "Avancer")
-- [ ] Compteurs par colonne
+- [x] Toggle vue: "Liste / Kanban" (icons dans toolbar)
+- [x] Composant `ClientKanbanView`
+- [x] Drag & drop entre colonnes (ou boutons "Avancer")
+- [x] Compteurs par colonne
 
 **Fichiers:**
 
-- `features/clients/components/client-kanban-view.tsx` (new)
+- `features/clients/components/client-kanban-view.tsx` ✅
 
 ---
 
 ### 9. Notes et historique activités
 
-**Status:** ⏳ À faire  
+**Status:** ✅ **DONE**  
 **Complexité:** Medium (1h)  
 **Valeur:** CRM basique, mémoire commerciale
 
 **Tâches:**
 
-- [ ] Nouvelle table `ClientActivity`:
-  ```prisma
-  model ClientActivity {
-    id        String   @id @default(uuid())
-    clientId  String
-    type      String   // 'CALL', 'EMAIL', 'NOTE', 'STATUS_CHANGE'
-    content   String
-    createdAt DateTime @default(now())
-    userId    String
-  }
-  ```
-- [ ] Timeline dans fiche client détail
-- [ ] Quick-add: "Ajouter une note", "Appel passé"
+- [x] Table `ClientActivity` dans Prisma (déjà existante)
+- [x] Timeline dans fiche client détail (`client-inspector.tsx`)
+- [x] Quick-add: "Ajouter une note", "Appel passé"
 
 **Fichiers:**
 
-- `prisma/schema.prisma`
-- `app/actions/client-activity-actions.ts`
-- `features/clients/components/client-activity-timeline.tsx`
+- `prisma/schema.prisma` ✅
+- `app/actions/client-activity-actions.ts` ✅
+- `features/clients/components/client-inspector.tsx` ✅
 
 ---
 
 ### 10. Intégration email (envoi devis)
 
-**Status:** ⏳ À faire  
-**Complexité:** High (4h+)  
+**Status:** ✅ **DONE**  
+**Complexité:** High (4h)  
 **Valeur:** Workflow complet sans quitter l'app  
-**Dépend de:** Intégration tierce (SendGrid/Resend/AWS SES)
+**Dépend de:** Resend
 
 **Tâches:**
 
-- [ ] Configurer provider email (Resend recommandé)
-- [ ] Template email devis personnalisable
-- [ ] Bouton "Envoyer par email" dans détail devis
-- [ ] Pièce jointe PDF auto-générée
-- [ ] Statut "Envoyé" automatique
-- [ ] Log d'emails envoyés dans activité client
+- [x] Installer `resend`
+- [x] Module email: `lib/email.ts` (template HTML avec logo, CTA, responsive)
+- [x] Server action: `actions/send-quote-email.ts`
+  - [x] Génération PDF via `/api/print`
+  - [x] Envoi via Resend avec pièce jointe PDF
+  - [x] Logger dans `ClientActivity` (type EMAIL)
+  - [x] Auto-passage en statut SENT si DRAFT
+- [x] UI: `features/quotes/components/send-email-modal.tsx`
+  - [x] Modal avec destinataire, message optionnel, feedback loading/sent
+- [x] Bouton "Envoyer par email" dans le menu dropdown des devis
+- [x] Bouton direct dans le footer de chaque carte devis
+- [x] Variables d'environnement ajoutées (RESEND_API_KEY)
+
+**Configuration nécessaire:**
+- [ ] Clé API Resend valide (remplacer `re_xxxxxxxxxxxx` dans `.env`)
+- [ ] Domaine vérifié dans Resend
 
 **Fichiers:**
 
-- `lib/email.ts` (config)
-- `app/actions/send-quote-email.ts`
-- `templates/email/quote-send.tsx` (React Email)
+- `lib/email.ts` (nouveau)
+- `actions/send-quote-email.ts` (nouveau)
+- `features/quotes/components/send-email-modal.tsx` (nouveau)
+- `features/quotes/spatial-quotes-view.tsx` (modifié)
+- `.env` (modifié)
 
 ---
 
 ### 11. Rappels automatiques (Insights)
 
-**Status:** ⏳ À faire  
+**Status:** ✅ **DONE**  
 **Complexité:** High (3h)  
 **Valeur:** Proactivité commerciale
 
-**Règles de rappel:**
-
+**Règles de rappel implémentées:**
 - Client sans devis depuis 90j → "À relancer"
 - Devis envoyé, pas de réponse depuis 14j → "Relancer"
 - Client VIP pas de nouveau devis depuis 30j → "Check-in"
 
 **Tâches:**
 
-- [ ] Cron job ou Vercel Cron (1x/jour)
-- [ ] Algo détection rappels
-- [ ] Badge "🔔 3 rappels" dans navbar
-- [ ] Page/liste dédiée des rappels
+- [x] Server action: `actions/reminder-action.ts`
+  - [x] Algorithme de détection des 3 règles
+  - [x] Tri par urgence (daysSince décroissant)
+  - [x] Retourne `ReminderItem[]` avec label, action, lien
+- [x] Hook React: `features/reminders/use-reminders.ts`
+  - [x] Polling automatique toutes les 5 min
+  - [x] `totalCount`, `getCountByType()`, `refresh()`
+- [x] UI: `features/reminders/reminder-popover.tsx`
+  - [x] Popover design system avec 3 icônes par type
+  - [x] Lien d'action direct (créer devis, relancer, check-in)
+  - [x] Compteur de rappels dans le header
+  - [x] Footer avec rafraîchissement manuel
+- [x] Intégration StatusBar: `components/spatial-status-bar.tsx`
+  - [x] Bouton cloche avec badge rouge (nombre de rappels)
+  - [x] Ouverture/fermeture du popover
+- [x] Route API Cron: `app/api/cron/client-reminders/route.ts`
+  - [x] Analyse quotidienne pour tous les utilisateurs
+  - [x] Logs des résultats
+  - [x] Compatible Vercel Cron (config `crons` dans `vercel.json`)
 
 **Fichiers:**
 
-- `app/api/cron/client-reminders/route.ts`
-- `features/reminders/reminder-list.tsx`
+- `actions/reminder-action.ts` (nouveau)
+- `features/reminders/use-reminders.ts` (nouveau)
+- `features/reminders/reminder-popover.tsx` (nouveau)
+- `app/api/cron/client-reminders/route.ts` (nouveau)
+- `components/spatial-status-bar.tsx` (modifié)
 
 ---
 
-## 🗓️ Planning suggéré
+## 🗓️ Réalisé
 
 | Semaine | Features | Focus              |
 | ------- | -------- | ------------------ |
@@ -317,7 +328,8 @@ name,email,phone,address,siret,tvaNumber,tags
 | S2      | 4        | Data complète      |
 | S3      | 5        | Migration adoption |
 | S4      | 6        | Productivité       |
-| S5+     | 7-11     | CRM avancé         |
+| S5      | 10       | Email devis        |
+| **S6**  | **11**   | **Rappels auto**   |
 
 ---
 

@@ -1,8 +1,8 @@
-import { auth } from "@clerk/nextjs/server";
+import { getClerkUserId } from "@/lib/auth";
 import db from "@/lib/prisma";
 
 export const getApiLimitCount = async (): Promise<number> => {
-  const { userId } = await auth();
+  const userId = await getClerkUserId();
 
   if (!userId) return 0;
 

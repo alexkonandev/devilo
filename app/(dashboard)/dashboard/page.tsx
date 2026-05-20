@@ -3,7 +3,6 @@ import { auth } from "@clerk/nextjs/server";
 import db from "@/lib/prisma";
 import { getAdvancedDashboardData } from "@/actions/dashboard-actions"; // Note: sans 's' selon tes règles
 import { DashboardView } from "@/features/dashboard/dashboard-view";
-import { Profession, BusinessModel } from "@/types/dashboard";
 
 export const metadata = {
   title: "Console de Performance | DevisExpress",
@@ -13,14 +12,10 @@ export default async function DashboardPage() {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
 
-  // 1. RÉCUPÉRATION DU PROFIL (Strictement nécessaire pour l'UI personnalisée)
+  // 1. VÉRIFICATION ONBOARDING
   const user = await db.user.findUnique({
     where: { id: userId },
-    select: {
-      profession: true,
-      businessModel: true,
-      isOnboarded: true,
-    },
+    select: { isOnboarded: true },
   });
 
   if (!user?.isOnboarded) {
@@ -61,13 +56,5 @@ export default async function DashboardPage() {
     })),
   };
 
-  return (
-    <DashboardView
-      data={mappedData}
-      profile={{
-        profession: user.profession as unknown as Profession | null,
-        businessModel: user.businessModel as unknown as BusinessModel | null,
-      }}
-    />
-  );
+  return <DashboardView data={mappedData} />;
 }

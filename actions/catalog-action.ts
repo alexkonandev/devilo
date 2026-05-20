@@ -1,10 +1,11 @@
 "use server";
 
 import db from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server";
+import { getClerkUserId } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { CatalogService, ActionResponse, CatalogSource } from "@/types/catalog";
 import { UserService, CatalogOffer } from "@/app/generated/prisma/client";
+import { catalogServiceSchema } from "@/lib/validations/catalog";
 
 /**
  * TYPE DE TRANSITION : Intersection des modèles Prisma
@@ -14,7 +15,7 @@ type PrismaCatalogItem = (Partial<UserService> & Partial<CatalogOffer>) & {
   id: string;
   title: string;
   unitPrice: number;
-  baseCost: number; // Inclus suite à la migration
+  baseCost: number;
   userId: string;
   createdAt: Date;
 };
@@ -31,7 +32,7 @@ function mapToCatalogService(
     title: item.title,
     subtitle: item.subtitle || "",
     unitPrice: item.unitPrice,
-    baseCost: item.baseCost || 0, // Mapping du nouveau champ
+    baseCost: item.baseCost || 0,
     category: (item as CatalogOffer).category || "MES_SERVICES",
     source: source,
     isPremium: (item as CatalogOffer).isPremium ?? false,
@@ -47,7 +48,7 @@ export async function getInventoryAction(): Promise<{
   userServices: CatalogService[];
   platformServices: CatalogService[];
 }> {
-  const { userId: clerkId } = await auth();
+  const clerkId = await getClerkUserId();
   if (!clerkId) return { userServices: [], platformServices: [] };
 
   try {
@@ -81,7 +82,7 @@ export async function getInventoryAction(): Promise<{
 export async function importServiceAction(
   platformServiceId: string
 ): Promise<ActionResponse<CatalogService>> {
-  const { userId: clerkId } = await auth();
+  const clerkId = await getClerkUserId();
   if (!clerkId) return { success: false, error: "AUTH_REQUIRED" };
 
   try {
@@ -91,7 +92,6 @@ export async function importServiceAction(
 
     if (!source) return { success: false, error: "SOURCE_NOT_FOUND" };
 
-    // On initialise le baseCost à 0 lors de l'import : c'est à l'user de définir sa marge.
     const newService = await db.userService.create({
       data: {
         userId: clerkId,
@@ -119,28 +119,23 @@ export async function updateServiceAction(
   id: string,
   data: Partial<CatalogService>
 ): Promise<ActionResponse<CatalogService>> {
-  const { userId: clerkId } = await auth();
+  const clerkId = await getClerkUserId();
   if (!clerkId) return { success: false, error: "AUTH_REQUIRED" };
 
   try {
-    // STRATÉGIE : On construit l'objet data de manière explicite
-    // pour éviter d'envoyer des undefined à Prisma
-    const updatePayload: any = {};
-    if (data.title !== undefined) updatePayload.title = data.title;
-    if (data.subtitle !== undefined) updatePayload.subtitle = data.subtitle;
+    const parsed = catalogServiceSchema.parse(data);
 
-    // On force le cast en Number pour Neon/Prisma
-    if (data.unitPrice !== undefined)
-      updatePayload.unitPrice = Number(data.unitPrice);
-    if (data.baseCost !== undefined)
-      updatePayload.baseCost = Number(data.baseCost);
-
-    console.log("[PRISMA_INPUT]", updatePayload);
+    const updatePayload: Record<string, unknown> = {
+      title: parsed.title,
+      subtitle: parsed.subtitle,
+      unitPrice: parsed.unitPrice,
+      baseCost: parsed.baseCost,
+    };
 
     const updated = await db.userService.update({
       where: {
         id,
-        userId: clerkId, // Sécurité : on vérifie que l'user possède bien le service
+        userId: clerkId,
       },
       data: updatePayload,
     });
@@ -151,18 +146,9 @@ export async function updateServiceAction(
       success: true,
       data: mapToCatalogService(updated as PrismaCatalogItem, "PERSONAL"),
     };
-  } catch (error: any) {
-    // LOG CRUCIAL : C'est ici que tu verras pourquoi Neon rejette le 0
-    console.error("[UPDATE_SERVICE_DETAILED_ERROR]", {
-      message: error.message,
-      code: error.code, // Cherche P2002, P2025, etc.
-      stack: error.stack,
-    });
-
-    return {
-      success: false,
-      error: `UPDATE_FAILED: ${error.code || "UNKNOWN"}`,
-    };
+  } catch (error) {
+    console.error("[UPDATE_SERVICE_ERROR]", error);
+    return { success: false, error: "UPDATE_FAILED" };
   }
 }
 
@@ -172,7 +158,7 @@ export async function updateServiceAction(
 export async function deleteServiceAction(
   id: string
 ): Promise<ActionResponse<boolean>> {
-  const { userId: clerkId } = await auth();
+  const clerkId = await getClerkUserId();
   if (!clerkId) return { success: false, error: "AUTH_REQUIRED" };
 
   try {
@@ -194,17 +180,19 @@ export async function deleteServiceAction(
 export async function createServiceAction(
   data: Partial<CatalogService>
 ): Promise<ActionResponse<CatalogService>> {
-  const { userId: clerkId } = await auth();
+  const clerkId = await getClerkUserId();
   if (!clerkId) return { success: false, error: "AUTH_REQUIRED" };
 
   try {
+    const parsed = catalogServiceSchema.parse(data);
+
     const newService = await db.userService.create({
       data: {
         userId: clerkId,
-        title: data.title || "Nouveau Service",
-        subtitle: data.subtitle || "",
-        unitPrice: Number(data.unitPrice) || 0,
-        baseCost: Number(data.baseCost) || 0,
+        title: parsed.title,
+        subtitle: parsed.subtitle,
+        unitPrice: parsed.unitPrice,
+        baseCost: parsed.baseCost,
       },
     });
 

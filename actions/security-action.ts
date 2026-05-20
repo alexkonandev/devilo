@@ -1,6 +1,7 @@
 "use server";
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
+import { getClerkUserId } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import db from "@/lib/prisma";
@@ -29,19 +30,18 @@ export interface SecurityProfile {
 // ─── Récupération du profil de sécurité complet ──────────────────────────────
 
 export async function getSecurityProfile(): Promise<SecurityProfile> {
-  const { userId, sessionId } = await auth();
+  const userId = await getClerkUserId();
+  const { sessionId } = await auth();
   if (!userId) redirect("/sign-in");
 
   const client = await clerkClient();
 
-  // Sessions actives
   const sessionsResponse = await client.sessions.getSessionList({
     userId,
     status: "active",
   });
 
   const parsedSessions: ParsedSession[] = sessionsResponse.data.map((s) => {
-    // Clerk expose directement browserName, deviceType, ipAddress, city, country
     const browserName = s.latestActivity?.browserName || "Navigateur inconnu";
     const osName = s.latestActivity?.deviceType || "OS inconnu";
     const ip = s.latestActivity?.ipAddress || "—";
@@ -60,16 +60,13 @@ export async function getSecurityProfile(): Promise<SecurityProfile> {
     };
   });
 
-  // Données utilisateur Clerk
   const clerkUser = await client.users.getUser(userId);
   const emailVerified =
     clerkUser.emailAddresses[0]?.verification?.status === "verified";
   const twoFactorEnabled = clerkUser.twoFactorEnabled ?? false;
 
-  // Score : 50 pts email vérifié + 50 pts profil complet
   let score = 0;
   if (emailVerified) score += 50;
-  // Bonus profil : si l'user a un nom de société configuré en BDD
   const user = await db.user.findUnique({
     where: { id: userId },
     select: { companyName: true },
@@ -88,7 +85,7 @@ export async function getSecurityProfile(): Promise<SecurityProfile> {
 // ─── Révocation d'une session ─────────────────────────────────────────────────
 
 export async function revokeSession(sessionId: string) {
-  const { userId } = await auth();
+  const userId = await getClerkUserId();
   if (!userId) return { success: false, error: "UNAUTHORIZED" };
 
   try {
@@ -107,34 +104,29 @@ export async function revokeSession(sessionId: string) {
 // ─── Suppression de compte — atomique avec soft-delete ───────────────────────
 
 export async function deleteAccountSecure(confirmEmail: string) {
-  const { userId } = await auth();
+  const userId = await getClerkUserId();
   if (!userId) return { success: false, error: "UNAUTHORIZED" };
 
   const client = await clerkClient();
   const clerkUser = await client.users.getUser(userId);
   const primaryEmail = clerkUser.emailAddresses[0]?.emailAddress ?? "";
 
-  // Vérification que l'email saisi correspond
   if (confirmEmail.toLowerCase().trim() !== primaryEmail.toLowerCase()) {
     return { success: false, error: "EMAIL_MISMATCH" };
   }
 
   try {
-    // 1. Soft-delete en BDD — marque deletedAt avant toute suppression
     await db.user.update({
       where: { id: userId },
       data: { deletedAt: new Date() },
     });
 
-    // 2. Suppression Clerk
     await client.users.deleteUser(userId);
 
-    // 3. Hard-delete BDD (orphelin impossible si Clerk a réussi)
     await db.user.delete({ where: { id: userId } });
 
     console.log(`[ACCOUNT_TERMINATED]: User ${userId} purged.`);
   } catch (e: unknown) {
-    // Rollback soft-delete si quoi que ce soit échoue
     await db.user
       .update({
         where: { id: userId },

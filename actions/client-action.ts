@@ -4,6 +4,7 @@ import db from "@/lib/prisma";
 import { getClerkUserId } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { ClientListItem } from "@/types/client";
+import { clientSchema } from "@/lib/validations/client";
 
 interface GetClientsPaginatedResult {
   clients: ClientListItem[];
@@ -94,7 +95,17 @@ export async function getClientsPaginated(
         email: client.email,
         phone: client.phone,
         address: client.address,
+        addressLine2: client.addressLine2,
+        city: client.city,
+        postalCode: client.postalCode,
+        country: client.country,
         taxId: client.taxId,
+        tvaNumber: client.tvaNumber,
+        legalForm: client.legalForm,
+        representativeName: client.representativeName,
+        representativePosition: client.representativePosition,
+        notes: client.notes,
+        tags: client.tags || [],
         createdAt: client.createdAt,
         quoteCount: client._count.quotes,
         totalSpent: totalSpent,
@@ -177,7 +188,17 @@ export async function getClients(): Promise<ClientListItem[]> {
         email: client.email,
         phone: client.phone,
         address: client.address,
+        addressLine2: client.addressLine2,
+        city: client.city,
+        postalCode: client.postalCode,
+        country: client.country,
         taxId: client.taxId,
+        tvaNumber: client.tvaNumber,
+        legalForm: client.legalForm,
+        representativeName: client.representativeName,
+        representativePosition: client.representativePosition,
+        notes: client.notes,
+        tags: client.tags || [],
         createdAt: client.createdAt,
         quoteCount: client._count.quotes,
         totalSpent: totalSpent,
@@ -194,44 +215,36 @@ export async function getClients(): Promise<ClientListItem[]> {
  * UPSERT CLIENT (Rich Data)
  * Création ou mise à jour complète avec tous les champs.
  */
-export async function upsertClient(data: {
-  id?: string;
-  name: string;
-  email?: string | null;
-  phone?: string | null;
-  address?: string | null;
-  addressLine2?: string | null;
-  city?: string | null;
-  postalCode?: string | null;
-  country?: string;
-  taxId?: string | null;
-  tvaNumber?: string | null;
-  notes?: string | null;
-  tags?: string[] | null;
-}) {
+export async function upsertClient(data: Record<string, unknown>) {
   try {
     const authId = await getClerkUserId();
     if (!authId) return { success: false, error: "Non autorisé" };
 
+    // Validation Zod
+    const parsed = clientSchema.parse(data);
+
     const clientData = {
-      name: data.name,
-      email: data.email || null,
-      phone: data.phone || null,
-      address: data.address || null,
-      addressLine2: data.addressLine2 || null,
-      city: data.city || null,
-      postalCode: data.postalCode || null,
-      country: data.country || "CI",
-      taxId: data.taxId || null,
-      tvaNumber: data.tvaNumber || null,
-      notes: data.notes || null,
-      tags: data.tags ? (data.tags as unknown as object) : undefined,
+      name: parsed.name,
+      email: parsed.email || null,
+      phone: parsed.phone || null,
+      address: parsed.address || null,
+      addressLine2: parsed.addressLine2 || null,
+      city: parsed.city || null,
+      postalCode: parsed.postalCode || null,
+      country: parsed.country || "CI",
+      taxId: parsed.taxId || null,
+      tvaNumber: parsed.tvaNumber || null,
+      legalForm: parsed.legalForm || null,
+      representativeName: parsed.representativeName || null,
+      representativePosition: parsed.representativePosition || null,
+      notes: parsed.notes || null,
+      tags: parsed.tags || [],
       userId: authId,
     };
 
-    const client = data.id
+    const client = parsed.id
       ? await db.client.update({
-          where: { id: data.id, userId: authId },
+          where: { id: parsed.id, userId: authId },
           data: clientData,
         })
       : await db.client.create({ data: clientData });
@@ -240,7 +253,10 @@ export async function upsertClient(data: {
     revalidatePath("/quotes");
 
     return { success: true, data: client };
-  } catch (err) {
+  } catch (err: unknown) {
+    if (err instanceof Error && err.name === "ZodError") {
+      return { success: false, error: "Données invalides", zodErrors: (err as any).errors };
+    }
     console.error("[UPSERT_CLIENT_ERROR]:", err);
     return { success: false, error: "Erreur technique lors de la sauvegarde" };
   }
@@ -280,7 +296,7 @@ export async function getClientById(clientId: string) {
 
     return {
       ...client,
-      tags: client.tags ? JSON.parse(client.tags as string) : null,
+      tags: client.tags || [],
     };
   } catch (err) {
     console.error("[GET_CLIENT_BY_ID_ERROR]:", err);

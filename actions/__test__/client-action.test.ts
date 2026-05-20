@@ -25,13 +25,19 @@ describe("Client Actions - Business Logic Validation", () => {
       (getClerkUserId as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
         mockUserId
       );
+      (db.client.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+        []
+      );
 
       await getClients();
 
-      expect(db.client.findMany).toHaveBeenCalledWith({
-        where: { userId: mockUserId },
-        orderBy: { name: "asc" },
-      });
+      expect(db.client.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { userId: mockUserId },
+          orderBy: { name: "asc" },
+          include: expect.any(Object),
+        })
+      );
     });
   });
 
@@ -40,7 +46,7 @@ describe("Client Actions - Business Logic Validation", () => {
       name: "Acme Corp",
       email: "contact@acme.com",
       address: "123 Rue du Succès",
-      siret: "12345678901234",
+      taxId: "CI-ABC-2024-A-12345",
     };
 
     it("devrait rejeter l'opération si l'utilisateur n'est pas authentifié", async () => {
@@ -64,7 +70,21 @@ describe("Client Actions - Business Logic Validation", () => {
 
       expect(db.client.create).toHaveBeenCalledWith({
         data: {
-          ...validClientData,
+          name: validClientData.name,
+          email: validClientData.email,
+          phone: null,
+          address: validClientData.address,
+          addressLine2: null,
+          city: null,
+          postalCode: null,
+          country: "CI",
+          taxId: validClientData.taxId,
+          tvaNumber: null,
+          legalForm: null,
+          representativeName: null,
+          representativePosition: null,
+          notes: null,
+          tags: [],
           userId: mockUserId,
         },
       });
@@ -82,7 +102,21 @@ describe("Client Actions - Business Logic Validation", () => {
       expect(db.client.update).toHaveBeenCalledWith({
         where: { id: clientId, userId: mockUserId },
         data: {
-          ...validClientData,
+          name: validClientData.name,
+          email: validClientData.email,
+          phone: null,
+          address: validClientData.address,
+          addressLine2: null,
+          city: null,
+          postalCode: null,
+          country: "CI",
+          taxId: validClientData.taxId,
+          tvaNumber: null,
+          legalForm: null,
+          representativeName: null,
+          representativePosition: null,
+          notes: null,
+          tags: [],
           userId: mockUserId,
         },
       });

@@ -51,13 +51,16 @@ export function ClientEditForm({
     phone: client?.phone || null,
     taxId: client?.taxId || null,
     tvaNumber: client?.tvaNumber || null,
+    legalForm: client?.legalForm || null,
+    representativeName: client?.representativeName || null,
+    representativePosition: client?.representativePosition || null,
     address: client?.address || null,
     addressLine2: client?.addressLine2 || null,
     city: client?.city || null,
     postalCode: client?.postalCode || null,
     country: client?.country || "CI",
     notes: client?.notes || null,
-    tags: client?.tags || null,
+    tags: client?.tags || [],
   });
   const [tagInput, setTagInput] = useState("");
 
@@ -89,7 +92,7 @@ export function ClientEditForm({
 
   const removeTag = (tagToRemove: string) => {
     const newTags = (formData.tags || []).filter((t) => t !== tagToRemove);
-    setFormData({ ...formData, tags: newTags.length ? newTags : null });
+    setFormData({ ...formData, tags: newTags });
   };
 
   const tabs = [
@@ -304,7 +307,7 @@ export function ClientEditForm({
                   Pays
                 </label>
                 <select
-                  value={formData.country}
+                  value={formData.country || ""}
                   onChange={(e) =>
                     setFormData({ ...formData, country: e.target.value })
                   }
@@ -325,6 +328,71 @@ export function ClientEditForm({
           {/* Tab: Legal */}
           {activeTab === "legal" && (
             <div className="space-y-4">
+              <div>
+                <label className={cn(DS_MICRO, "text-slate-500 block mb-1.5")}>
+                  Forme juridique
+                </label>
+                <select
+                  value={formData.legalForm || ""}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      legalForm: e.target.value || null,
+                    })
+                  }
+                  className={cn(DS_INPUT, "w-full")}
+                >
+                  <option value="">Sélectionner...</option>
+                  <option value="EI">Entreprise Individuelle (EI)</option>
+                  <option value="SARL">SARL</option>
+                  <option value="SAS">SAS</option>
+                  <option value="SA">SA</option>
+                  <option value="SCS">SCS</option>
+                  <option value="SCA">SCA</option>
+                  <option value="SNC">SNC</option>
+                  <option value="GIE">GIE</option>
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label
+                    className={cn(DS_MICRO, "text-slate-500 block mb-1.5")}
+                  >
+                    Nom du représentant
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.representativeName || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        representativeName: e.target.value || null,
+                      })
+                    }
+                    placeholder="Prénom Nom"
+                    className={cn(DS_INPUT, "w-full")}
+                  />
+                </div>
+                <div>
+                  <label
+                    className={cn(DS_MICRO, "text-slate-500 block mb-1.5")}
+                  >
+                    Fonction
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.representativePosition || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        representativePosition: e.target.value || null,
+                      })
+                    }
+                    placeholder="DG, PDG, Gérant..."
+                    className={cn(DS_INPUT, "w-full")}
+                  />
+                </div>
+              </div>
               <div>
                 <label className={cn(DS_MICRO, "text-slate-500 block mb-1.5")}>
                   Identifiant fiscal (RCCM, SIRET, NCC...)
@@ -372,7 +440,7 @@ export function ClientEditForm({
                 <label
                   className={cn(
                     DS_MICRO,
-                    "text-slate-500 block mb-1.5 flex items-center gap-1.5",
+                    "text-slate-500 mb-1.5 flex items-center gap-1.5",
                   )}
                 >
                   <Tag size={14} />
@@ -420,7 +488,7 @@ export function ClientEditForm({
                 <label
                   className={cn(
                     DS_MICRO,
-                    "text-slate-500 block mb-1.5 flex items-center gap-1.5",
+                    "text-slate-500 mb-1.5 flex items-center gap-1.5",
                   )}
                 >
                   <FileText size={14} />

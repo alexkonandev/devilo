@@ -510,77 +510,7 @@ export function SpatialCatalogView() {
   return (
     <div className={cn(DS_PAGE_SHELL, "px-4 py-3")}>
       <div className={DS_PAGE_GRID}>
-        {/* ROW 0 — KPI Bento (4 × col-span-3) */}
-        <div
-          className={cn(DS_BENTO_CARD, "col-span-3 flex items-center gap-3")}
-        >
-          <div className={cn(DS_ICON_WRAPPER, "bg-indigo-50")}>
-            <CubeIcon
-              size={DS_ICON_SM}
-              className="text-indigo-600"
-              weight="bold"
-            />
-          </div>
-          <div>
-            <p className="text-lg font-black text-slate-900 tabular-nums leading-none">
-              {kpiStats.totalServices}
-            </p>
-            <p className={cn(DS_MICRO, "text-slate-400")}>Services</p>
-          </div>
-        </div>
-        <div
-          className={cn(DS_BENTO_CARD, "col-span-3 flex items-center gap-3")}
-        >
-          <div className={cn(DS_ICON_WRAPPER, "bg-indigo-50")}>
-            <TrendUpIcon
-              size={DS_ICON_SM}
-              className="text-indigo-600"
-              weight="bold"
-            />
-          </div>
-          <div>
-            <p className="text-lg font-black text-slate-900 tabular-nums leading-none">
-              {kpiStats.avgMargin}%
-            </p>
-            <p className={cn(DS_MICRO, "text-slate-400")}>Marge moy.</p>
-          </div>
-        </div>
-        <div
-          className={cn(DS_BENTO_CARD, "col-span-3 flex items-center gap-3")}
-        >
-          <div className={cn(DS_ICON_WRAPPER, "bg-amber-50")}>
-            <StarIcon
-              size={DS_ICON_SM}
-              className="text-amber-600"
-              weight="bold"
-            />
-          </div>
-          <div>
-            <p className="text-lg font-black text-slate-900 tabular-nums leading-none">
-              {servicesWithMetrics.filter((s) => s.quadrant === "STARS").length}
-            </p>
-            <p className={cn(DS_MICRO, "text-slate-400")}>Stars</p>
-          </div>
-        </div>
-        <div
-          className={cn(DS_BENTO_CARD, "col-span-3 flex items-center gap-3")}
-        >
-          <div className={cn(DS_ICON_WRAPPER, "bg-emerald-50")}>
-            <CurrencyCircleDollarIcon
-              size={DS_ICON_SM}
-              className="text-emerald-600"
-              weight="bold"
-            />
-          </div>
-          <div>
-            <p className="text-lg font-black text-slate-900 tabular-nums leading-none">
-              {formatCompact(kpiStats.totalValue)}
-            </p>
-            <p className={cn(DS_MICRO, "text-slate-400")}>Valeur totale XOF</p>
-          </div>
-        </div>
-
-        {/* ROW 1 — Filtres + Vue principale + Détail */}
+        {/* ROW 0 — Filtres + Vue principale + Détail */}
         <div className="col-span-2 overflow-hidden">{leftSlot}</div>
         <div
           className={cn(

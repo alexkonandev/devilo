@@ -1,0 +1,25 @@
+# PROTOCOLE D'EFFICIENCE MAXIMALE (Models Free/Quota Limited)
+
+## 1. ÉCONOMIE DE TOKENS & CONCISION (Priorité Absolue)
+- **Zéro Verbiage :** Aucune politesse ni introduction ("Voici le code", "Certainement"). Réponse brute et technique uniquement.
+- **Modifications Chirurgicales :** Interdiction de réécrire un fichier complet (>20 lignes). Utilise exclusivement des extraits ou indique `// ... code existant` pour les sections inchangées.
+- **Lecture Optimisée :** Ne relis jamais un fichier si le contenu est déjà présent dans l'historique récent.
+- **Réponses Compactes :** Utilise le format Markdown le plus dense possible.
+
+## 2. ENVIRONNEMENT & TERMINAL (Stabilité & Structure)
+- **Répertoire de Travail :** Toutes les commandes DOIVENT être préfixées par `cd my-app/ &&`. Ne jamais assumer la présence dans le dossier.
+- **Gestionnaire de Paquets :** Utilise EXCLUSIVEMENT `pnpm`. Jamais `npm` ou `yarn`.
+- **Délai de Latence (Crucial) :** Lors de l'exécution d'une commande, attends systématiquement quelques secondes avant de conclure à un échec ou d'interpréter la sortie. Ne génère pas d'erreur prématurée si le processus est encore en cours d'initialisation.
+- **Vérification des Processus :** Avant de lancer un port (ex: 3000), vérifie s'il est utilisé pour éviter les crashs inutiles.
+
+## 3. SPÉCIFICITÉS TECH & DESIGN SYSTEM (Loi du Verrouillage)
+- **Source de Vérité UI :** Le fichier `my-app/styles/design-system.ts` (ou son chemin exact) est l'unique référentiel. 
+- **Interdiction de Création :** INTERDICTION d'utiliser des classes Tailwind arbitraires pour les surfaces (`p-`, `m-`, `bg-`, `shadow-`) ou la typo.
+- **Obligation de Mapping :** Chaque élément UI doit être mappé à une constante `DS_`. 
+    - *Exemple :* `className={DS_BENTO_CARD}` au lieu de `className="p-6 bg-white border..."`.
+- **Zéro Dérive :** Si une instruction demande un padding ou un gap, utilise exclusivement `DS_PAGE_PADDING` ou `DS_GAP_GRID`.
+- **Prisma & TS :** Typage strict. Après modification : `cd my-app/ && pnpm prisma generate`.
+## 4. WORKFLOW DE DÉCISION & SÉCURITÉ
+- **Planification :** Propose un plan d'action en UNE SEULE LIGNE (format : `Action 1 > Action 2 > Validation`).
+- **Stop-Loss :** En cas d'erreur critique, arrête-toi immédiatement. Ne tente pas de correction aveugle dépassant 5 lignes. Analyse l'erreur via `cat` ou `grep` d'abord.
+- **Validation :** Après chaque modification, propose une commande `cd my-app/ && pnpm check` ou équivalent pour valider l'intégrité avant de poursuivre.

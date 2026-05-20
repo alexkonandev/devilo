@@ -9,19 +9,19 @@ import {
   MagnifyingGlassIcon,
   FileTextIcon,
   XCircleIcon,
-  CurrencyCircleDollarIcon,
-  TrendUpIcon,
-  ClockIcon,
   PlusIcon,
   PencilSimpleIcon,
+  PaperPlaneTilt,
 } from "@phosphor-icons/react";
 import { QuoteStatus, QuoteRegistryItem } from "@/types/quote-registry";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SendEmailModal } from "./components/send-email-modal";
 import {
   DS_MICRO,
   DS_LABEL,
@@ -76,34 +76,13 @@ const STATUS_STYLE: Record<
 };
 
 // ═══════════════════════════════════════════════════════════════
-// KPI HELPERS
-// ═══════════════════════════════════════════════════════════════
-
-function useQuoteStats() {
-  const { stats } = useQuotes();
-
-  const formatCFA = (amount: number) =>
-    new Intl.NumberFormat("fr-FR", {
-      style: "currency",
-      currency: "XOF",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-
-  return { stats, formatCFA };
-}
-
-// ═══════════════════════════════════════════════════════════════
-// QUOTE BENTO CARD - Registre scrollable
-// ═══════════════════════════════════════════════════════════════
-
-// ═══════════════════════════════════════════════════════════════
 // QUOTE BENTO CARD — Registre scrollable
 // ═══════════════════════════════════════════════════════════════
 
 function QuoteBentoCard({ quote }: { quote: QuoteRegistryItem }) {
   const { quickStatusChange } = useQuotes();
   const style = STATUS_STYLE[quote.status];
+  const [isEmailModalOpen, setIsEmailModalOpen] = React.useState(false);
 
   const totalHT = quote.lines.reduce(
     (acc, ln) => acc + ln.unitPrice * ln.quantity,
@@ -118,111 +97,146 @@ function QuoteBentoCard({ quote }: { quote: QuoteRegistryItem }) {
     }).format(n);
 
   return (
-    <div className={cn(DS_BENTO_CARD, "flex flex-col gap-3")}>
-      {/* Header */}
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className={cn(DS_MONO, "font-bold text-slate-900 truncate")}>
-            {quote.client.name}
-          </p>
-          <p className={cn(DS_MICRO, "text-slate-400")}>{quote.number}</p>
-        </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              className={cn(
-                "px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider border shrink-0",
-                style.bg,
-                style.text,
-                style.border,
-              )}
-            >
-              <span
+    <>
+      <div className={cn(DS_BENTO_CARD, "flex flex-col gap-3")}>
+        {/* Header */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <p className={cn(DS_MONO, "font-bold text-slate-900 truncate")}>
+              {quote.client.name}
+            </p>
+            <p className={cn(DS_MICRO, "text-slate-400")}>{quote.number}</p>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
                 className={cn(
-                  "w-1.5 h-1.5 rounded-full inline-block mr-1",
-                  style.dot,
-                )}
-              />
-              {quote.status}
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="min-w-[120px]">
-            {(
-              ["DRAFT", "SENT", "ACCEPTED", "PAID", "REJECTED"] as QuoteStatus[]
-            ).map((s) => (
-              <DropdownMenuItem
-                key={s}
-                onClick={() => quickStatusChange(quote.id, s)}
-                className={cn(
-                  "text-[10px] font-bold uppercase cursor-pointer",
-                  quote.status === s && "bg-slate-100",
+                  "px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider border shrink-0",
+                  style.bg,
+                  style.text,
+                  style.border,
                 )}
               >
                 <span
                   className={cn(
-                    "w-1.5 h-1.5 rounded-full mr-2",
-                    STATUS_STYLE[s].dot,
+                    "w-1.5 h-1.5 rounded-full inline-block mr-1",
+                    style.dot,
                   )}
                 />
-                {s}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      {/* Montant */}
-      <div className="flex items-baseline gap-1">
-        <span className="text-xl font-black text-slate-900 tabular-nums">
-          {new Intl.NumberFormat("fr-FR").format(totalHT)}
-        </span>
-        <span className={cn(DS_LABEL, "text-slate-400")}>XOF HT</span>
-      </div>
-
-      {/* Lignes */}
-      {quote.lines.length > 0 && (
-        <div className="space-y-1">
-          {quote.lines.slice(0, 2).map((ln, i) => (
-            <div key={i} className="flex items-center justify-between">
-              <span
+                {quote.status}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-[120px]">
+              {(
+                ["DRAFT", "SENT", "ACCEPTED", "PAID", "REJECTED"] as QuoteStatus[]
+              ).map((s) => (
+                <DropdownMenuItem
+                  key={s}
+                  onClick={() => quickStatusChange(quote.id, s)}
+                  className={cn(
+                    "text-[10px] font-bold uppercase cursor-pointer",
+                    quote.status === s && "bg-slate-100",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "w-1.5 h-1.5 rounded-full mr-2",
+                      STATUS_STYLE[s].dot,
+                    )}
+                  />
+                  {s}
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => setIsEmailModalOpen(true)}
                 className={cn(
-                  DS_MICRO,
-                  "text-slate-500 truncate max-w-[160px]",
+                  "text-[10px] font-bold uppercase cursor-pointer text-indigo-600",
                 )}
               >
-                {ln.title}
-              </span>
-              <span className={cn(DS_MONO, "text-slate-400")}>
-                {ln.quantity} × {formatCFA(ln.unitPrice)}
-              </span>
-            </div>
-          ))}
-          {quote.lines.length > 2 && (
-            <span className={cn(DS_MICRO, "text-slate-300")}>
-              +{quote.lines.length - 2} ligne(s)
-            </span>
-          )}
+                <PaperPlaneTilt size={12} weight="bold" className="mr-2" />
+                Envoyer par email
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-      )}
 
-      {/* Footer */}
-      <div className="flex items-center justify-between pt-1 border-t border-slate-100">
-        <span className={cn(DS_MICRO, "text-slate-400")}>
-          {new Date(quote.issueDate).toLocaleDateString("fr-FR", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-          })}
-        </span>
-        <Link
-          href={`/quotes/new?id=${quote.id}`}
-          className={cn(DS_BUTTON, "py-1 px-2 text-[9px]")}
-        >
-          <PencilSimpleIcon size={10} weight="bold" />
-          Éditer
-        </Link>
+        {/* Montant */}
+        <div className="flex items-baseline gap-1">
+          <span className="text-xl font-black text-slate-900 tabular-nums">
+            {new Intl.NumberFormat("fr-FR").format(totalHT)}
+          </span>
+          <span className={cn(DS_LABEL, "text-slate-400")}>XOF HT</span>
+        </div>
+
+        {/* Lignes */}
+        {quote.lines.length > 0 && (
+          <div className="space-y-1">
+            {quote.lines.slice(0, 2).map((ln, i) => (
+              <div key={i} className="flex items-center justify-between">
+                <span
+                  className={cn(
+                    DS_MICRO,
+                    "text-slate-500 truncate max-w-[160px]",
+                  )}
+                >
+                  {ln.title}
+                </span>
+                <span className={cn(DS_MONO, "text-slate-400")}>
+                  {ln.quantity} × {formatCFA(ln.unitPrice)}
+                </span>
+              </div>
+            ))}
+            {quote.lines.length > 2 && (
+              <span className={cn(DS_MICRO, "text-slate-300")}>
+                +{quote.lines.length - 2} ligne(s)
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+          <span className={cn(DS_MICRO, "text-slate-400")}>
+            {new Date(quote.issueDate).toLocaleDateString("fr-FR", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            })}
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setIsEmailModalOpen(true)}
+              className={cn(
+                DS_BUTTON,
+                "py-1 px-2 text-[9px] bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-200",
+              )}
+              title="Envoyer par email"
+            >
+              <PaperPlaneTilt size={10} weight="bold" />
+            </button>
+            <Link
+              href={`/quotes/new?id=${quote.id}`}
+              className={cn(DS_BUTTON, "py-1 px-2 text-[9px]")}
+            >
+              <PencilSimpleIcon size={10} weight="bold" />
+              Éditer
+            </Link>
+          </div>
+        </div>
       </div>
-    </div>
+
+      {isEmailModalOpen && (
+        <SendEmailModal
+          quoteId={quote.id}
+          quoteNumber={quote.number}
+          clientName={quote.client.name || ""}
+          clientEmail={quote.client.email || ""}
+          isOpen={isEmailModalOpen}
+          onClose={() => setIsEmailModalOpen(false)}
+        />
+      )}
+    </>
   );
 }
 
@@ -232,7 +246,6 @@ function QuoteBentoCard({ quote }: { quote: QuoteRegistryItem }) {
 
 export function SpatialQuotesView() {
   const { filteredQuotes, searchQuery, setSearchQuery } = useQuotes();
-  const { stats, formatCFA } = useQuoteStats();
 
   return (
     <div className="h-full flex flex-col">
@@ -249,111 +262,7 @@ export function SpatialQuotesView() {
 
       <div className={DS_PAGE_SHELL}>
         <div className={cn(DS_PAGE_GRID, "p-4")}>
-          {/* ROW 0 — KPI 1: En-cours */}
-          <div
-            className={cn(DS_BENTO_CARD, "col-span-3 flex items-center gap-3")}
-          >
-            <div className={cn(DS_ICON_WRAPPER, "bg-indigo-50")}>
-              <ClockIcon
-                size={DS_ICON_SM}
-                className="text-indigo-600"
-                weight="bold"
-              />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p
-                className={cn(
-                  DS_MONO,
-                  "font-bold text-slate-900 text-lg leading-none",
-                )}
-              >
-                {formatCFA(stats.totalPipelineValue)}
-              </p>
-              <p className={cn(DS_MICRO, "text-slate-400 mt-0.5")}>
-                {stats.countByStatus.SENT} envoyés
-              </p>
-            </div>
-          </div>
-
-          {/* ROW 0 — KPI 2: Conversion */}
-          <div
-            className={cn(DS_BENTO_CARD, "col-span-3 flex items-center gap-3")}
-          >
-            <div className={cn(DS_ICON_WRAPPER, "bg-emerald-50")}>
-              <TrendUpIcon
-                size={DS_ICON_SM}
-                className="text-emerald-600"
-                weight="bold"
-              />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p
-                className={cn(
-                  DS_MONO,
-                  "font-bold text-slate-900 text-lg leading-none",
-                )}
-              >
-                {stats.conversionRate.toFixed(1)}%
-              </p>
-              <p className={cn(DS_MICRO, "text-slate-400 mt-0.5")}>
-                Conversion
-              </p>
-            </div>
-          </div>
-
-          {/* ROW 0 — KPI 3: Encaissé */}
-          <div
-            className={cn(DS_BENTO_CARD, "col-span-3 flex items-center gap-3")}
-          >
-            <div className={cn(DS_ICON_WRAPPER, "bg-emerald-50")}>
-              <CurrencyCircleDollarIcon
-                size={DS_ICON_SM}
-                className="text-emerald-600"
-                weight="bold"
-              />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p
-                className={cn(
-                  DS_MONO,
-                  "font-bold text-slate-900 text-lg leading-none",
-                )}
-              >
-                {formatCFA(stats.totalCashCollected)}
-              </p>
-              <p className={cn(DS_MICRO, "text-slate-400 mt-0.5")}>
-                {stats.countByStatus.PAID} payés
-              </p>
-            </div>
-          </div>
-
-          {/* ROW 0 — KPI 4: Brouillons */}
-          <div
-            className={cn(DS_BENTO_CARD, "col-span-3 flex items-center gap-3")}
-          >
-            <div className={cn(DS_ICON_WRAPPER, "bg-amber-50")}>
-              <FileTextIcon
-                size={DS_ICON_SM}
-                className="text-amber-600"
-                weight="bold"
-              />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p
-                className={cn(
-                  DS_MONO,
-                  "font-bold text-slate-900 text-lg leading-none",
-                )}
-              >
-                {stats.countByStatus.DRAFT}
-              </p>
-              <p className={cn(DS_MICRO, "text-slate-400 mt-0.5")}>
-                Brouillons
-              </p>
-            </div>
-          </div>
-
-          {/* ROW 1 — Recherche */}
+          {/* Recherche */}
           <div className="col-span-12">
             <div className="relative max-w-sm">
               <MagnifyingGlassIcon

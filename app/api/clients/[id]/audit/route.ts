@@ -52,6 +52,7 @@ export async function GET(
       id: client.id,
       name: client.name,
       email: client.email,
+      phone: client.phone,
       taxId: client.taxId,
       address: client.address,
       createdAt: client.createdAt,

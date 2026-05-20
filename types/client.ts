@@ -12,6 +12,17 @@ export interface ClientListItem {
   phone: string | null;
   taxId: string | null; // Identifiant fiscal (ex: RCCM, SIRET, etc.)
   address: string | null;
+  // Champs "rich data" (optionnels en liste; utilisés par l'inspector/export)
+  addressLine2?: string | null;
+  city?: string | null;
+  postalCode?: string | null;
+  country?: string;
+  tvaNumber?: string | null;
+  legalForm?: string | null;
+  representativeName?: string | null;
+  representativePosition?: string | null;
+  notes?: string | null;
+  tags?: string[];
   totalSpent: number; // Calculé via agrégation pour le ROI business
   quoteCount: number; // KPI de volume
   createdAt: Date;
@@ -43,7 +54,7 @@ export interface ClientFull {
   taxId: string | null; // SIRET / NCC / RCCM
   tvaNumber: string | null; // TVA intracommunautaire
   notes: string | null;
-  tags: string[] | null;
+  tags: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -55,17 +66,20 @@ export interface ClientFull {
 export interface EditorClient {
   id?: string;
   name: string;
-  email: string | null;
-  phone: string | null;
-  taxId: string | null;
-  tvaNumber: string | null;
-  address: string | null;
-  addressLine2: string | null;
-  city: string | null;
-  postalCode: string | null;
-  country: string;
-  notes: string | null;
-  tags: string[] | null;
+  email?: string | null;
+  phone?: string | null;
+  taxId?: string | null; // RCCM / SIRET
+  tvaNumber?: string | null; // Numéro de TVA
+  legalForm?: string | null; // Forme juridique (SARL, SAS, etc.)
+  representativeName?: string | null; // Nom du représentant légal
+  representativePosition?: string | null; // Fonction (DG, PDG, etc.)
+  address?: string | null;
+  addressLine2?: string | null;
+  city?: string | null;
+  postalCode?: string | null;
+  country?: string | null;
+  notes?: string | null;
+  tags?: string[];
 }
 
 export type ClientActionResponse = ActionResponse<Client>;
