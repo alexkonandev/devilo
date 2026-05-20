@@ -1,5 +1,5 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
-import { auth } from "@clerk/nextjs/server";
+import { getClerkUserId } from "@/lib/auth";
 import db from "@/lib/prisma";
 
 const f = createUploadthing();
@@ -7,7 +7,7 @@ const f = createUploadthing();
 export const ourFileRouter = {
   companyLogo: f({ image: { maxFileSize: "2MB", maxFileCount: 1 } })
     .middleware(async () => {
-      const { userId } = await auth();
+      const userId = await getClerkUserId();
       if (!userId) throw new Error("Unauthorized");
       return { userId };
     })

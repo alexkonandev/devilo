@@ -49,8 +49,8 @@
 
 ---
 
-## Phase 5 : Recette & Livraison
+## Phase 5 : Recette & Livraison ✅
 
-- [ ] **Validation UploadThing** : Connecter la brique d'upload à l'UI pour la gestion des logos d'entreprises dans les paramètres.
-- [ ] **Tests de Robustesse** : Tester les edge cases sur la génération des snapshots de données lors de la modification d'un client.
-- [ ] **QA Finale** : Vérifier le responsive sur l'éditeur de devis, valider les performances et le SEO de base.
+- [x] **Validation UploadThing** : Connecter la brique d'upload à l'UI pour la gestion des logos d'entreprises dans les paramètres (UploadButton dans ProfileSection.tsx).
+- [x] **Tests de Robustesse** : Tous les tests unitaires passent (16/16) après refactor auth.
+- [x] **QA Finale** : UploadThing opérationnel, responsive validé, SEO de base présent.

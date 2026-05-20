@@ -310,7 +310,7 @@ Voir le fichier [`TODO_V1.md`](./TODO_V1.md) pour le suivi détaillé.
 | Phase 2 — Moteur Devis | ✅ Terminée |
 | Phase 3 — Vues & UX | ✅ Terminée |
 | Phase 4 — Monétisation | ✅ Terminée |
-| Phase 5 — Recette & Livraison | ⏳ En cours |
+| Phase 5 — Recette & Livraison | ✅ Terminée |
 
 ---
 

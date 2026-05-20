@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import db from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server";
+import * as authModule from "@/lib/auth";
 import {
   getInventoryAction,
   createServiceAction,
@@ -15,9 +15,7 @@ describe("Catalog Actions - Business Logic Validation", () => {
 
   describe("getInventoryAction", () => {
     it("devrait retourner des listes vides si non authentifié", async () => {
-      (auth as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
-        userId: null,
-      });
+      vi.mocked(authModule.getClerkUserId).mockResolvedValue(null);
 
       const res = await getInventoryAction();
       expect(res).toEqual({ userServices: [], platformServices: [] });
@@ -26,15 +24,9 @@ describe("Catalog Actions - Business Logic Validation", () => {
     });
 
     it("devrait appeler userService.findMany et catalogOffer.findMany si authentifié", async () => {
-      (auth as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
-        userId: "user_123",
-      });
-      (db.userService.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
-        []
-      );
-      (db.catalogOffer.findMany as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
-        []
-      );
+      vi.mocked(authModule.getClerkUserId).mockResolvedValue("user_123");
+      vi.mocked(db.userService.findMany as any).mockResolvedValue([]);
+      vi.mocked(db.catalogOffer.findMany as any).mockResolvedValue([]);
 
       await getInventoryAction();
 
@@ -50,9 +42,7 @@ describe("Catalog Actions - Business Logic Validation", () => {
 
   describe("createServiceAction", () => {
     it("devrait rejeter l'opération si l'utilisateur n'est pas authentifié", async () => {
-      (auth as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
-        userId: null,
-      });
+      vi.mocked(authModule.getClerkUserId).mockResolvedValue(null);
 
       const result = await createServiceAction({ title: "SEO", unitPrice: 500 });
       expect(result.success).toBe(false);
@@ -62,9 +52,7 @@ describe("Catalog Actions - Business Logic Validation", () => {
 
   describe("updateServiceAction / deleteServiceAction", () => {
     it("devrait rejeter l'opération si l'utilisateur n'est pas authentifié", async () => {
-      (auth as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
-        userId: null,
-      });
+      vi.mocked(authModule.getClerkUserId).mockResolvedValue(null);
 
       const u = await updateServiceAction("svc_1", { title: "X" });
       expect(u.success).toBe(false);

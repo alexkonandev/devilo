@@ -3,6 +3,8 @@
 import React, { useState, useCallback, useMemo } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { UploadButton } from "@/lib/uploadthing";
+import { updateCompanyLogo } from "@/actions/logo-action";
 import {
   BuildingOfficeIcon,
   FileTextIcon,
@@ -339,23 +341,39 @@ export function BentoProfileCard({
         <div>
           <h4 className={cn(DS.label, "mb-3")}>Logo Professionnel</h4>
           <div className="border-2 border-dashed border-slate-300 rounded-lg p-4 hover:border-indigo-400 transition-colors">
-            <div className="text-center">
+            <div className="text-center space-y-4">
               {watchedValues.companyLogo ? (
                 <div className="space-y-3">
-                  <div className="w-16 h-16 mx-auto bg-slate-100 rounded flex items-center justify-center">
+                  <div className="w-24 h-24 mx-auto bg-slate-100 rounded flex items-center justify-center">
                     <Image
                       src={watchedValues.companyLogo}
                       alt="Logo"
-                      width={64}
-                      height={64}
+                      width={96}
+                      height={96}
                       className="object-contain"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <p className="text-xs text-slate-600">Logo chargé</p>
+                  <p className="text-xs text-slate-600">Logo chargé</p>
+                  <div className="flex items-center justify-center gap-2">
+                    <UploadButton
+                      endpoint="companyLogo"
+                      className="ut-button:bg-indigo-600 ut-button:h-8 ut-button:text-xs ut-button:rounded ut-button:px-3 ut-button:py-1 ut-allowed-content:hidden ut-button:ut-uploading:bg-indigo-400"
+                      onClientUploadComplete={(res) => {
+                        if (res?.[0]?.url) {
+                          setValue("companyLogo", res[0].url);
+                          updateCompanyLogo(res[0].url);
+                        }
+                      }}
+                      onUploadError={(error: Error) => {
+                        console.error("[UPLOAD_ERROR]:", error.message);
+                      }}
+                    />
                     <button
                       type="button"
-                      onClick={() => setValue("companyLogo", "")}
+                      onClick={() => {
+                        setValue("companyLogo", "");
+                        updateCompanyLogo("");
+                      }}
                       className="text-xs text-rose-600 hover:text-rose-700"
                     >
                       Supprimer
@@ -364,37 +382,40 @@ export function BentoProfileCard({
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <div className="w-16 h-16 mx-auto bg-slate-100 rounded flex items-center justify-center">
-                    <BuildingOfficeIcon size={24} className="text-slate-400" />
+                  <div className="w-24 h-24 mx-auto bg-slate-100 rounded flex items-center justify-center">
+                    <BuildingOfficeIcon size={32} className="text-slate-400" />
                   </div>
-                  <div className="space-y-2">
-                    <p className="text-xs text-slate-600">
-                      Glissez-déposez votre logo
-                    </p>
-                    <p className="text-[9px] text-slate-400">
-                      PNG ou SVG, max 2MB
-                    </p>
-                    <button
-                      type="button"
-                      className="text-xs text-indigo-600 hover:text-indigo-700"
-                    >
-                      Parcourir
-                    </button>
-                  </div>
+                  <p className="text-xs text-slate-600">
+                    Glissez-déposez votre logo
+                  </p>
+                  <p className="text-[9px] text-slate-400">
+                    PNG ou SVG, max 2MB
+                  </p>
+                  <UploadButton
+                    endpoint="companyLogo"
+                    className="ut-button:bg-indigo-600 ut-button:h-8 ut-button:text-xs ut-button:rounded ut-button:px-4 ut-allowed-content:hidden ut-button:ut-uploading:bg-indigo-400"
+                    onClientUploadComplete={(res) => {
+                      if (res?.[0]?.url) {
+                        setValue("companyLogo", res[0].url);
+                        updateCompanyLogo(res[0].url);
+                      }
+                    }}
+                    onUploadError={(error: Error) => {
+                      console.error("[UPLOAD_ERROR]:", error.message);
+                    }}
+                  />
                 </div>
               )}
             </div>
             <input
               {...register("companyLogo")}
-              type="url"
-              className="hidden"
-              placeholder="https://..."
+              type="hidden"
             />
           </div>
           <div className="mt-2 p-2 bg-amber-50 rounded border border-amber-200">
             <p className="text-[10px] text-amber-700">
               <strong>Safe Area:</strong> Votre logo sera redimensionné pour
-              s&apos;adapter aux en-têtes de devis.
+              s'adapter aux en-têtes de devis.
             </p>
           </div>
         </div>
