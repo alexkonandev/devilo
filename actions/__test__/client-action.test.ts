@@ -68,6 +68,7 @@ describe("Client Actions - Business Logic Validation", () => {
 
       await upsertClient(validClientData);
 
+      // Le userId est injecté via user.connect côté serveur, pas dans le payload direct
       expect(db.client.create).toHaveBeenCalledWith({
         data: {
           name: validClientData.name,
@@ -85,7 +86,9 @@ describe("Client Actions - Business Logic Validation", () => {
           representativePosition: null,
           notes: null,
           tags: [],
-          userId: mockUserId,
+          user: {
+            connect: { id: mockUserId },
+          },
         },
       });
     });
@@ -93,31 +96,69 @@ describe("Client Actions - Business Logic Validation", () => {
     it("devrait mettre à jour un client existant en vérifiant le userId", async () => {
       const mockUserId = "user_nomad_123";
       const clientId = "client_abc_123";
+      const mockUpdatedAt = new Date("2026-01-01T00:00:00Z");
+
+      // Simuler un client existant (merge attendu)
+      const existingClient = {
+        id: clientId,
+        name: "Old Name",
+        email: "old@email.com",
+        phone: "+22500000000",
+        address: "Old Address",
+        addressLine2: null,
+        city: "Abidjan",
+        postalCode: "00225",
+        country: "CI",
+        taxId: "CI-OLD",
+        tvaNumber: null,
+        legalForm: "SARL",
+        representativeName: "Old Rep",
+        representativePosition: "DG",
+        notes: "Old notes",
+        tags: ["VIP"],
+        userId: mockUserId,
+        updatedAt: mockUpdatedAt,
+      };
+
       (getClerkUserId as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
         mockUserId
+      );
+      (db.client.findFirst as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+        existingClient
+      );
+
+      // Mock update pour retourner le client mis à jour (évite l'erreur optimistic locking)
+      (db.client.update as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+        { ...existingClient, name: validClientData.name }
       );
 
       await upsertClient({ id: clientId, ...validClientData });
 
-      expect(db.client.update).toHaveBeenCalledWith({
+      // Vérifie que findFirst a été appelé avant l'update
+      expect(db.client.findFirst).toHaveBeenCalledWith({
         where: { id: clientId, userId: mockUserId },
+      });
+
+      // L'optimistic locking utilise updatedAt dans le where
+      // Le userId n'est pas dans le data (il est déjà garanti par le where)
+      expect(db.client.update).toHaveBeenCalledWith({
+        where: { id: clientId, updatedAt: mockUpdatedAt },
         data: {
-          name: validClientData.name,
-          email: validClientData.email,
-          phone: null,
-          address: validClientData.address,
-          addressLine2: null,
-          city: null,
-          postalCode: null,
-          country: "CI",
-          taxId: validClientData.taxId,
-          tvaNumber: null,
-          legalForm: null,
-          representativeName: null,
-          representativePosition: null,
-          notes: null,
-          tags: [],
-          userId: mockUserId,
+          name: validClientData.name,          // fourni → modifié
+          email: validClientData.email,        // fourni → modifié
+          phone: existingClient.phone,         // NON fourni → préservé
+          address: validClientData.address,    // fourni → modifié
+          addressLine2: existingClient.addressLine2, // NON fourni → préservé
+          city: existingClient.city,           // NON fourni → préservé
+          postalCode: existingClient.postalCode, // NON fourni → préservé
+          country: existingClient.country,     // NON fourni → préservé
+          taxId: validClientData.taxId,        // fourni → modifié
+          tvaNumber: existingClient.tvaNumber, // NON fourni → préservé
+          legalForm: existingClient.legalForm, // NON fourni → préservé
+          representativeName: existingClient.representativeName, // NON fourni → préservé
+          representativePosition: existingClient.representativePosition, // NON fourni → préservé
+          notes: existingClient.notes,         // NON fourni → préservé
+          tags: existingClient.tags,           // NON fourni → préservé
         },
       });
     });

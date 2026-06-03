@@ -12,8 +12,9 @@ import {
 // ═══════════════════════════════════════════════════════════════════════════════
 // PAGE SHELL — Grammaire structurelle commune (Dashboard, Devis, Clients, Catalogue)
 //
-// Structure : [telemetry optionnel] + grille 12 cols [left | main | detail]
-// Pas de header redondant — la topbar du layout principal s'en charge déjà.
+// Gère uniquement la grille 12 colonnes [left | main | detail].
+// Le header et la bande telemetry sont gérés par chaque page via sa propre
+// structure flex-col.
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export interface PageShellProps {
@@ -29,9 +30,6 @@ export interface PageShellProps {
   leftCols?: string;
   mainCols?: string;
   detailCols?: string;
-
-  /** Bande KPI/Telemetry en haut (optionnel) */
-  telemetry?: React.ReactNode;
 }
 
 export function PageShell({
@@ -41,7 +39,6 @@ export function PageShell({
   leftCols = "col-span-2",
   mainCols,
   detailCols = "col-span-4",
-  telemetry,
 }: PageShellProps) {
   const hasLeft = Boolean(left);
   const hasDetail = Boolean(detail);
@@ -57,11 +54,6 @@ export function PageShell({
 
   return (
     <div className="h-full flex flex-col bg-white overflow-hidden">
-      {/* ═══ BANDE TÉLÉMÉTRIE (optionnelle) ═══ */}
-      {telemetry && (
-        <div className="shrink-0 border-b border-slate-100">{telemetry}</div>
-      )}
-
       {/* ═══ GRILLE 12 COLS ═══ */}
       <div className="flex-1 grid grid-cols-12 overflow-hidden">
         {hasLeft && (

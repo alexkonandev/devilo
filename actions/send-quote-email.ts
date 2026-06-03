@@ -4,7 +4,7 @@ import db from "@/lib/prisma";
 import { getClerkUserId } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { sendQuoteEmail } from "@/lib/email";
-import { generateQuoteHTML } from "@/lib/print-template";
+import { logQuoteEventAction } from "./quote-event-action";
 
 export interface SendQuoteEmailParams {
   quoteId: string;
@@ -167,7 +167,14 @@ export async function sendQuoteEmailAction({
       },
     });
 
-    // 9. Mettre à jour le statut en SENT si encore en DRAFT
+    // 9. Logger l'événement d'envoi
+    await logQuoteEventAction(quoteId, "sent", {
+      email: client.email,
+      subject: `Votre devis ${quote.number}`,
+      quoteNumber: quote.number,
+    });
+
+    // 10. Mettre à jour le statut en SENT si encore en DRAFT
     if (quote.status === "DRAFT") {
       await db.quote.update({
         where: { id: quoteId },

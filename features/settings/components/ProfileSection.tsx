@@ -20,6 +20,7 @@ import type {
   FieldErrors,
 } from "react-hook-form";
 import type { SettingsFormValues } from "@/lib/validations/settings";
+import { Currency } from "@/app/generated/prisma/enums";
 
 // ─── Design System tokens (locaux) ───────────────────────────────────────────
 const DS = {
@@ -302,7 +303,7 @@ export function BentoProfileCard({
                         key={currency.code}
                         type="button"
                         onClick={() => {
-                          setValue("currency", currency.code);
+                          setValue("currency", currency.code as Currency);
                           setShowCurrencyDropdown(false);
                           setCurrencySearch("");
                           if (

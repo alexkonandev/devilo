@@ -16,7 +16,7 @@ export default async function BillingPage() {
 
   return (
     <div className="h-full w-full">
-      <SpatialBillingView billingProfile={billingProfile} />
+      <SpatialBillingView billingProfile={billingProfile!} />
     </div>
   );
 }

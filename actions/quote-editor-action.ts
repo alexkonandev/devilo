@@ -6,9 +6,12 @@ import { revalidatePath } from "next/cache";
 import {
   QuoteStatus as PrismaQuoteStatus,
   Quote,
+  Currency,
 } from "@/app/generated/prisma/client";
 
 import { ActiveQuote, ActionResponse } from "@/types/quote-editor";
+import { upsertQuoteSchema, updateQuoteInlineSchema } from "@/lib/validations/quote";
+import { logQuoteEventAction } from "./quote-event-action";
 
 export async function upsertQuoteAction(
   data: ActiveQuote,
@@ -18,18 +21,12 @@ export async function upsertQuoteAction(
     const authId = await getClerkUserId();
     if (!authId) return { success: false, error: "Non autorisé" };
 
-    // ─── VALIDATION STRICTE (Phase 2 - Bloqueurs Critiques) ───
-    if (!data.client.name || data.client.name.trim() === "") {
+    // ─── VALIDATION ZOD ───
+    const parsed = upsertQuoteSchema.safeParse(data);
+    if (!parsed.success) {
       return {
         success: false,
-        error: "Le nom du client est obligatoire pour la conformité légale",
-      };
-    }
-
-    if (!data.client.address || data.client.address.trim() === "") {
-      return {
-        success: false,
-        error: "L'adresse du client est obligatoire pour la conformité fiscale",
+        error: parsed.error.errors.map((e) => e.message).join(", "),
       };
     }
 
@@ -88,6 +85,7 @@ export async function upsertQuoteAction(
 
     // Base des données pour la Quote (sans le numéro pour l'instant)
     // ─── SNAPSHOT ÉTENDU (Phase 2 - Bloqueurs Critiques) ───
+    const currency = (data.currency || "XOF") as Currency;
     const quoteDataBase = {
       title: data.title,
       status: (data.quote.status as PrismaQuoteStatus) || "DRAFT",
@@ -103,7 +101,7 @@ export async function upsertQuoteAction(
       clientTaxId: data.client.taxId,
       // Nouveaux champs légaux
       dueDate: dueDate,
-      currency: data.currency || "XOF",
+      currency,
       validityDays: validityDays,
       // Snapshot des coordonnées bancaires pour figer les infos au moment de la création
       bankName: userBankInfo?.bankName || null,
@@ -192,6 +190,14 @@ export async function upsertQuoteAction(
       });
     }
 
+    // Logger la création si c'est bien une création (pas un update)
+    if (!existingQuote) {
+      await logQuoteEventAction(quote.id, "created", {
+        number: quote.number,
+        clientName: data.client.name,
+      });
+    }
+
     revalidatePath("/quotes");
     revalidatePath(`/quotes/${quote.id}`);
 
@@ -202,22 +208,81 @@ export async function upsertQuoteAction(
   }
 }
 
-// ✅ Ajoute ceci à ton fichier d'actions server
-export async function deleteQuoteAction(
+/**
+ * Mise à jour inline d'un devis depuis la sidebar
+ * Seuls les champs éditables inline sont modifiés
+ */
+export async function updateQuoteInlineAction(
   id: string,
-): Promise<ActionResponse<void>> {
+  data: {
+    number?: string;
+    issueDate?: string;
+    vatRatePercent?: number;
+    clientName?: string;
+    clientEmail?: string;
+    clientPhone?: string;
+    clientAddress?: string;
+    clientCity?: string;
+    clientPostalCode?: string;
+    clientCountry?: string;
+    clientTaxId?: string;
+  },
+): Promise<ActionResponse<Quote>> {
   try {
     const authId = await getClerkUserId();
     if (!authId) return { success: false, error: "Non autorisé" };
 
-    await db.quote.delete({
+    // ─── VALIDATION ZOD ───
+    const parsed = updateQuoteInlineSchema.safeParse({ id, data });
+    if (!parsed.success) {
+      return {
+        success: false,
+        error: parsed.error.errors.map((e) => e.message).join(", "),
+      };
+    }
+
+    // Valider que l'utilisateur a accès à ce devis
+    const existing = await db.quote.findUnique({
       where: { id, userId: authId },
+      include: { client: true },
+    });
+    if (!existing) {
+      return { success: false, error: "Devis non trouvé" };
+    }
+
+    // Mise à jour des champs du devis
+    const quoteUpdate: Record<string, unknown> = {};
+    if (data.number !== undefined) quoteUpdate.number = data.number;
+    if (data.issueDate !== undefined) quoteUpdate.issueDate = new Date(data.issueDate);
+    if (data.vatRatePercent !== undefined) quoteUpdate.vatRatePercent = data.vatRatePercent;
+
+    // Mise à jour des champs du client
+    const clientUpdate: Record<string, unknown> = {};
+    if (data.clientName !== undefined) clientUpdate.name = data.clientName;
+    if (data.clientEmail !== undefined) clientUpdate.email = data.clientEmail;
+    if (data.clientPhone !== undefined) clientUpdate.phone = data.clientPhone;
+    if (data.clientAddress !== undefined) clientUpdate.address = data.clientAddress;
+    if (data.clientCity !== undefined) clientUpdate.city = data.clientCity;
+    if (data.clientPostalCode !== undefined) clientUpdate.postalCode = data.clientPostalCode;
+    if (data.clientCountry !== undefined) clientUpdate.country = data.clientCountry;
+    if (data.clientTaxId !== undefined) clientUpdate.taxId = data.clientTaxId;
+
+    // Appliquer les mises à jour
+    const quote = await db.quote.update({
+      where: { id },
+      data: {
+        ...quoteUpdate,
+        client: Object.keys(clientUpdate).length > 0
+          ? { update: clientUpdate }
+          : undefined,
+      },
     });
 
     revalidatePath("/quotes");
-    return { success: true };
+    return { success: true, data: quote };
   } catch (err) {
-    console.error("[DELETE_QUOTE_ERROR]:", err);
-    return { success: false, error: "Erreur lors de la suppression" };
+    console.error("[UPDATE_QUOTE_INLINE_ERROR]:", err);
+    return { success: false, error: "Erreur lors de la mise à jour" };
   }
 }
+

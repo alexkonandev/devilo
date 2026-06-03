@@ -13,7 +13,6 @@ model User {
   plan                  PlanStatus     @default(FREE)
   profession            Profession?
   businessModel         BusinessModel?
-  isOnboarded           Boolean        @default(false)
   companyName           String?
   companyLogo           String?
   taxId                 String?
@@ -30,7 +29,7 @@ model User {
   updatedAt             DateTime       @updatedAt
   companyAddressDetails String?
   companyCity           String?
-  
+
   // --- CHAMPS BANCAIRES (Phase 2 - Géo-spécifique) ---
   paymentZone           PaymentZone    @default(AFRI)
   bankName              String?
@@ -47,6 +46,7 @@ model User {
   subscription          Subscription?
   userServices          UserService[]
   quotes                Quote[]
+  quoteEvents           QuoteEvent[]
 
   @@map("users")
 }
@@ -147,9 +147,9 @@ model Quote {
   id             String      @id @default(cuid())
   userId         String
   clientId       String
-  
+
   title          String      @default("NOUVEAU_PROJET")
-  
+
   companyName    String?
   companyEmail   String?
   companyAddress String?
@@ -181,13 +181,19 @@ model Quote {
   vatRatePercent Float       @default(20)
   discount       Float       @default(0)
   terms          String?     @db.Text
-  
+
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
-  
+
   lines          QuoteLine[]
   client         Client      @relation(fields: [clientId], references: [id], onDelete: Cascade)
   user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events         QuoteEvent[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([userId, status])
 
   @@map("quotes")
 }
@@ -203,6 +209,24 @@ model QuoteLine {
   quote     Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
 
   @@map("quote_lines")
+}
+
+model QuoteEvent {
+  id        String      @id @default(cuid())
+  quoteId   String
+  userId    String
+  quote     Quote       @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String      // created | sent | viewed | status_changed | reminder | note
+  status    QuoteStatus?
+  metadata  Json?
+  createdAt DateTime    @default(now())
+  createdBy String?
+
+  @@index([quoteId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("quote_events")
 }
 
 model Theme {
@@ -232,6 +256,7 @@ enum QuoteStatus {
   ACCEPTED
   REJECTED
   PAID
+  CANCELLED
 }
 
 enum Profession {

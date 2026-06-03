@@ -5,11 +5,12 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ─── Typographie ─────────────────────────────────────────────────────────────
-export const DS_MICRO = "font-mono text-[10px] uppercase tracking-tight text-slate-500";
 export const DS_LABEL =
-  "font-mono text-[11px] uppercase tracking-wide text-slate-400";
-export const DS_MONO = "font-mono text-[11px] tabular-nums leading-none";
+  "font-mono text-[9px] uppercase tracking-wide text-slate-500";
+export const DS_MICRO = DS_LABEL; // alias — sera supprimé progressivement
+export const DS_MONO = "font-mono text-[11px] tabular-nums leading-snug";
 export const DS_TITLE = "font-mono text-xl uppercase tracking-tight text-slate-900";
+export const DS_H2 = "font-mono text-base uppercase tracking-tight text-slate-900";
 export const DS_BODY = "font-sans text-sm text-slate-600 leading-relaxed";
 
 // ─── Surfaces ────────────────────────────────────────────────────────────────
@@ -43,6 +44,12 @@ export const DS_BADGE_WARNING =
   "px-1.5 py-0.5 rounded-md text-[8px] font-bold bg-amber-50 text-amber-600 border border-amber-200";
 export const DS_BADGE_DANGER =
   "px-1.5 py-0.5 rounded-md text-[8px] font-bold bg-rose-50 text-rose-600 border border-rose-200";
+export const DS_BADGE_ACCEPTED =
+  "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200";
+export const DS_BADGE_NEUTRAL =
+  "px-1.5 py-0.5 rounded-md text-[8px] font-bold bg-slate-50 text-slate-600 border border-slate-200";
+export const DS_BADGE_CANCELLED =
+  "px-1.5 py-0.5 rounded-md text-[8px] font-bold bg-slate-100 text-slate-400 border border-slate-300 line-through";
 
 // ─── Telemetry (sidebar info blocks) ────────────────────────────────────────
 export const DS_TEL_BLOCK =
@@ -168,7 +175,6 @@ export const DS_LP_NAV_CONN = "hidden sm:inline-flex items-center gap-1.5 px-4 p
 
 // ─── Objet legacy (compat avec les fichiers existants) ──────────────────────
 export const DS = {
-  micro: DS_MICRO,
   label: DS_LABEL,
   mono: DS_MONO,
   card: DS_CARD,

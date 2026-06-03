@@ -135,277 +135,284 @@ export function DashboardView({ data }: DashboardProps) {
   ];
 
   return (
-    <PageShell
-      telemetry={<TelemetryStrip cells={telemetryCells} />}
-      main={
-        <div className="h-full overflow-y-auto p-4">
-          <div className="grid grid-cols-12 gap-4">
-            {/* COLONNE GAUCHE (8 cols) — Activité + Table */}
-            <div className="col-span-8 space-y-3">
-              {/* CARD 1 — Graphique Activité (compact) */}
-              <div className={cn(DS_BENTO_CARD, "p-0 overflow-hidden")}>
-                <div
-                  className={cn(
-                    DS_SECTION_HEADER,
-                    "px-3 py-2 border-b border-slate-100/60 bg-slate-50/50 mb-0",
-                  )}
-                >
-                  <div className="flex items-center gap-2">
-                    <div className={cn(DS_ICON_WRAPPER, "bg-indigo-50")}>
-                      <TrendUpIcon size={DS_ICON_SM} className="text-indigo-500" />
-                    </div>
-                    <span className={cn(DS_MICRO, "text-slate-600")}>
-                      Activité Récente
-                    </span>
-                  </div>
-                  <Link
-                    href="/quotes"
-                    className={cn(DS_BUTTON_SECONDARY, "px-2.5 py-1 text-[9px]")}
-                  >
-                    Voir tout
-                    <ArrowRightIcon size={DS_ICON_SM} weight="bold" />
-                  </Link>
-                </div>
-                <div className={cn(DS_TEL_BLOCK, "h-24 rounded-none border-0")}>
-                  <div className="h-full flex items-end gap-1">
-                    {sparklineData.slice(-20).map((value, i) => (
-                      <motion.div
-                        key={i}
-                        initial={{ height: 0 }}
-                        animate={{ height: `${(value / Math.max(...sparklineData)) * 100}%` }}
-                        transition={{ duration: 0.5, delay: i * 0.02 }}
-                        className="flex-1 bg-indigo-200 hover:bg-indigo-400 rounded-t-sm transition-colors cursor-pointer"
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
+    <div className="flex flex-col h-full">
+      {/* ── Bande Telemetry ── */}
+      <TelemetryStrip cells={telemetryCells} />
 
-              {/* CARD 2 — Table Dernières Actions */}
-              <div className={cn(DS_BENTO_CARD, "p-0 overflow-hidden bg-white")}>
-                <div
-                  className={cn(
-                    DS_SECTION_HEADER,
-                    "px-3 py-2 border-b border-slate-100/60 mb-0",
-                  )}
-                >
-                  <div className="flex items-center gap-2">
-                    <div className={cn(DS_ICON_WRAPPER, "bg-slate-100")}>
-                      <FileTextIcon size={DS_ICON_SM} className="text-slate-500" />
-                    </div>
-                    <span className={cn(DS_MICRO, "text-slate-600")}>
-                      Dernières Actions
-                    </span>
-                  </div>
-                  <span className={cn(DS_MONO, "text-slate-400")}>
-                    {fluxRecent.length} entrées
-                  </span>
-                </div>
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-slate-100/60 bg-slate-50/80">
-                      <th className={cn(DS_LABEL, "text-left py-2 px-4")}>Action</th>
-                      <th className={cn(DS_LABEL, "text-left py-2 px-4")}>Client</th>
-                      <th className={cn(DS_LABEL, "text-right py-2 px-4")}>Montant</th>
-                      <th className={cn(DS_LABEL, "text-center py-2 px-4")}>Statut</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100/60">
-                    {fluxRecent.map((item, index) => (
-                      <motion.tr
-                        key={item.id}
-                        initial={{ opacity: 0, y: 4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        className="hover:bg-slate-50/50 cursor-pointer group"
+      {/* ── Contenu principal ── */}
+      <div className="flex-1 overflow-hidden">
+        <PageShell
+          main={
+            <div className="h-full overflow-y-auto p-4">
+              <div className="grid grid-cols-12 gap-4">
+                {/* COLONNE GAUCHE (8 cols) — Activité + Table */}
+                <div className="col-span-8 space-y-3">
+                  {/* CARD 1 — Graphique Activité (compact) */}
+                  <div className={cn(DS_BENTO_CARD, "p-0 overflow-hidden")}>
+                    <div
+                      className={cn(
+                        DS_SECTION_HEADER,
+                        "px-3 py-2 border-b border-slate-100/60 bg-slate-50/50 mb-0",
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className={cn(DS_ICON_WRAPPER, "bg-indigo-50")}>
+                          <TrendUpIcon size={DS_ICON_SM} className="text-indigo-500" />
+                        </div>
+                        <span className={cn(DS_MICRO, "text-slate-600")}>
+                          Activité Récente
+                        </span>
+                      </div>
+                      <Link
+                        href="/quotes"
+                        className={cn(DS_BUTTON_SECONDARY, "px-2.5 py-1 text-[9px]")}
                       >
-                        <td className="py-2 px-4">
-                          <div className="flex items-center gap-2">
-                            <div
-                              className={cn(
-                                DS_ICON_WRAPPER,
-                                item.statut === "PAID"
-                                  ? "bg-indigo-50 text-indigo-600"
-                                  : "bg-slate-50 text-slate-500",
-                              )}
-                            >
-                              {item.statut === "PAID" ? (
-                                <CheckCircleIcon size={DS_ICON_SM} weight="bold" />
-                              ) : (
-                                <FileTextIcon size={DS_ICON_SM} />
-                              )}
+                        Voir tout
+                        <ArrowRightIcon size={DS_ICON_SM} weight="bold" />
+                      </Link>
+                    </div>
+                    <div className={cn(DS_TEL_BLOCK, "h-24 rounded-none border-0")}>
+                      <div className="h-full flex items-end gap-1">
+                        {sparklineData.slice(-20).map((value, i) => (
+                          <motion.div
+                            key={i}
+                            initial={{ height: 0 }}
+                            animate={{ height: `${(value / Math.max(...sparklineData)) * 100}%` }}
+                            transition={{ duration: 0.5, delay: i * 0.02 }}
+                            className="flex-1 bg-indigo-200 hover:bg-indigo-400 rounded-t-sm transition-colors cursor-pointer"
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* CARD 2 — Table Dernières Actions */}
+                  <div className={cn(DS_BENTO_CARD, "p-0 overflow-hidden bg-white")}>
+                    <div
+                      className={cn(
+                        DS_SECTION_HEADER,
+                        "px-3 py-2 border-b border-slate-100/60 mb-0",
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className={cn(DS_ICON_WRAPPER, "bg-slate-100")}>
+                          <FileTextIcon size={DS_ICON_SM} className="text-slate-500" />
+                        </div>
+                        <span className={cn(DS_MICRO, "text-slate-600")}>
+                          Dernières Actions
+                        </span>
+                      </div>
+                      <span className={cn(DS_MONO, "text-slate-400")}>
+                        {fluxRecent.length} entrées
+                      </span>
+                    </div>
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-slate-100/60 bg-slate-50/80">
+                          <th className={cn(DS_LABEL, "text-left py-2 px-4")}>Action</th>
+                          <th className={cn(DS_LABEL, "text-left py-2 px-4")}>Client</th>
+                          <th className={cn(DS_LABEL, "text-right py-2 px-4")}>Montant</th>
+                          <th className={cn(DS_LABEL, "text-center py-2 px-4")}>Statut</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100/60">
+                        {fluxRecent.map((item, index) => (
+                          <motion.tr
+                            key={item.id}
+                            initial={{ opacity: 0, y: 4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                            className="hover:bg-slate-50/50 cursor-pointer group"
+                          >
+                            <td className="py-2 px-4">
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className={cn(
+                                    DS_ICON_WRAPPER,
+                                    item.statut === "PAID"
+                                      ? "bg-indigo-50 text-indigo-600"
+                                      : "bg-slate-50 text-slate-500",
+                                  )}
+                                >
+                                  {item.statut === "PAID" ? (
+                                    <CheckCircleIcon size={DS_ICON_SM} weight="bold" />
+                                  ) : (
+                                    <FileTextIcon size={DS_ICON_SM} />
+                                  )}
+                                </div>
+                                <span className="text-xs font-medium text-slate-900 truncate max-w-[200px]">
+                                  {item.projetTitre}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="py-2 px-4">
+                              <span className={cn(DS_MONO, "text-slate-600")}>{item.clientNom}</span>
+                            </td>
+                            <td className="py-2 px-4 text-right">
+                              <span className={cn(DS_MONO, "font-bold text-slate-900")}>
+                                {formatCFA(item.montant)}
+                              </span>
+                            </td>
+                            <td className="py-2 px-4 text-center">
+                              <StatusBadge status={item.statut} />
+                            </td>
+                          </motion.tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* COLONNE DROITE (4 cols) — Brouillons + Top Clients */}
+                <div className="col-span-4 space-y-3">
+                  {/* CARD 3 — Brouillons */}
+                  <div className={cn(DS_BENTO_CARD, "p-0 overflow-hidden")}>
+                    <div
+                      className={cn(
+                        DS_SECTION_HEADER,
+                        "px-3 py-2 border-b border-slate-100/60 bg-slate-50/50 mb-0",
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className={cn(DS_ICON_WRAPPER, "bg-indigo-50")}>
+                          <FileTextIcon size={DS_ICON_SM} className="text-indigo-500" />
+                        </div>
+                        <span className={cn(DS_MICRO, "text-slate-600")}>
+                          Brouillons en cours
+                        </span>
+                      </div>
+                      <Link href="/quotes/new" className={DS_BUTTON}>
+                        <PlusIcon size={DS_ICON_SM} weight="bold" />
+                        Créer
+                      </Link>
+                    </div>
+                    <div className="max-h-48 overflow-y-auto p-2 space-y-1.5">
+                      {fluxRecent
+                        .filter((item) => item.statut === "DRAFT")
+                        .slice(0, 6)
+                        .map((item) => (
+                          <Link
+                            key={item.id}
+                            href={`/quotes?id=${item.id}`}
+                            className={cn(
+                              DS_BENTO_CARD,
+                              "block hover:border-indigo-300 hover:shadow-sm transition-all",
+                            )}
+                          >
+                            <div className="flex items-start justify-between mb-1">
+                              <span
+                                className={cn(
+                                  DS_MONO,
+                                  "font-bold text-slate-900 truncate max-w-[140px]",
+                                )}
+                              >
+                                {item.projetTitre}
+                              </span>
+                              <span className={cn(DS_MONO, "font-bold text-slate-700")}>
+                                {formatCompact(item.montant)}
+                              </span>
                             </div>
-                            <span className="text-xs font-medium text-slate-900 truncate max-w-[200px]">
-                              {item.projetTitre}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="py-2 px-4">
-                          <span className={cn(DS_MONO, "text-slate-600")}>{item.clientNom}</span>
-                        </td>
-                        <td className="py-2 px-4 text-right">
-                          <span className={cn(DS_MONO, "font-bold text-slate-900")}>
-                            {formatCFA(item.montant)}
-                          </span>
-                        </td>
-                        <td className="py-2 px-4 text-center">
-                          <StatusBadge status={item.statut} />
-                        </td>
-                      </motion.tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* COLONNE DROITE (4 cols) — Brouillons + Top Clients */}
-            <div className="col-span-4 space-y-3">
-              {/* CARD 3 — Brouillons */}
-              <div className={cn(DS_BENTO_CARD, "p-0 overflow-hidden")}>
-                <div
-                  className={cn(
-                    DS_SECTION_HEADER,
-                    "px-3 py-2 border-b border-slate-100/60 bg-slate-50/50 mb-0",
-                  )}
-                >
-                  <div className="flex items-center gap-2">
-                    <div className={cn(DS_ICON_WRAPPER, "bg-indigo-50")}>
-                      <FileTextIcon size={DS_ICON_SM} className="text-indigo-500" />
+                            <div className="flex items-center justify-between">
+                              <span className={cn(DS_LABEL, "text-slate-500")}>{item.clientNom}</span>
+                              <span className={cn(DS_MICRO, "text-slate-400")}>{item.date}</span>
+                            </div>
+                          </Link>
+                        ))}
+                      {fluxRecent.filter((item) => item.statut === "DRAFT").length === 0 && (
+                        <div className="text-center py-8">
+                          <p className={cn(DS_MONO, "text-slate-400")}>Aucun brouillon</p>
+                          <p className={cn(DS_LABEL, "text-slate-300 mt-1")}>
+                            Créez un nouveau devis
+                          </p>
+                        </div>
+                      )}
                     </div>
-                    <span className={cn(DS_MICRO, "text-slate-600")}>
-                      Brouillons en cours
-                    </span>
                   </div>
-                  <Link href="/quotes/new" className={DS_BUTTON}>
-                    <PlusIcon size={DS_ICON_SM} weight="bold" />
-                    Créer
-                  </Link>
-                </div>
-                <div className="max-h-48 overflow-y-auto p-2 space-y-1.5">
-                  {fluxRecent
-                    .filter((item) => item.statut === "DRAFT")
-                    .slice(0, 6)
-                    .map((item) => (
-                      <Link
-                        key={item.id}
-                        href={`/quotes?id=${item.id}`}
-                        className={cn(
-                          DS_BENTO_CARD,
-                          "block hover:border-indigo-300 hover:shadow-sm transition-all",
-                        )}
-                      >
-                        <div className="flex items-start justify-between mb-1">
-                          <span
+
+                  {/* CARD 4 — Top Clients */}
+                  <div className={cn(DS_BENTO_CARD, "p-0 overflow-hidden")}>
+                    <div
+                      className={cn(
+                        DS_SECTION_HEADER,
+                        "px-3 py-2 border-b border-slate-100/60 bg-slate-50/50 mb-0",
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className={cn(DS_ICON_WRAPPER, "bg-indigo-50")}>
+                          <UsersThreeIcon size={DS_ICON_SM} className="text-indigo-500" />
+                        </div>
+                        <span className={cn(DS_MICRO, "text-slate-600")}>Top Clients</span>
+                      </div>
+                      <span className={cn(DS_MONO, "text-slate-500")}>
+                        {formatCompact(totalValeurPortefeuille)}
+                      </span>
+                    </div>
+                    <div className="max-h-64 overflow-y-auto p-2 space-y-1.5">
+                      {portefeuilleStrategique.map((client, index) => {
+                        const partDuCA =
+                          totalValeurPortefeuille > 0
+                            ? (client.valeurCumulee / totalValeurPortefeuille) * 100
+                            : 0;
+                        const isTop = index === 0;
+
+                        return (
+                          <Link
+                            key={client.id}
+                            href={`/clients?id=${client.id}`}
                             className={cn(
-                              DS_MONO,
-                              "font-bold text-slate-900 truncate max-w-[140px]",
+                              DS_BENTO_CARD,
+                              "block hover:border-indigo-300 transition-all",
                             )}
                           >
-                            {item.projetTitre}
-                          </span>
-                          <span className={cn(DS_MONO, "font-bold text-slate-700")}>
-                            {formatCompact(item.montant)}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className={cn(DS_LABEL, "text-slate-500")}>{item.clientNom}</span>
-                          <span className={cn(DS_MICRO, "text-slate-400")}>{item.date}</span>
-                        </div>
-                      </Link>
-                    ))}
-                  {fluxRecent.filter((item) => item.statut === "DRAFT").length === 0 && (
-                    <div className="text-center py-8">
-                      <p className={cn(DS_MONO, "text-slate-400")}>Aucun brouillon</p>
-                      <p className={cn(DS_LABEL, "text-slate-300 mt-1")}>
-                        Créez un nouveau devis
-                      </p>
+                            <div className="flex items-center gap-2 mb-2">
+                              <div
+                                className={cn(
+                                  DS_ICON_WRAPPER,
+                                  "text-[10px] font-bold",
+                                  isTop
+                                    ? "bg-indigo-50 text-indigo-600"
+                                    : "bg-slate-50 text-slate-500",
+                                )}
+                              >
+                                {client.nom.slice(0, 2).toUpperCase()}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className={cn(DS_MONO, "font-bold text-slate-900 truncate")}>
+                                  {client.nom}
+                                </p>
+                                <p className={cn(DS_MICRO, "text-slate-500")}>
+                                  {client.nombreDevis} devis · {client.delaiMoyen}j paiement
+                                </p>
+                              </div>
+                              <span className={cn(DS_MONO, "font-bold text-slate-700")}>
+                                {formatCompact(client.valeurCumulee)}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className={cn(DS_PROGRESS_TRACK, "flex-1")}>
+                                <motion.div
+                                  className={cn(DS_PROGRESS_BAR, isTop ? "bg-indigo-500" : "bg-slate-300")}
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${partDuCA}%` }}
+                                  transition={{ duration: 0.5, delay: 0.1 + index * 0.05 }}
+                                />
+                              </div>
+                              <span className={cn(DS_MICRO, "text-slate-400 w-8 text-right")}>
+                                {partDuCA.toFixed(0)}%
+                              </span>
+                            </div>
+                          </Link>
+                        );
+                      })}
                     </div>
-                  )}
-                </div>
-              </div>
-
-              {/* CARD 4 — Top Clients */}
-              <div className={cn(DS_BENTO_CARD, "p-0 overflow-hidden")}>
-                <div
-                  className={cn(
-                    DS_SECTION_HEADER,
-                    "px-3 py-2 border-b border-slate-100/60 bg-slate-50/50 mb-0",
-                  )}
-                >
-                  <div className="flex items-center gap-2">
-                    <div className={cn(DS_ICON_WRAPPER, "bg-indigo-50")}>
-                      <UsersThreeIcon size={DS_ICON_SM} className="text-indigo-500" />
-                    </div>
-                    <span className={cn(DS_MICRO, "text-slate-600")}>Top Clients</span>
                   </div>
-                  <span className={cn(DS_MONO, "text-slate-500")}>
-                    {formatCompact(totalValeurPortefeuille)}
-                  </span>
-                </div>
-                <div className="max-h-64 overflow-y-auto p-2 space-y-1.5">
-                  {portefeuilleStrategique.map((client, index) => {
-                    const partDuCA =
-                      totalValeurPortefeuille > 0
-                        ? (client.valeurCumulee / totalValeurPortefeuille) * 100
-                        : 0;
-                    const isTop = index === 0;
-
-                    return (
-                      <Link
-                        key={client.id}
-                        href={`/clients?id=${client.id}`}
-                        className={cn(
-                          DS_BENTO_CARD,
-                          "block hover:border-indigo-300 transition-all",
-                        )}
-                      >
-                        <div className="flex items-center gap-2 mb-2">
-                          <div
-                            className={cn(
-                              DS_ICON_WRAPPER,
-                              "text-[10px] font-bold",
-                              isTop
-                                ? "bg-indigo-50 text-indigo-600"
-                                : "bg-slate-50 text-slate-500",
-                            )}
-                          >
-                            {client.nom.slice(0, 2).toUpperCase()}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className={cn(DS_MONO, "font-bold text-slate-900 truncate")}>
-                              {client.nom}
-                            </p>
-                            <p className={cn(DS_MICRO, "text-slate-500")}>
-                              {client.nombreDevis} devis · {client.delaiMoyen}j paiement
-                            </p>
-                          </div>
-                          <span className={cn(DS_MONO, "font-bold text-slate-700")}>
-                            {formatCompact(client.valeurCumulee)}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className={cn(DS_PROGRESS_TRACK, "flex-1")}>
-                            <motion.div
-                              className={cn(DS_PROGRESS_BAR, isTop ? "bg-indigo-500" : "bg-slate-300")}
-                              initial={{ width: 0 }}
-                              animate={{ width: `${partDuCA}%` }}
-                              transition={{ duration: 0.5, delay: 0.1 + index * 0.05 }}
-                            />
-                          </div>
-                          <span className={cn(DS_MICRO, "text-slate-400 w-8 text-right")}>
-                            {partDuCA.toFixed(0)}%
-                          </span>
-                        </div>
-                      </Link>
-                    );
-                  })}
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      }
-    />
+          }
+        />
+      </div>
+    </div>
   );
 }
 
@@ -419,6 +426,7 @@ const STATUS_BADGE_MAP: Record<QuoteStatus, { className: string; label: string }
   ACCEPTED: { className: DS_BADGE_ACTIVE, label: "Signé" },
   DRAFT: { className: DS_BADGE_WARNING, label: "Brouillon" },
   REJECTED: { className: DS_BADGE_DANGER, label: "Refusé" },
+  CANCELLED: { className: DS_BADGE_DANGER, label: "Annulé" },
 };
 
 function StatusBadge({ status }: { status: QuoteStatus }) {

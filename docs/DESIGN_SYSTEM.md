@@ -88,13 +88,26 @@
 
 ## 4. TYPOGRAPHIE
 
+### Grille Typo Standardisée (tokens DS)
+
+```typescript
+export const DS_LABEL = "font-mono text-[9px] uppercase tracking-wide text-slate-500";
+export const DS_MONO  = "font-mono text-[11px] tabular-nums leading-snug";
+export const DS_TITLE = "font-mono text-xl uppercase tracking-tight text-slate-900";
+export const DS_H2    = "font-mono text-base uppercase tracking-tight text-slate-900";
+export const DS_BODY  = "font-sans text-sm text-slate-600 leading-relaxed";
+export const DS_MICRO = DS_LABEL; // alias legacy
+```
+
 ### Échelle Type
 
-| Usage | Classe | Exemple |
-|-------|--------|---------|
-| **Micro Labels** | `text-[9px] uppercase font-bold tracking-wider text-slate-500` | "CA TOTAL", "EN ATTENTE" |
-| **Small Data** | `text-[11px] font-medium text-slate-700` | Emails, sous-titres |
-| **Body** | `text-xs font-semibold text-slate-800` | Noms, titres secondaires |
+| Usage | Classe / Token | Exemple |
+|-------|----------------|---------|
+| **Titre de section** | `DS_TITLE` / `font-mono text-xl` | "TABLEAU DE BORD" |
+| **Sous-titre** | `DS_H2` / `font-mono text-base` | "ACTIVITÉ RÉCENTE" |
+| **Corps** | `DS_BODY` / `font-sans text-sm` | Descriptifs, paragraphes |
+| **Labels (micro)** | `DS_LABEL` / `text-[9px] uppercase` | "CA TOTAL", "EN ATTENTE" |
+| **Données monospace** | `DS_MONO` / `font-mono text-[11px]` | Montants, dates, IDs |
 | **KPI Numbers** | `text-lg font-bold text-slate-900 tabular-nums` | Montants en header |
 | **Large KPI** | `text-2xl font-black tracking-tight` | Chiffres principaux |
 

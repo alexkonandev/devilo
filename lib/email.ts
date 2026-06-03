@@ -1,17 +1,18 @@
 // @/lib/email.ts
-// Module d'envoi d'emails via Resend
+// Module d'envoi d'emails via SendGrid
 
-import { Resend } from "resend";
+import sgMail from "@sendgrid/mail";
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
 
-// Créer l'instance Resend uniquement si la clé est disponible
-function createResend(): Resend | null {
-  if (!RESEND_API_KEY) {
-    console.warn("[EMAIL] RESEND_API_KEY non configurée — emails désactivés");
-    return null;
+// Initialiser SendGrid uniquement si la clé est disponible
+function initSendGrid(): boolean {
+  if (!SENDGRID_API_KEY) {
+    console.warn("[EMAIL] SENDGRID_API_KEY non configurée — emails désactivés");
+    return false;
   }
-  return new Resend(RESEND_API_KEY);
+  sgMail.setApiKey(SENDGRID_API_KEY);
+  return true;
 }
 
 export interface SendQuoteEmailParams {
@@ -25,16 +26,15 @@ export interface SendQuoteEmailParams {
 }
 
 export async function sendQuoteEmail(params: SendQuoteEmailParams) {
-  const resend = createResend();
-  if (!resend) {
+  if (!initSendGrid()) {
     return { success: false, error: "EMAIL_NON_CONFIGURÉ" };
   }
 
-  const fromEmail = process.env.EMAIL_FROM || "noreply@devis-express.app";
+  const fromEmail = process.env.EMAIL_FROM || "alexkonan.dev@gmail.com";
   const fromName = process.env.EMAIL_FROM_NAME || "Devis Express";
 
   try {
-    const { data, error } = await resend.emails.send({
+    const msg = {
       from: `${fromName} <${fromEmail}>`,
       to: Array.isArray(params.to) ? params.to : [params.to],
       subject: params.subject,
@@ -47,20 +47,22 @@ export async function sendQuoteEmail(params: SendQuoteEmailParams) {
         {
           filename: params.pdfFileName,
           content: params.pdfBuffer.toString("base64"),
+          type: "application/pdf",
+          disposition: "attachment" as const,
         },
       ],
-    });
+    };
 
-    if (error) {
-      console.error("[EMAIL_SEND_ERROR]:", error);
-      return { success: false, error: error.message };
-    }
+    await sgMail.send(msg);
 
-    return { success: true, data };
-  } catch (err) {
+    return { success: true };
+  } catch (err: unknown) {
+    const error = err as { response?: { body?: { errors?: Array<{ message: string }> } }; message?: string };
+    console.error("[EMAIL_SEND_ERROR]:", error);
     const msg =
-      err instanceof Error ? err.message : "Erreur inconnue lors de l'envoi";
-    console.error("[EMAIL_SEND_EXCEPTION]:", err);
+      error?.response?.body?.errors?.[0]?.message ||
+      error?.message ||
+      "Erreur inconnue lors de l'envoi";
     return { success: false, error: msg };
   }
 }

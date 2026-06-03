@@ -3,6 +3,7 @@
 import db from "@/lib/prisma";
 import { getClerkUserId } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { Currency } from "@/app/generated/prisma/client";
 
 /**
  * RÉCUPÉRER LE PROFIL COMPLET (POUR LE DASHBOARD & SETTINGS)
@@ -38,9 +39,13 @@ export async function updateCompanySettings(data: {
     const authId = await getClerkUserId();
     if (!authId) return { success: false, error: "Non autorisé" };
 
+    const { currency: currencyRaw, ...rest } = data;
     await db.user.update({
       where: { id: authId },
-      data: { ...data },
+      data: {
+        ...rest,
+        ...(currencyRaw ? { currency: currencyRaw as Currency } : {}),
+      },
     });
 
     revalidatePath("/dashboard/settings");

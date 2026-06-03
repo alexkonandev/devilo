@@ -1,5 +1,6 @@
 import * as z from "zod";
 import { validateIBAN, validateBIC } from "@/lib/iban-validation";
+import { Currency } from "@/app/generated/prisma/enums";
 
 // REGEX pour accepter www. OU https://
 const websiteRegex =
@@ -44,7 +45,7 @@ const baseSettingsSchema = z.object({
     .nullable(),
 
   // FINANCE
-  currency: z.string().min(1).default("XOF"),
+  currency: z.nativeEnum(Currency).default("XOF"),
   defaultVatRate: z.number().min(0).max(100).default(18),
 
   // LOGISTIQUE

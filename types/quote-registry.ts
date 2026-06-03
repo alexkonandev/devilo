@@ -53,10 +53,12 @@ export interface QuoteTimelineEvent {
  * 5. CONTEXT INTERFACE
  * Ce contrat définit comment l'UI communique avec tes données.
  */
+export type DateRange = "7d" | "30d" | "month" | "custom" | null;
+
 export interface QuoteContextType {
   // Data
   quotes: QuoteRegistryItem[]; // Source brute
-  filteredQuotes: QuoteRegistryItem[]; // Source filtrée (Recherche + Statut)
+  filteredQuotes: QuoteRegistryItem[]; // Source filtrée (tous filtres combinés)
   stats: QuoteRegistryStats; // Calculs financiers
 
   // State
@@ -64,6 +66,14 @@ export interface QuoteContextType {
   searchQuery: string;
   search: string; // Alias pour compatibilité
   activeStatus: QuoteStatus | "ALL";
+
+  // Filtres avancés (déplacés ici — Phase 3.2)
+  dateRange: DateRange;
+  customStartDate: string | null;
+  customEndDate: string | null;
+  amountMin: string;
+  amountMax: string;
+  highlightThreshold: number | null;
 
   // NOUVEAU: Master-Detail Architecture
   activeQuoteId: string | null;
@@ -75,6 +85,16 @@ export interface QuoteContextType {
   setSearchQuery: (query: string) => void;
   setSearch: (query: string) => void; // Alias pour compatibilité
   setActiveStatus: (status: QuoteStatus | "ALL") => void;
+
+  // Setters filtres avancés
+  setDateRange: (v: DateRange) => void;
+  setCustomStartDate: (v: string | null) => void;
+  setCustomEndDate: (v: string | null) => void;
+  setAmountMin: (v: string) => void;
+  setAmountMax: (v: string) => void;
+  setHighlightThreshold: (v: number | null) => void;
+  resetFilters: () => void;
+  hasActiveFilters: boolean;
 
   // NOUVEAU: Master-Detail
   selectQuote: (quoteId: string | null) => void;

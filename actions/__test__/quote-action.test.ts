@@ -11,14 +11,14 @@ describe("Quote Actions - Business Logic Validation", () => {
   });
 
   const createMockActiveQuote = (overrides = {}): ActiveQuote => ({
-    // Ces deux champs manquaient au premier niveau de l'objet
     title: "Projet Refonte Web",
     company: {
       name: "Ma Super Entreprise",
       address: "Mon Adresse, Abidjan",
       email: "contact@entreprise.com",
-      siret: "987654321000",
-      website: "https://mon-entreprise.com", // Ajout du champ manquant
+      taxId: "987654321000",
+      taxIdLabel: "NCC",
+      website: "https://mon-entreprise.com",
     },
     quote: {
       number: "INV-2026-001",
@@ -30,20 +30,22 @@ describe("Quote Actions - Business Logic Validation", () => {
       name: "Client Test",
       email: "test@client.com",
       address: "123 Rue de la Paix",
-      siret: "123456789",
+      taxId: "123456789",
     },
     items: [
       {
         title: "Prestation Service",
         subtitle: "Détails",
         quantity: 1,
-        unitPriceEuros: 1000,
+        unitPrice: 1000,
       },
     ],
     financials: {
       vatRatePercent: 20,
-      discountAmountEuros: 0,
+      discountAmount: 0,
     },
+    currency: "XOF",
+    validityDays: 30,
     ...overrides,
   });
 

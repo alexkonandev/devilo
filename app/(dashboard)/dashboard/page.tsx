@@ -12,18 +12,16 @@ export default async function DashboardPage() {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
 
-  // 1. VÉRIFICATION ONBOARDING
-  const user = await db.user.findUnique({
-    where: { id: userId },
-    select: { isOnboarded: true },
-  });
-
-  if (!user?.isOnboarded) {
-    redirect("/onboarding");
-  }
-
-  // 2. EXTRACTION DE L'INTELLIGENCE MÉTIER
+  // 1. EXTRACTION DE L'INTELLIGENCE MÉTIER
   const rawData = await getAdvancedDashboardData();
+
+  if (!rawData) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-muted-foreground">Aucune donnée disponible pour le moment.</p>
+      </div>
+    );
+  }
 
   // 3. MAPPING STRATÉGIQUE (On casse la redondance ici)
   const mappedData = {
@@ -37,7 +35,7 @@ export default async function DashboardPage() {
     fluxRecent: rawData.activity.map((item) => ({
       id: item.id,
       clientNom: item.clientName,
-      projetTitre: item.projectName, // NOUVEAU : On passe le titre du projet
+      projetTitre: item.projectName,
       montant: item.amount,
       statut: item.status,
       date: new Date(item.date).toLocaleDateString("fr-FR", {
@@ -51,8 +49,8 @@ export default async function DashboardPage() {
       nom: client.name,
       valeurCumulee: client.totalSpent,
       nombreDevis: client.quoteCount,
-      scoreSante: client.healthScore, // NOUVEAU : EXCELLENT, GOOD, SLOW
-      delaiMoyen: client.averagePaymentDays, // NOUVEAU : Nombre de jours
+      scoreSante: client.healthScore,
+      delaiMoyen: client.averagePaymentDays,
     })),
   };
 

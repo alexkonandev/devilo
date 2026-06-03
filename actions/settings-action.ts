@@ -6,6 +6,7 @@ import { getClerkUserId } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { settingsSchema, SettingsFormValues } from "@/lib/validations/settings";
 import { redirect } from "next/navigation";
+import { Currency } from "@/app/generated/prisma/client";
 
 export async function updateSettings(rawData: unknown) {
   try {
@@ -26,7 +27,7 @@ export async function updateSettings(rawData: unknown) {
       companyCity: data.companyCity,
       companyAddressDetails: data.companyAddressDetails,
       companyWebsite: data.companyWebsite ?? null,
-      currency: data.currency,
+      currency: data.currency as Currency,
       defaultVatRate: data.defaultVatRate,
       quotePrefix: data.quotePrefix,
       nextQuoteNumber: data.nextQuoteNumber,

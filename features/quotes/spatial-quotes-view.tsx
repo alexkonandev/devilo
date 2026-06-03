@@ -1,315 +1,195 @@
 "use client";
 
-import React from "react";
-import Link from "next/link";
+import React, { useState, useMemo, useCallback } from "react";
 import { useQuotes } from "./components/quote-context";
-import { PageHeader } from "@/components/layout/page-header";
-import { cn } from "@/lib/utils";
 import {
-  MagnifyingGlassIcon,
+  cn,
+  formatPrice,
+  applySort,
+  type SortConfig,
+} from "@/lib/utils";
+import {
   FileTextIcon,
-  XCircleIcon,
   PlusIcon,
-  PencilSimpleIcon,
-  PaperPlaneTilt,
+  CheckCircle,
+  ClockClockwise,
+  CalendarBlank,
+  XCircle,
 } from "@phosphor-icons/react";
-import { QuoteStatus, QuoteRegistryItem } from "@/types/quote-registry";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { SendEmailModal } from "./components/send-email-modal";
-import {
-  DS_MICRO,
-  DS_LABEL,
-  DS_MONO,
-  DS_BENTO_CARD,
-  DS_ICON_WRAPPER,
-  DS_ICON_SM,
-  DS_BUTTON,
-  DS_INPUT,
-  DS_PAGE_SHELL,
-  DS_PAGE_GRID,
-} from "@/lib/design-system";
+import { PageHeader } from "@/components/shared/layout/page-header";
+import { SearchBar } from "@/components/shared/ui/search-bar";
+import { QuotesTable } from "./components/quotes-table";
+import { QuoteCreationSheet } from "./components/quote-creation-sheet";
+import { ExportActions } from "./components/export-actions";
+import { DS_MONO } from "@/lib/design-system";
+import { BTN_PRIMARY, BTN_SECONDARY } from "@/components/shared/ui/constants";
+import { QuoteDetailSidebar } from "./components/quote-detail-sidebar";
+import { FiltersDropdown } from "./components/filters-dropdown";
+import { TablePagination, paginate } from "./components/table-pagination";
+import { PAGE_SIZE } from "./components/constants";
 
 // ═══════════════════════════════════════════════════════════════
-// STATUS TOKENS (alignés sur le design system)
-// ═══════════════════════════════════════════════════════════════
-
-const STATUS_STYLE: Record<
-  QuoteStatus,
-  { bg: string; text: string; border: string; dot: string }
-> = {
-  DRAFT: {
-    bg: "bg-amber-50",
-    text: "text-amber-600",
-    border: "border-amber-200/60",
-    dot: "bg-amber-500",
-  },
-  SENT: {
-    bg: "bg-blue-50",
-    text: "text-blue-600",
-    border: "border-blue-200/60",
-    dot: "bg-blue-500",
-  },
-  ACCEPTED: {
-    bg: "bg-indigo-50",
-    text: "text-indigo-600",
-    border: "border-indigo-200/60",
-    dot: "bg-indigo-500",
-  },
-  PAID: {
-    bg: "bg-emerald-50",
-    text: "text-emerald-600",
-    border: "border-emerald-200/60",
-    dot: "bg-emerald-500",
-  },
-  REJECTED: {
-    bg: "bg-rose-50",
-    text: "text-rose-600",
-    border: "border-rose-200/60",
-    dot: "bg-rose-500",
-  },
-};
-
-// ═══════════════════════════════════════════════════════════════
-// QUOTE BENTO CARD — Registre scrollable
-// ═══════════════════════════════════════════════════════════════
-
-function QuoteBentoCard({ quote }: { quote: QuoteRegistryItem }) {
-  const { quickStatusChange } = useQuotes();
-  const style = STATUS_STYLE[quote.status];
-  const [isEmailModalOpen, setIsEmailModalOpen] = React.useState(false);
-
-  const totalHT = quote.lines.reduce(
-    (acc, ln) => acc + ln.unitPrice * ln.quantity,
-    0,
-  );
-
-  const formatCFA = (n: number) =>
-    new Intl.NumberFormat("fr-FR", {
-      style: "currency",
-      currency: "XOF",
-      minimumFractionDigits: 0,
-    }).format(n);
-
-  return (
-    <>
-      <div className={cn(DS_BENTO_CARD, "flex flex-col gap-3")}>
-        {/* Header */}
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <p className={cn(DS_MONO, "font-bold text-slate-900 truncate")}>
-              {quote.client.name}
-            </p>
-            <p className={cn(DS_MICRO, "text-slate-400")}>{quote.number}</p>
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                className={cn(
-                  "px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider border shrink-0",
-                  style.bg,
-                  style.text,
-                  style.border,
-                )}
-              >
-                <span
-                  className={cn(
-                    "w-1.5 h-1.5 rounded-full inline-block mr-1",
-                    style.dot,
-                  )}
-                />
-                {quote.status}
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[120px]">
-              {(
-                ["DRAFT", "SENT", "ACCEPTED", "PAID", "REJECTED"] as QuoteStatus[]
-              ).map((s) => (
-                <DropdownMenuItem
-                  key={s}
-                  onClick={() => quickStatusChange(quote.id, s)}
-                  className={cn(
-                    "text-[10px] font-bold uppercase cursor-pointer",
-                    quote.status === s && "bg-slate-100",
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "w-1.5 h-1.5 rounded-full mr-2",
-                      STATUS_STYLE[s].dot,
-                    )}
-                  />
-                  {s}
-                </DropdownMenuItem>
-              ))}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => setIsEmailModalOpen(true)}
-                className={cn(
-                  "text-[10px] font-bold uppercase cursor-pointer text-indigo-600",
-                )}
-              >
-                <PaperPlaneTilt size={12} weight="bold" className="mr-2" />
-                Envoyer par email
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
-        {/* Montant */}
-        <div className="flex items-baseline gap-1">
-          <span className="text-xl font-black text-slate-900 tabular-nums">
-            {new Intl.NumberFormat("fr-FR").format(totalHT)}
-          </span>
-          <span className={cn(DS_LABEL, "text-slate-400")}>XOF HT</span>
-        </div>
-
-        {/* Lignes */}
-        {quote.lines.length > 0 && (
-          <div className="space-y-1">
-            {quote.lines.slice(0, 2).map((ln, i) => (
-              <div key={i} className="flex items-center justify-between">
-                <span
-                  className={cn(
-                    DS_MICRO,
-                    "text-slate-500 truncate max-w-[160px]",
-                  )}
-                >
-                  {ln.title}
-                </span>
-                <span className={cn(DS_MONO, "text-slate-400")}>
-                  {ln.quantity} × {formatCFA(ln.unitPrice)}
-                </span>
-              </div>
-            ))}
-            {quote.lines.length > 2 && (
-              <span className={cn(DS_MICRO, "text-slate-300")}>
-                +{quote.lines.length - 2} ligne(s)
-              </span>
-            )}
-          </div>
-        )}
-
-        {/* Footer */}
-        <div className="flex items-center justify-between pt-1 border-t border-slate-100">
-          <span className={cn(DS_MICRO, "text-slate-400")}>
-            {new Date(quote.issueDate).toLocaleDateString("fr-FR", {
-              day: "2-digit",
-              month: "short",
-              year: "numeric",
-            })}
-          </span>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setIsEmailModalOpen(true)}
-              className={cn(
-                DS_BUTTON,
-                "py-1 px-2 text-[9px] bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-200",
-              )}
-              title="Envoyer par email"
-            >
-              <PaperPlaneTilt size={10} weight="bold" />
-            </button>
-            <Link
-              href={`/quotes/new?id=${quote.id}`}
-              className={cn(DS_BUTTON, "py-1 px-2 text-[9px]")}
-            >
-              <PencilSimpleIcon size={10} weight="bold" />
-              Éditer
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {isEmailModalOpen && (
-        <SendEmailModal
-          quoteId={quote.id}
-          quoteNumber={quote.number}
-          clientName={quote.client.name || ""}
-          clientEmail={quote.client.email || ""}
-          isOpen={isEmailModalOpen}
-          onClose={() => setIsEmailModalOpen(false)}
-        />
-      )}
-    </>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════
-// MAIN — Bento Scrollable Registry
+// MAIN — Spatial Quotes Registry View (orchestration pure)
 // ═══════════════════════════════════════════════════════════════
 
 export function SpatialQuotesView() {
-  const { filteredQuotes, searchQuery, setSearchQuery } = useQuotes();
+  const {
+    quotes,
+    filteredQuotes,
+    searchQuery,
+    setSearchQuery,
+    stats,
+    selectedQuoteIds,
+    highlightThreshold,
+  } = useQuotes();
+
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [sortConfig, setSortConfig] = useState<SortConfig>({
+    column: null,
+    direction: "asc",
+  });
+  const [currentPage, setCurrentPage] = useState(1);
+  const resetPage = useCallback(() => setCurrentPage(1), []);
+
+  // Tri + pagination
+  const sortedQuotes = useMemo(
+    () => applySort(filteredQuotes, sortConfig.column, sortConfig.direction),
+    [filteredQuotes, sortConfig],
+  );
+  const totalPages = Math.max(1, Math.ceil(sortedQuotes.length / PAGE_SIZE));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const paginatedQuotes = useMemo(
+    () => paginate(sortedQuotes, safeCurrentPage, PAGE_SIZE),
+    [sortedQuotes, safeCurrentPage],
+  );
+
+  const handleSort = useCallback(
+    (column: SortConfig["column"]) => {
+      setSortConfig((prev) => ({
+        column,
+        direction: prev.column === column && prev.direction === "asc" ? "desc" : "asc",
+      }));
+      resetPage();
+    },
+    [resetPage],
+  );
+
+  const handleSearch = useCallback(
+    (q: string) => { setSearchQuery(q); resetPage(); },
+    [setSearchQuery, resetPage],
+  );
+
+  // États vides
+  const isTotallyEmpty = quotes.length === 0;
+  const isSearchEmpty = searchQuery && filteredQuotes.length === 0 && !isTotallyEmpty;
+  const isFilterEmpty = !searchQuery && !isTotallyEmpty && filteredQuotes.length === 0;
+
+  const renderEmptyState = () => {
+    if (isTotallyEmpty)
+      return (
+        <div className="flex flex-col items-center justify-center py-24 gap-3 bg-white border border-slate-200 rounded-md">
+          <FileTextIcon size={48} className="text-slate-200" weight="duotone" />
+          <p className={cn(DS_MONO, "text-slate-400")}>Aucun devis trouvé</p>
+          <p className={cn(DS_MONO, "text-[10px] text-slate-300 max-w-[250px] text-center")}>
+            Créez votre premier devis pour commencer
+          </p>
+        </div>
+      );
+    if (isSearchEmpty)
+      return (
+        <div className="flex flex-col items-center justify-center py-24 gap-3 bg-white border border-slate-200 rounded-md">
+          <span className="text-4xl text-slate-200">🔍</span>
+          <p className={cn(DS_MONO, "text-slate-400")}>Aucun devis ne correspond à votre recherche</p>
+          <p className={cn(DS_MONO, "text-[10px] text-slate-300 max-w-[250px] text-center")}>
+            Essayez de modifier vos filtres ou votre recherche
+          </p>
+          <button onClick={() => setSearchQuery("")} className={cn(BTN_SECONDARY, "mt-2 text-[10px]")}>
+            <XCircle size={10} weight="bold" /> Réinitialiser les filtres
+          </button>
+        </div>
+      );
+    if (isFilterEmpty)
+      return (
+        <div className="flex flex-col items-center justify-center py-24 gap-3 bg-white border border-slate-200 rounded-md">
+          <CalendarBlank size={48} className="text-slate-200" weight="duotone" />
+          <p className={cn(DS_MONO, "text-slate-400")}>Aucun devis dans cette période</p>
+          <p className={cn(DS_MONO, "text-[10px] text-slate-300 max-w-[250px] text-center")}>
+            Essayez de modifier vos filtres
+          </p>
+        </div>
+      );
+    return null;
+  };
+
+  const emptyState = renderEmptyState();
 
   return (
-    <div className="h-full flex flex-col">
-      <PageHeader
-        title="Devis"
-        subtitle={`${filteredQuotes.length} devis`}
-        actions={
-          <Link href="/quotes/new" className={cn(DS_BUTTON)}>
-            <PlusIcon size={DS_ICON_SM} weight="bold" />
-            Nouveau devis
-          </Link>
-        }
-      />
+    <div className="flex flex-col h-full w-full bg-slate-50">
+      <div className="shrink-0 px-6 pt-6">
+        <PageHeader
+          title="Devis"
+          description={
+            <span className="inline-flex items-center gap-3">
+              <span>{filteredQuotes.length} devis</span>
+              <span className="w-px h-3 bg-slate-200" />
+              <span className={cn(DS_MONO, "text-[10px] text-emerald-600 font-semibold")}>
+                <CheckCircle size={10} className="inline mr-0.5" weight="fill" />
+                {formatPrice(stats.totalCashCollected)} encaissé
+              </span>
+              <span className={cn(DS_MONO, "text-[10px] text-amber-600 font-semibold")}>
+                <ClockClockwise size={10} className="inline mr-0.5" weight="fill" />
+                {formatPrice(stats.totalPipelineValue)} en attente
+              </span>
+            </span>
+          }
+          actions={
+            <>
+              <SearchBar value={searchQuery} onChange={handleSearch} placeholder="Rechercher un devis…" />
+              <FiltersDropdown />
+              <ExportActions data={sortedQuotes} selectedIds={selectedQuoteIds} />
+              <button onClick={() => setIsSheetOpen(true)} className={BTN_PRIMARY}>
+                <PlusIcon size={12} weight="bold" /> Nouveau devis
+              </button>
+            </>
+          }
+        />
+      </div>
 
-      <div className={DS_PAGE_SHELL}>
-        <div className={cn(DS_PAGE_GRID, "p-4")}>
-          {/* Recherche */}
-          <div className="col-span-12">
-            <div className="relative max-w-sm">
-              <MagnifyingGlassIcon
-                size={DS_ICON_SM}
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"
-              />
-              <input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Rechercher un devis…"
-                className={cn(DS_INPUT, "pl-8 w-full")}
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                >
-                  <XCircleIcon size={DS_ICON_SM} />
-                </button>
+      <div className="flex w-full flex-1 min-h-0 px-6 pb-6 pt-4 overflow-hidden gap-6">
+        <div className="flex-[4] min-w-0 flex flex-col">
+          {emptyState ?? (
+            <>
+              {selectedQuoteIds.size > 0 && (
+                <div className="mb-2 px-3 py-1.5 bg-indigo-50 border border-indigo-200 rounded-md">
+                  <span className={cn(DS_MONO, "text-[10px] text-indigo-700 font-semibold")}>
+                    {selectedQuoteIds.size} devis sélectionné{selectedQuoteIds.size > 1 ? "s" : ""}
+                  </span>
+                </div>
               )}
-            </div>
-          </div>
-
-          {/* ROW 2 — Grille de cards */}
-          {filteredQuotes.length === 0 ? (
-            <div className="col-span-12 flex flex-col items-center justify-center py-24 gap-3">
-              <FileTextIcon
-                size={48}
-                className="text-slate-200"
-                weight="duotone"
-              />
-              <p className={cn(DS_MONO, "text-slate-400")}>
-                Aucun devis trouvé
-              </p>
-            </div>
-          ) : (
-            filteredQuotes.map((quote) => (
-              <div
-                key={quote.id}
-                className="col-span-12 md:col-span-6 lg:col-span-4"
-              >
-                <QuoteBentoCard quote={quote} />
+              <div className="flex-1 min-h-0 overflow-auto">
+                <QuotesTable
+                  data={paginatedQuotes}
+                  sortConfig={sortConfig}
+                  onSort={handleSort}
+                  highlightThreshold={highlightThreshold}
+                />
               </div>
-            ))
+              <TablePagination
+                currentPage={safeCurrentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                totalItems={sortedQuotes.length}
+              />
+            </>
           )}
         </div>
+
+        <aside className="flex-[6] flex flex-col min-h-0 overflow-hidden">
+          <QuoteDetailSidebar />
+        </aside>
       </div>
+
+      <QuoteCreationSheet open={isSheetOpen} onOpenChange={setIsSheetOpen} />
     </div>
   );
 }

@@ -28,10 +28,8 @@ import {
 import { User } from "@/app/generated/prisma/client";
 
 // --- ACTIONS ---
-import {
-  upsertQuoteAction,
-  deleteQuoteAction,
-} from "@/actions/quote-editor-action";
+import { upsertQuoteAction } from "@/actions/quote-editor-action";
+import { deleteQuoteAction } from "@/actions/quote-registry-action";
 
 interface CreateQuoteClientProps {
   initialCatalog: EditorCatalogOffer[];

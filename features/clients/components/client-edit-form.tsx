@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { EditorClient } from "@/types/client";
 import { upsertClient } from "@/actions/client-action";
+import { validateField } from "@/lib/validations/client";
 import { cn } from "@/lib/utils";
 import {
   DS_MICRO,
@@ -50,7 +51,6 @@ export function ClientEditForm({
     email: client?.email || null,
     phone: client?.phone || null,
     taxId: client?.taxId || null,
-    tvaNumber: client?.tvaNumber || null,
     legalForm: client?.legalForm || null,
     representativeName: client?.representativeName || null,
     representativePosition: client?.representativePosition || null,
@@ -62,7 +62,27 @@ export function ClientEditForm({
     notes: client?.notes || null,
     tags: client?.tags || [],
   });
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string | null>>({});
   const [tagInput, setTagInput] = useState("");
+
+  const validateFieldValue = useCallback((field: string, value: string | null | undefined): string | null => {
+    if (!value || value.trim() === "") return null;
+    switch (field) {
+      case "email":    return validateField.email(value);
+      case "phone":    return validateField.phone(value);
+      default:         return null;
+    }
+  }, []);
+
+  const updateField = useCallback((field: string, value: string | null) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    const err = validateFieldValue(field, value);
+    setFieldErrors((prev) => ({ ...prev, [field]: err }));
+  }, [validateFieldValue]);
+
+  const hasErrors = useCallback((): boolean => {
+    return Object.values(fieldErrors).some((e) => e !== null);
+  }, [fieldErrors]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,8 +91,21 @@ export function ClientEditForm({
       return;
     }
 
+    // Validate all fields before submit
+    const errors: Record<string, string | null> = {};
+    errors.email = validateFieldValue("email", formData.email);
+    errors.phone = validateFieldValue("phone", formData.phone);
+    setFieldErrors(errors);
+
+    const hasAnyError = Object.values(errors).some((e) => e !== null);
+    if (hasAnyError) {
+      toast.error("Corrigez les erreurs de validation avant d'enregistrer");
+      setActiveTab("contact");
+      return;
+    }
+
     setIsSubmitting(true);
-    const result = await upsertClient(formData);
+    const result = await upsertClient(formData as unknown as Record<string, unknown>);
     setIsSubmitting(false);
 
     if (result.success) {
@@ -183,21 +216,28 @@ export function ClientEditForm({
                   <div className="relative">
                     <EnvelopeSimple
                       size={16}
-                      className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"
+                      className={cn(
+                        "absolute left-2.5 top-1/2 -translate-y-1/2",
+                        fieldErrors.email ? "text-red-400" : "text-slate-400",
+                      )}
                     />
                     <input
                       type="email"
                       value={formData.email || ""}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          email: e.target.value || null,
-                        })
-                      }
+                      onChange={(e) => updateField("email", e.target.value || null)}
                       placeholder="contact@example.com"
-                      className={cn(DS_INPUT, "w-full pl-9")}
+                      className={cn(
+                        DS_INPUT,
+                        "w-full pl-9",
+                        fieldErrors.email && "border-red-500 focus:border-red-500 focus:ring-red-300",
+                      )}
                     />
                   </div>
+                  {fieldErrors.email && (
+                    <p className="text-[10px] font-mono text-red-500 mt-1 ml-1">
+                      {fieldErrors.email}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label
@@ -208,21 +248,28 @@ export function ClientEditForm({
                   <div className="relative">
                     <Phone
                       size={16}
-                      className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"
+                      className={cn(
+                        "absolute left-2.5 top-1/2 -translate-y-1/2",
+                        fieldErrors.phone ? "text-red-400" : "text-slate-400",
+                      )}
                     />
                     <input
                       type="tel"
                       value={formData.phone || ""}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          phone: e.target.value || null,
-                        })
-                      }
+                      onChange={(e) => updateField("phone", e.target.value || null)}
                       placeholder="+225 07 XX XX XX XX"
-                      className={cn(DS_INPUT, "w-full pl-9")}
+                      className={cn(
+                        DS_INPUT,
+                        "w-full pl-9",
+                        fieldErrors.phone && "border-red-500 focus:border-red-500 focus:ring-red-300",
+                      )}
                     />
                   </div>
+                  {fieldErrors.phone && (
+                    <p className="text-[10px] font-mono text-red-500 mt-1 ml-1">
+                      {fieldErrors.phone}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -408,26 +455,6 @@ export function ClientEditForm({
                 />
                 <p className={cn(DS_MICRO, "text-slate-400 mt-1")}>
                   Numéro d&apos;immatriculation de l&apos;entreprise
-                </p>
-              </div>
-              <div>
-                <label className={cn(DS_MICRO, "text-slate-500 block mb-1.5")}>
-                  Numéro TVA intracommunautaire
-                </label>
-                <input
-                  type="text"
-                  value={formData.tvaNumber || ""}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      tvaNumber: e.target.value || null,
-                    })
-                  }
-                  placeholder="FR12345678901"
-                  className={cn(DS_INPUT, "w-full")}
-                />
-                <p className={cn(DS_MICRO, "text-slate-400 mt-1")}>
-                  Obligatoire pour la facturation intra-UE
                 </p>
               </div>
             </div>

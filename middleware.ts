@@ -16,9 +16,6 @@ const isPublicRoute = createRouteMatcher([
   "/favicon.ico",
 ]);
 
-// ─── Routes Onboarding ────────────────────────────────────────────────────────
-const isOnboardingRoute = createRouteMatcher(["/onboarding(.*)"]);
-
 // ─── Routes API protégées ─────────────────────────────────────────────────────
 const isApiRoute = createRouteMatcher(["/api/(.*)"]);
 
@@ -41,24 +38,6 @@ export default clerkMiddleware(async (auth, req) => {
     // Rediriger vers la page de connexion si non authentifié
     if (!userId) {
       return redirectToSignIn({ returnBackUrl: req.url });
-    }
-
-    // 3. Rediriger vers l'onboarding si l'utilisateur ne l'a pas terminé
-    //    (sauf s'il est déjà sur la page d'onboarding)
-    if (!isOnboardingRoute(req)) {
-      try {
-        const db = (await import("@/lib/prisma")).default;
-        const user = await db.user.findUnique({
-          where: { id: userId },
-          select: { isOnboarded: true },
-        });
-
-        if (user && !user.isOnboarded) {
-          return NextResponse.redirect(new URL("/onboarding", req.url));
-        }
-      } catch {
-        // Si la DB est inaccessible, on laisse passer
-      }
     }
   }
 });

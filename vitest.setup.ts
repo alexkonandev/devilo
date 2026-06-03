@@ -23,6 +23,7 @@ vi.mock("@/lib/prisma", () => ({
       update: vi.fn(),
       findUnique: vi.fn(),
       findMany: vi.fn(),
+      findFirst: vi.fn(),
       delete: vi.fn(),
     },
     client: {

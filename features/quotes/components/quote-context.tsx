@@ -8,12 +8,14 @@ import React, {
   useTransition,
   useCallback,
 } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   QuoteRegistryItem,
   QuoteRegistryStats,
   QuoteContextType,
   QuoteStatus,
   QuoteTimelineEvent,
+  DateRange,
 } from "@/types/quote-registry";
 import {
   updateQuoteStatusAction,
@@ -22,6 +24,7 @@ import {
   getQuoteTimelineAction,
 } from "@/actions/quote-registry-action";
 import { notify } from "@/lib/notifications";
+import { computeTotalHT } from "@/lib/utils";
 
 const QuoteContext = createContext<QuoteContextType | undefined>(undefined);
 
@@ -32,37 +35,159 @@ export function QuoteProvider({
   children: React.ReactNode;
   initialQuotes: QuoteRegistryItem[];
 }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   // 1. Utilisation de startTransition pour les rafraîchissements lourds
   const [isPending, startTransition] = useTransition();
 
   const [quotes, setQuotes] = useState<QuoteRegistryItem[]>(initialQuotes);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeStatus, setActiveStatus] = useState<QuoteStatus | "ALL">("ALL");
 
-  // NOUVEAU: Devis actif sélectionné (Master-Detail)
-  const [activeQuoteId, setActiveQuoteId] = useState<string | null>(null);
-
-  // NOUVEAU: Multi-sélection pour export batch
-  const [selectedQuoteIds, setSelectedQuoteIds] = useState<Set<string>>(
-    new Set(),
+  // ─── Filtres de base ───
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") ?? "");
+  const [activeStatus, setActiveStatus] = useState<QuoteStatus | "ALL">(
+    (searchParams.get("status") as QuoteStatus | "ALL") || "ALL"
   );
 
-  // NOUVEAU: Timeline du devis actif
+  // ─── Filtres avancés (déplacés depuis SpatialQuotesView — Phase 3.2) ───
+  const [dateRange, setDateRange] = useState<DateRange>(
+    searchParams.get("dateRange") as DateRange || null
+  );
+  const [customStartDate, setCustomStartDate] = useState<string | null>(
+    searchParams.get("customStart") ?? null
+  );
+  const [customEndDate, setCustomEndDate] = useState<string | null>(
+    searchParams.get("customEnd") ?? null
+  );
+  const [amountMin, setAmountMin] = useState(searchParams.get("amountMin") ?? "");
+  const [amountMax, setAmountMax] = useState(searchParams.get("amountMax") ?? "");
+  const [highlightThreshold, setHighlightThreshold] = useState<number | null>(
+    searchParams.get("highlight")
+      ? parseFloat(searchParams.get("highlight")!)
+      : null
+  );
+
+  // ─── Master-Detail ───
+  const [activeQuoteId, setActiveQuoteId] = useState<string | null>(null);
+  const [selectedQuoteIds, setSelectedQuoteIds] = useState<Set<string>>(new Set());
   const [timeline, setTimeline] = useState<QuoteTimelineEvent[]>([]);
   const [isLoadingTimeline, setIsLoadingTimeline] = useState(false);
 
-  // NOUVEAU: Smart filtering avec support plage de prix et dates
+  // ─── Synchronisation URL (Phase 3.3) ───
+  const syncUrl = useCallback(
+    (params: Record<string, string | null>) => {
+      const sp = new URLSearchParams(searchParams.toString());
+      for (const [key, value] of Object.entries(params)) {
+        if (value === null || value === "") {
+          sp.delete(key);
+        } else {
+          sp.set(key, value);
+        }
+      }
+      const newUrl = sp.toString() ? `?${sp.toString()}` : window.location.pathname;
+      router.replace(newUrl, { scroll: false });
+    },
+    [router, searchParams],
+  );
+
+  // ─── Wrappers setters qui synchronisent l'URL ───
+  const handleSetSearchQuery = useCallback(
+    (q: string) => {
+      setSearchQuery(q);
+      syncUrl({ q: q || null });
+    },
+    [syncUrl],
+  );
+
+  const handleSetActiveStatus = useCallback(
+    (s: QuoteStatus | "ALL") => {
+      setActiveStatus(s);
+      syncUrl({ status: s === "ALL" ? null : s });
+    },
+    [syncUrl],
+  );
+
+  const handleSetDateRange = useCallback(
+    (v: DateRange) => {
+      setDateRange(v);
+      syncUrl({ dateRange: v });
+    },
+    [syncUrl],
+  );
+
+  const handleSetCustomStartDate = useCallback(
+    (v: string | null) => {
+      setCustomStartDate(v);
+      syncUrl({ customStart: v });
+    },
+    [syncUrl],
+  );
+
+  const handleSetCustomEndDate = useCallback(
+    (v: string | null) => {
+      setCustomEndDate(v);
+      syncUrl({ customEnd: v });
+    },
+    [syncUrl],
+  );
+
+  const handleSetAmountMin = useCallback(
+    (v: string) => {
+      setAmountMin(v);
+      syncUrl({ amountMin: v || null });
+    },
+    [syncUrl],
+  );
+
+  const handleSetAmountMax = useCallback(
+    (v: string) => {
+      setAmountMax(v);
+      syncUrl({ amountMax: v || null });
+    },
+    [syncUrl],
+  );
+
+  const handleSetHighlightThreshold = useCallback(
+    (v: number | null) => {
+      setHighlightThreshold(v);
+      syncUrl({ highlight: v !== null ? String(v) : null });
+    },
+    [syncUrl],
+  );
+
+  // ─── Constantes i18n pour le smart search ───
+  const SEARCH_KEYWORDS = {
+    lastMonth: [
+      "dernier mois", "last month", "le mois dernier",
+      "ce mois-ci", "this month", "ce mois",
+    ],
+    lastWeek: [
+      "dernière semaine", "last week", "cette semaine",
+      "this week", "cette semaine-ci",
+    ],
+  };
+
+  // ─── Filtrage global combiné : statut × texte × smart search × date × montant ───
   const filteredQuotes = useMemo(() => {
     return quotes.filter((q) => {
-      const totalHT = q.lines.reduce(
-        (acc, ln) => acc + ln.unitPrice * ln.quantity,
-        0,
-      );
+      const totalHT = computeTotalHT(q);
 
-      // Recherche texte standard
+      // ── Filtre statut ──
+      if (activeStatus !== "ALL" && q.status !== activeStatus) return false;
+
+      // ── Recherche texte standard + smart search ──
+      const qLower = searchQuery.toLowerCase();
       let matchSearch =
-        q.number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        q.client.name.toLowerCase().includes(searchQuery.toLowerCase());
+        !searchQuery ||
+        q.number.toLowerCase().includes(qLower) ||
+        q.client.name.toLowerCase().includes(qLower) ||
+        q.lines.some(
+          (ln) =>
+            ln.title.toLowerCase().includes(qLower) ||
+            ln.subtitle.toLowerCase().includes(qLower) ||
+            ln.unitPrice.toString().includes(qLower) ||
+            ln.quantity.toString().includes(qLower),
+        );
 
       // Smart filtering: plage de prix (ex: >5000, <10000, 5000-10000)
       const priceMatch = searchQuery.match(/(>|<|>=|<=)?\s*(\d+)/);
@@ -88,26 +213,78 @@ export function QuoteProvider({
         }
       }
 
-      // Smart filtering: plage de dates (ex: "2024-01", "jan", "dernier mois")
-      if (
-        searchQuery.toLowerCase().includes("dernier") ||
-        searchQuery.match(/^\d{4}[-/]\d{2}$/)
-      ) {
-        const quoteDate = new Date(q.createdAt);
-        const now = new Date();
-        if (searchQuery.includes("dernier mois")) {
-          const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-          matchSearch = matchSearch || quoteDate >= lastMonth;
-        }
+      // Smart filtering: plage de dates (i18n fr + en)
+      const quoteDate = new Date(q.createdAt);
+      const now = new Date();
+
+      const isLastMonthQuery = SEARCH_KEYWORDS.lastMonth.some(
+        (kw) => qLower.includes(kw)
+      );
+      if (isLastMonthQuery) {
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        matchSearch = matchSearch || quoteDate >= startOfMonth;
       }
 
-      const matchStatus = activeStatus === "ALL" || q.status === activeStatus;
-      return matchSearch && matchStatus;
+      const isLastWeekQuery = SEARCH_KEYWORDS.lastWeek.some(
+        (kw) => qLower.includes(kw)
+      );
+      if (isLastWeekQuery) {
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        matchSearch = matchSearch || quoteDate >= weekAgo;
+      }
+
+      if (searchQuery.match(/^\d{4}[-/]\d{2}$/)) {
+        const [year, month] = searchQuery.split(/[-/]/);
+        const monthStart = new Date(parseInt(year), parseInt(month) - 1, 1);
+        const monthEnd = new Date(parseInt(year), parseInt(month), 0, 23, 59, 59);
+        matchSearch = matchSearch || (quoteDate >= monthStart && quoteDate <= monthEnd);
+      }
+
+      if (!matchSearch) return false;
+
+      // ── Filtre date (local) ──
+      if (dateRange) {
+        let dateStart: Date | null = null;
+        let dateEnd: Date | null = null;
+
+        switch (dateRange) {
+          case "7d":
+            dateStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            break;
+          case "30d":
+            dateStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            break;
+          case "month":
+            dateStart = new Date(now.getFullYear(), now.getMonth(), 1);
+            break;
+          case "custom":
+            if (customStartDate) dateStart = new Date(customStartDate);
+            if (customEndDate) {
+              dateEnd = new Date(customEndDate);
+              dateEnd.setHours(23, 59, 59, 999);
+            }
+            break;
+        }
+
+        if (dateStart && quoteDate < dateStart) return false;
+        if (dateEnd && quoteDate > dateEnd) return false;
+      }
+
+      // ── Filtre montant ──
+      if (amountMin !== "") {
+        const min = parseFloat(amountMin);
+        if (!isNaN(min) && totalHT < min) return false;
+      }
+      if (amountMax !== "") {
+        const max = parseFloat(amountMax);
+        if (!isNaN(max) && totalHT > max) return false;
+      }
+
+      return true;
     });
-  }, [quotes, searchQuery, activeStatus]);
+  }, [quotes, searchQuery, activeStatus, dateRange, customStartDate, customEndDate, amountMin, amountMax]);
 
   const stats = useMemo<QuoteRegistryStats>(() => {
-    // Correction de l'erreur ts(2741) : On inclut tous les statuts possibles de Prisma
     const counts: Record<QuoteStatus | "ALL", number> = {
       ALL: quotes.length,
       DRAFT: 0,
@@ -115,31 +292,26 @@ export function QuoteProvider({
       ACCEPTED: 0,
       PAID: 0,
       REJECTED: 0,
+      CANCELLED: 0,
     };
 
-    let pipeline = 0; // En-cours : SENT (Cash virtuel)
-    let outstanding = 0; // En-cours total
+    let pipeline = 0;
+    let outstanding = 0;
     let collected = 0;
 
-    // Pour le sparkline des 30 derniers jours
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const dailyActivity = new Map<string, number>();
 
     quotes.forEach((q) => {
       counts[q.status]++;
-      const totalHT = q.lines.reduce(
-        (acc, ln) => acc + ln.unitPrice * ln.quantity,
-        0,
-      );
+      const totalHT = computeTotalHT(q);
 
-      // Logique financière : SENT = En-cours (Cash virtuel)
+      if (q.status === "CANCELLED") return;
       if (q.status === "SENT") pipeline += totalHT;
-      if (["DRAFT", "SENT", "ACCEPTED"].includes(q.status))
-        outstanding += totalHT;
+      if (["DRAFT", "SENT", "ACCEPTED"].includes(q.status)) outstanding += totalHT;
       if (q.status === "PAID") collected += totalHT;
 
-      // Activité pour sparkline
       const quoteDate = new Date(q.createdAt);
       if (quoteDate >= thirtyDaysAgo) {
         const dateKey = quoteDate.toISOString().split("T")[0];
@@ -147,10 +319,8 @@ export function QuoteProvider({
       }
     });
 
-    const sentCount =
-      counts["SENT"] + counts["ACCEPTED"] + counts["PAID"] + counts["REJECTED"];
-    const conversionRate =
-      sentCount > 0 ? (counts["PAID"] / sentCount) * 100 : 0;
+    const sentCount = counts["SENT"] + counts["ACCEPTED"] + counts["PAID"] + counts["REJECTED"];
+    const conversionRate = sentCount > 0 ? (counts["PAID"] / sentCount) * 100 : 0;
 
     return {
       totalPipelineValue: pipeline,
@@ -162,7 +332,9 @@ export function QuoteProvider({
     };
   }, [quotes]);
 
-  // Utilisation de startTransition pour le refresh (non-bloquant pour l'UI)
+  const hasActiveFilters = dateRange !== null || amountMin !== "" || amountMax !== "";
+
+  // ─── Refresh ───
   const refresh = async () => {
     startTransition(async () => {
       const res = await getQuotesAction();
@@ -170,7 +342,7 @@ export function QuoteProvider({
     });
   };
 
-  // NOUVEAU: Charger la timeline du devis actif
+  // ─── Timeline ───
   const loadTimeline = useCallback(async (quoteId: string) => {
     setIsLoadingTimeline(true);
     const res = await getQuoteTimelineAction(quoteId);
@@ -180,10 +352,23 @@ export function QuoteProvider({
     setIsLoadingTimeline(false);
   }, []);
 
-  // NOUVEAU: Sélectionner un devis (active)
+  // ─── Reset tous les filtres ───
+  const resetFilters = useCallback(() => {
+    setDateRange(null);
+    setCustomStartDate(null);
+    setCustomEndDate(null);
+    setAmountMin("");
+    setAmountMax("");
+    setHighlightThreshold(null);
+    // Reset URL
+    router.replace(window.location.pathname, { scroll: false });
+  }, [router]);
+
+  // ─── Sélection ───
   const selectQuote = useCallback(
     (quoteId: string | null) => {
       setActiveQuoteId(quoteId);
+      setSelectedQuoteIds(new Set());
       if (quoteId) {
         loadTimeline(quoteId);
       } else {
@@ -193,34 +378,27 @@ export function QuoteProvider({
     [loadTimeline],
   );
 
-  // NOUVEAU: Toggle multi-sélection
   const toggleSelection = useCallback((quoteId: string) => {
     setSelectedQuoteIds((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(quoteId)) {
-        newSet.delete(quoteId);
-      } else {
-        newSet.add(quoteId);
-      }
+      if (newSet.has(quoteId)) newSet.delete(quoteId);
+      else newSet.add(quoteId);
       return newSet;
     });
   }, []);
 
-  // NOUVEAU: Sélectionner tous les devis filtrés
   const selectAll = useCallback(() => {
     setSelectedQuoteIds(new Set(filteredQuotes.map((q) => q.id)));
   }, [filteredQuotes]);
 
-  // NOUVEAU: Désélectionner tout
   const clearSelection = useCallback(() => {
     setSelectedQuoteIds(new Set());
   }, []);
 
-  // NOUVEAU: Quick Status Switch avec transition fluide
+  // ─── Quick Status Switch ───
   const quickStatusChange = useCallback(
     async (id: string, newStatus: QuoteStatus) => {
       const previousQuotes = [...quotes];
-      // Optimistic update
       setQuotes((prev) =>
         prev.map((q) => (q.id === id ? { ...q, status: newStatus } : q)),
       );
@@ -228,16 +406,10 @@ export function QuoteProvider({
       const res = await updateQuoteStatusAction(id, newStatus);
       if (!res.success) {
         setQuotes(previousQuotes);
-        notify.error(
-          "ERREUR_SYSTÈME",
-          "Impossible de mettre à jour le statut.",
-        );
+        notify.error("ERREUR_SYSTÈME", "Impossible de mettre à jour le statut.");
       } else {
         notify.success("STATUT_MIS_À_JOUR", `Devis marqué comme ${newStatus}`);
-        // Recharger la timeline si c'est le devis actif
-        if (activeQuoteId === id) {
-          loadTimeline(id);
-        }
+        if (activeQuoteId === id) loadTimeline(id);
       }
     },
     [quotes, activeQuoteId, loadTimeline],
@@ -252,10 +424,7 @@ export function QuoteProvider({
       setQuotes(previousQuotes);
       notify.error("ERREUR_SYSTÈME", "Impossible de mettre à jour le statut.");
     } else {
-      notify.success(
-        "STATUT_MIS_À_JOUR",
-        `Le devis est maintenant marqué comme ${status}.`,
-      );
+      notify.success("STATUT_MIS_À_JOUR", `Le devis est maintenant marqué comme ${status}.`);
     }
   };
 
@@ -282,12 +451,27 @@ export function QuoteProvider({
         stats,
         isLoading: isPending,
         searchQuery,
-        search: searchQuery, // Alias pour compatibilité
-        setSearchQuery,
-        setSearch: setSearchQuery, // Alias pour compatibilité
+        search: searchQuery,
+        setSearchQuery: handleSetSearchQuery,
+        setSearch: handleSetSearchQuery,
         activeStatus,
-        setActiveStatus,
-        // NOUVEAU: Master-Detail
+        setActiveStatus: handleSetActiveStatus,
+        // Filtres avancés centralisés
+        dateRange,
+        customStartDate,
+        customEndDate,
+        amountMin,
+        amountMax,
+        highlightThreshold,
+        setDateRange: handleSetDateRange,
+        setCustomStartDate: handleSetCustomStartDate,
+        setCustomEndDate: handleSetCustomEndDate,
+        setAmountMin: handleSetAmountMin,
+        setAmountMax: handleSetAmountMax,
+        setHighlightThreshold: handleSetHighlightThreshold,
+        resetFilters,
+        hasActiveFilters,
+        // Master-Detail
         activeQuoteId,
         selectedQuoteIds,
         timeline,
@@ -296,11 +480,10 @@ export function QuoteProvider({
         toggleSelection,
         selectAll,
         clearSelection,
-        // Actions existantes
+        // Actions
         updateStatus,
         deleteQuote,
         refresh,
-        // NOUVEAU: Quick Actions
         quickStatusChange,
       }}
     >

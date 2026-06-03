@@ -61,6 +61,8 @@ import {
   DS_PAGE_SHELL,
   DS_PAGE_GRID,
 } from "@/lib/design-system";
+import { SearchBar } from "@/components/shared/ui/search-bar";
+import { BTN_PRIMARY, BTN_SECONDARY } from "@/components/shared/ui/constants";
 
 const EASE_OUT_EXPO: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
@@ -303,22 +305,12 @@ export function SpatialCatalogView() {
       {/* Card Search */}
       <div className={cn(DS_BENTO_CARD, "p-2")}>
         <p className={cn(DS_MICRO, "text-slate-400 mb-1.5")}>Recherche</p>
-        <div className="relative">
-          <MagnifyingGlassIcon
-            size={12}
-            className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400"
-          />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Rechercher..."
-            className={cn(
-              DS_INPUT,
-              "w-full pl-7 pr-2 py-1.5 rounded text-[11px]",
-            )}
-          />
-        </div>
+        <SearchBar
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Rechercher..."
+          width="w-full"
+        />
       </div>
 
       {/* Card Source */}
@@ -613,9 +605,9 @@ function PortfolioMatrix({
                         size={24}
                         className={cn("opacity-20", config.color)}
                       />
-                      <p className={cn(DS_LABEL, "mt-2")}>
-                        {config.description}
-                      </p>
+              <p className={cn(DS_LABEL, "mt-2")}>
+                {config.description}
+              </p>
                     </div>
                   ) : (
                     <div className={DS_GAP_ITEMS}>

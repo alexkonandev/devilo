@@ -9,6 +9,8 @@ import {
   ActionResponse,
   QuoteTimelineEvent,
 } from "@/types/quote-registry";
+import { updateQuoteStatusSchema, deleteQuoteSchema } from "@/lib/validations/quote";
+import { logQuoteEventAction, logQuoteStatusChangeAction, getQuoteEventsAction } from "./quote-event-action";
 
 /**
  * FETCH : Récupère tous les devis de l'utilisateur avec relations
@@ -40,6 +42,7 @@ export async function getQuotesAction(): Promise<
 /**
  * UPDATE_STATUS : Change l'état d'un devis (Workflow rapide)
  * Utile pour passer de SENT à PAID sans ouvrir l'éditeur.
+ * Logge automatiquement l'événement dans QuoteEvent.
  */
 export async function updateQuoteStatusAction(
   id: string,
@@ -49,10 +52,34 @@ export async function updateQuoteStatusAction(
     const userId = await getClerkUserId();
     if (!userId) return { success: false, error: "Non autorisé" };
 
+    // ─── VALIDATION ZOD ───
+    const parsed = updateQuoteStatusSchema.safeParse({ id, status });
+    if (!parsed.success) {
+      return {
+        success: false,
+        error: parsed.error.errors.map((e) => e.message).join(", "),
+      };
+    }
+
+    // Récupérer l'ancien statut avant mise à jour
+    const existing = await db.quote.findUnique({
+      where: { id, userId },
+      select: { id: true, status: true },
+    });
+
+    if (!existing) {
+      return { success: false, error: "Devis non trouvé" };
+    }
+
     await db.quote.update({
       where: { id, userId },
       data: { status },
     });
+
+    // Logger le changement de statut
+    if (existing.status !== status) {
+      await logQuoteStatusChangeAction(id, existing.status, status);
+    }
 
     revalidatePath("/quotes");
     return { success: true };
@@ -70,6 +97,15 @@ export async function deleteQuoteAction(id: string): Promise<ActionResponse> {
     const userId = await getClerkUserId();
     if (!userId) return { success: false, error: "Non autorisé" };
 
+    // ─── VALIDATION ZOD ───
+    const parsed = deleteQuoteSchema.safeParse({ id });
+    if (!parsed.success) {
+      return {
+        success: false,
+        error: parsed.error.errors.map((e) => e.message).join(", "),
+      };
+    }
+
     await db.quote.delete({
       where: { id, userId },
     });
@@ -84,7 +120,8 @@ export async function deleteQuoteAction(id: string): Promise<ActionResponse> {
 
 /**
  * GET_TIMELINE : Récupère l'historique d'un devis (Audit Trail)
- * Pour le panneau de télémétrie dans l'UI Master-Detail
+ * Utilise maintenant la table QuoteEvent. Fallback sur la timeline
+ * synthétique si aucun événement n'est encore enregistré.
  */
 export async function getQuoteTimelineAction(
   quoteId: string,
@@ -103,7 +140,14 @@ export async function getQuoteTimelineAction(
       return { success: false, error: "Devis non trouvé" };
     }
 
-    // Construire une timeline synthétique à partir des données existantes
+    // Essayer de récupérer les événements depuis QuoteEvent
+    const eventsResult = await getQuoteEventsAction(quoteId);
+
+    if (eventsResult.success && eventsResult.data && eventsResult.data.length > 0) {
+      return eventsResult;
+    }
+
+    // Fallback: timeline synthétique si aucun événement n'existe encore
     const timeline: QuoteTimelineEvent[] = [
       {
         id: `${quoteId}-created`,
@@ -113,20 +157,6 @@ export async function getQuoteTimelineAction(
         metadata: { initialStatus: quote.status },
       },
     ];
-
-    // Si le statut a changé depuis la création, ajouter un événement
-    if (
-      quote.status !== "DRAFT" ||
-      quote.updatedAt.getTime() !== quote.createdAt.getTime()
-    ) {
-      timeline.push({
-        id: `${quoteId}-status-${quote.updatedAt.getTime()}`,
-        quoteId,
-        type: "status_changed",
-        status: quote.status,
-        createdAt: quote.updatedAt,
-      });
-    }
 
     return { success: true, data: timeline };
   } catch (error) {

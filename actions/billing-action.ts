@@ -209,7 +209,7 @@ export async function createCheckoutSession(): Promise<{
       metadata: { userId },
     });
 
-    return { success: true, url: session.url };
+    return { success: true, url: session.url ?? undefined };
   } catch (e: unknown) {
     return {
       success: false,
