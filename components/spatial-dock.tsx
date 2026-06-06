@@ -67,11 +67,12 @@ const TOP_NAV_ITEMS: NavItem[] = [
   { label: "Devis", href: "/quotes", icon: FileTextIcon, badge: "drafts" },
   { label: "Clients", href: "/clients", icon: UsersThreeIcon },
   { label: "Catalogue", href: "/catalog", icon: PackageIcon },
-  { label: "Facturation", href: "/billing", icon: CreditCardIcon },
+
 ];
 
 const BOTTOM_NAV_ITEMS: NavItem[] = [
   { label: "Nouveau Devis", href: "/quotes/new", icon: PlusIcon },
+  { label: "Facturation", href: "/billing", icon: CreditCardIcon },
   { label: "Paramètres", href: "/settings", icon: GearSixIcon },
 ];
 

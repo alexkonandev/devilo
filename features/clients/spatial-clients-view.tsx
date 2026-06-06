@@ -301,51 +301,48 @@ export default function SpatialClientsView({
 
   // ─── RENDER ────────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col h-full py-6">
-      {/* ── Contenu principal avec header intégré dans la pile Bento ── */}
-      <div className="flex-1 overflow-hidden bg-slate-50">
-        <div className="flex flex-col gap-6 h-full">
-          {/* Header — PageHeader générique */}
-          <div className="shrink-0 px-6">
-            <PageHeader
-              title="Clients"
-              description={`${total} client${total > 1 ? "s" : ""}`}
-              actions={
-                <>
-                  {/* Barre de recherche (composant partagé avec Devis) */}
-                  <SearchBar
-                    value={searchQuery}
-                    onChange={handleSearch}
-                    placeholder="Rechercher..."
-                    isLoading={isLoading}
-                  />
+    <div className="flex flex-col h-full w-full bg-slate-50">
+        {/* Header — PageHeader générique */}
+        <div className="shrink-0 px-6 pt-6">
+          <PageHeader
+            title="Clients"
+            description={`${total} client${total > 1 ? "s" : ""}`}
+            actions={
+              <>
+                {/* Barre de recherche (composant partagé avec Devis) */}
+                <SearchBar
+                  value={searchQuery}
+                  onChange={handleSearch}
+                  placeholder="Rechercher..."
+                  isLoading={isLoading}
+                />
 
-                  {/* Bouton Importer */}
-                  <button
-                    onClick={() => setIsImportModalOpen(true)}
-                    className={BTN_SECONDARY}
-                  >
-                    <Upload size={12} weight="bold" />
-                    Importer
-                  </button>
+                {/* Bouton Importer */}
+                <button
+                  onClick={() => setIsImportModalOpen(true)}
+                  className={BTN_SECONDARY}
+                >
+                  <Upload size={12} weight="bold" />
+                  Importer
+                </button>
 
-                  {/* Bouton Nouveau Client */}
-                  <button
-                    onClick={() => setIsSheetOpen(true)}
-                    className={BTN_PRIMARY}
-                  >
-                    <PlusIcon size={12} weight="bold" />
-                    Nouveau Client
-                  </button>
-                </>
-              }
-            />
-          </div>
+                {/* Bouton Nouveau Client */}
+                <button
+                  onClick={() => setIsSheetOpen(true)}
+                  className={BTN_PRIMARY}
+                >
+                  <PlusIcon size={12} weight="bold" />
+                  Nouveau Client
+                </button>
+              </>
+            }
+          />
+        </div>
 
-          {/* Flex layout horizontal : table + panel détail */}
-          <div className="flex-1 flex overflow-hidden px-6 gap-6">
-            {/* Colonne gauche : Table */}
-            <div className="w-1/3 min-w-[350px] max-w-[500px] shrink-0 bg-white border border-slate-200 rounded-md overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-200">
+        {/* Flex layout horizontal : table + panel détail */}
+        <div className="flex w-full flex-1 min-h-0 px-6 pb-6 pt-4 overflow-hidden gap-6">
+          {/* Colonne gauche : Table */}
+          <div className="flex-[4] min-w-0 bg-white border border-slate-200 rounded-md self-start max-h-[calc(100vh-200px)] overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-200">
               <ClientTable
                 clients={filteredAndSortedClients}
                 selectedIds={selectedIds}
@@ -362,6 +359,7 @@ export default function SpatialClientsView({
                 total={total}
                 limit={limit}
                 isLoading={isLoading}
+                searchQuery={searchQuery}
                 onToggleSelect={handleToggleSelect}
                 onSelectClient={handleSelectClient}
                 onEditClient={handleEditClient}
@@ -372,31 +370,30 @@ export default function SpatialClientsView({
                 onSetOpenDropdownId={setOpenDropdownId}
                 onSetActiveFilter={setActiveFilter}
                 onPageChange={setPage}
+                onSearchChange={handleSearch}
               />
-            </div>
-
-              {/* Colonne droite : Panel détail */}
-              <div className="flex-1 overflow-y-auto">
-                <ClientDetailPanel
-                  client={selectedClient}
-                  onEditClient={handleEditClient}
-                  onUpdate={async () => {
-                    const result = await getClientsPaginated(page, limit, searchQuery);
-                    setClients(result.clients);
-                    setTotal(result.total);
-                    setTotalPages(result.totalPages);
-                    // Mettre à jour viewingClient avec les données fraîches
-                    // pour que selectedClient reflète immédiatement les changements
-                    const updated = result.clients.find((c) => c.id === selectedClientId);
-                    if (updated) {
-                      setViewingClient(updated);
-                    }
-                  }}
-                />
-              </div>
           </div>
+
+          {/* Colonne droite : Panel détail */}
+          <aside className="flex-[6] flex flex-col min-h-0 overflow-hidden">
+            <ClientDetailPanel
+              client={selectedClient}
+              onEditClient={handleEditClient}
+              onUpdate={async () => {
+                const result = await getClientsPaginated(page, limit, searchQuery);
+                setClients(result.clients);
+                setTotal(result.total);
+                setTotalPages(result.totalPages);
+                // Mettre à jour viewingClient avec les données fraîches
+                // pour que selectedClient reflète immédiatement les changements
+                const updated = result.clients.find((c) => c.id === selectedClientId);
+                if (updated) {
+                  setViewingClient(updated);
+                }
+              }}
+            />
+          </aside>
         </div>
-      </div>
 
       {/* SHEET CRÉATION CLIENT */}
       <ClientCreationSheet

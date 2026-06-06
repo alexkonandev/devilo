@@ -5,15 +5,23 @@ import { useRouter } from "next/navigation";
 import { ClientListItem } from "@/types/client";
 import { upsertClient } from "@/actions/client-action";
 import { validateField } from "@/lib/validations/client";
-import { cn } from "@/lib/utils";
+import { cn, formatPrice, formatPriceCompact } from "@/lib/utils";
 import {
   DS_MICRO,
   DS_LABEL,
   DS_MONO,
+  DS_TITLE,
   DS_CARD,
-  DS_INPUT,
-  DS_BUTTON_SECONDARY,
+  DS_BADGE_SUCCESS,
+  DS_BADGE_ACTIVE,
+  DS_BADGE_NEUTRAL,
+  DS_BADGE_ACCEPTED,
+  DS_BADGE_DANGER,
+  DS_BADGE_WARNING,
+  DS_SECTION_HEADER,
+  DS_ICON_WRAPPER,
 } from "@/lib/design-system";
+import { STATUS_LABELS } from "./client-constants";
 import {
   UserCircle,
   EnvelopeSimple,
@@ -31,18 +39,6 @@ import {
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-const formatCompact = (n: number) => {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(".0", "")}M`;
-  if (n >= 1_000) return `${Math.round(n / 1_000)}K`;
-  return `${n.toLocaleString("fr-FR")}`;
-};
-
-const formatCurrency = (n: number) =>
-  `${n.toLocaleString("fr-FR", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  })} FCFA`;
-
 const daysSince = (date: Date | string | null | undefined): number | null => {
   if (!date) return null;
   return Math.floor(
@@ -52,30 +48,16 @@ const daysSince = (date: Date | string | null | undefined): number | null => {
 
 // ─── Styles ─────────────────────────────────────────────────────────────────
 
-const SECTION_CLASS = "bg-white border border-slate-200 rounded-md p-6";
-const SECTION_TITLE_CLASS = "flex items-center gap-2 mb-4";
-const SECTION_TITLE_TEXT_CLASS =
-  "font-mono text-[9px] uppercase tracking-tight text-slate-500 font-semibold";
-
 const STAT_CARD_CLASS =
   "p-3 bg-white border border-slate-200 rounded-md flex flex-col gap-1";
 
-const BADGE_CLASSES: Record<string, string> = {
-  PAID: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  SENT: "bg-blue-50 text-blue-700 border-blue-200",
-  DRAFT: "bg-slate-50 text-slate-500 border-slate-200",
-  ACCEPTED: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  REJECTED: "bg-rose-50 text-rose-700 border-rose-200",
-  REMINDER: "bg-amber-50 text-amber-700 border-amber-200",
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  PAID: "Payé",
-  SENT: "Envoyé",
-  DRAFT: "Brouillon",
-  ACCEPTED: "Accepté",
-  REJECTED: "Refusé",
-  REMINDER: "Relance",
+const BADGE_MAP: Record<string, string> = {
+  PAID: DS_BADGE_SUCCESS,
+  SENT: DS_BADGE_ACTIVE,
+  DRAFT: DS_BADGE_NEUTRAL,
+  ACCEPTED: DS_BADGE_ACCEPTED,
+  REJECTED: DS_BADGE_DANGER,
+  REMINDER: DS_BADGE_WARNING,
 };
 
 // ─── Field type for validation ──────────────────────────────────────────────
@@ -188,28 +170,13 @@ function EditableField({
   // if the incoming value equals the last server-confirmed value, it's an echo of
   // the local save — do NOT overwrite the draft.
   useEffect(() => {
-    console.log("[EditableField sync] check", {
-      editing,
-      value,
-      prevValueRef: prevValueRef.current,
-      lastSavedValue,
-      draft,
-    });
     if (!editing && value !== prevValueRef.current) {
       // Garde anti-rollback : si lastSavedValue est fourni et que la prop value
       // correspond exactement à la valeur qu'on vient de confirmer au serveur,
       // c'est un écho de notre propre sauvegarde → on préserve le draft.
       if (lastSavedValue !== undefined && value === lastSavedValue) {
-        console.log(
-          "[EditableField sync] SKIP (echo local) — value === lastSavedValue, draft preserved",
-          { value, lastSavedValue, draft }
-        );
         return;
       }
-      console.log(
-        "[EditableField sync] APPLY — updating draft from external prop",
-        { value, prevValueRef: prevValueRef.current, lastSavedValue }
-      );
       setDraft(value ?? "");
       setError(null);
       prevValueRef.current = value;
@@ -246,7 +213,8 @@ function EditableField({
             <textarea
               ref={inputRef as React.RefObject<HTMLTextAreaElement>}
               className={cn(
-                "flex-1 text-[11px] font-mono bg-transparent border-none outline-none resize-none min-h-[48px] leading-relaxed",
+                DS_MONO,
+                "flex-1 bg-transparent border-none outline-none resize-none min-h-[48px] leading-relaxed",
                 hasError ? "text-red-700" : "text-slate-700"
               )}
               value={draft}
@@ -266,7 +234,8 @@ function EditableField({
               ref={inputRef as React.RefObject<HTMLInputElement>}
               autoFocus
               className={cn(
-                "flex-1 text-[11px] font-mono bg-transparent border-none outline-none leading-relaxed",
+                DS_MONO,
+                "flex-1 bg-transparent border-none outline-none leading-relaxed",
                 hasError ? "text-red-700" : "text-slate-700"
               )}
               value={draft}
@@ -288,7 +257,7 @@ function EditableField({
 
         {/* Error message under the input */}
         {error && (
-          <p className="text-[9px] font-mono text-red-500 ml-[22px] leading-tight">
+          <p className={cn(DS_MONO, "text-red-500 ml-[22px] leading-tight")}>
             {error}
           </p>
         )}
@@ -312,13 +281,13 @@ function EditableField({
       <div className="flex-1 min-w-0">
         {/* Label au-dessus de la valeur */}
         {smallLabel && (
-          <span className="block text-[10px] text-slate-400 uppercase font-semibold tracking-tight leading-none mb-1">
+          <span className={cn(DS_LABEL, "block mb-1")}>
             {smallLabel}
           </span>
         )}
         <span
           className={cn(
-            "block text-[11px] font-mono leading-relaxed",
+            DS_MONO,
             isEmpty ? "text-slate-300 italic" : "text-slate-700",
             multiline && "whitespace-pre-wrap"
           )}
@@ -326,7 +295,7 @@ function EditableField({
           {isEmpty ? (
             <span className="inline-flex items-center gap-1">
               <span>{placeholder}</span>
-              <span className="text-[10px] text-slate-300 font-normal">
+              <span className={cn(DS_MONO, "text-slate-300 font-normal")}>
                 — Cliquez pour ajouter
               </span>
             </span>
@@ -422,14 +391,11 @@ export default function ClientDetailPanel({
         name: client.name,
         [field]: value || null,
       });
-      console.log("[DEBUG handleSaveField] result:", result);
       if (!result.success) {
         throw new Error(result.error ?? "Save failed");
       }
       // Notify parent to refresh data (indicators, CA, etc.)
-      console.log("[DEBUG handleSaveField] calling onUpdate");
       await onUpdate?.();
-      console.log("[DEBUG handleSaveField] onUpdate completed");
     },
     [client?.id, client?.name, onUpdate]
   );
@@ -445,7 +411,6 @@ export default function ClientDetailPanel({
         address: val, // Envoie uniquement l'adresse modifiée
       });
 
-      console.log("[DEBUG handleSaveAddress] result:", result);
       if (!result.success) {
         throw new Error(result.error ?? "Save failed");
       }
@@ -459,11 +424,26 @@ export default function ClientDetailPanel({
   // ─── Empty state ─────────────────────────────────────────────────────────
   if (!client) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-slate-300 gap-3">
-        <UserCircle size={40} weight="thin" />
-        <span className={cn(DS_MICRO, "text-[10px] text-slate-300")}>
-          SÉLECTIONNEZ UN CLIENT
-        </span>
+      <div className="flex-1 bg-white border border-slate-200 rounded-md overflow-hidden">
+        {/* En-tête "Informations" avec trait de séparation */}
+        <div className="flex items-center gap-2 px-5 py-2.5 border-b border-slate-100 bg-slate-50/50">
+          <span className={cn(DS_LABEL, "text-[10px] text-slate-500 uppercase tracking-wider")}>
+            Informations
+          </span>
+        </div>
+        <div className="flex flex-col items-center justify-center px-8 py-16 gap-4 h-full">
+          <div className="w-14 h-14 rounded-md bg-slate-100 flex items-center justify-center text-slate-300">
+            <UserCircle size={28} weight="duotone" />
+          </div>
+          <div className="text-center space-y-1.5">
+            <p className={cn(DS_MONO, "text-sm font-semibold text-slate-500")}>
+              Aucune sélection
+            </p>
+            <p className={cn(DS_MONO, "text-[10px] text-slate-400 leading-relaxed max-w-[200px]")}>
+              {`Sélectionnez un client pour voir ses informations, ses devis et son activité`}
+            </p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -504,12 +484,12 @@ export default function ClientDetailPanel({
   // ─── RENDER ──────────────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-6 h-full overflow-y-auto pr-3 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-200">
+    <div className="space-y-6 h-full overflow-y-auto pr-3">
       {/* ── SECTION 1 : RÉSUMÉ ─────────────────────────────────────────────── */}
-      <section className={SECTION_CLASS}>
-        <div className={SECTION_TITLE_CLASS}>
+      <section className={`${DS_CARD} p-6`}>
+        <div className={`${DS_SECTION_HEADER} gap-2`}>
           <UserCircle size={13} weight="bold" className="text-slate-400" />
-          <span className={SECTION_TITLE_TEXT_CLASS}>Résumé</span>
+          <span className={DS_MICRO}>Résumé</span>
         </div>
 
         <div className="space-y-2">
@@ -519,10 +499,10 @@ export default function ClientDetailPanel({
               {client.name.slice(0, 2).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <h2 className="text-sm font-semibold text-slate-900 leading-tight truncate">
+              <h2 className={cn(DS_TITLE, "leading-tight truncate")}>
                 {client.name}
               </h2>
-              <p className="text-[10px] font-mono text-slate-400">
+              <p className={cn(DS_MONO, "text-slate-400")}>
                 Client depuis{" "}
                 {new Date(client.createdAt).toLocaleDateString("fr-FR", {
                   day: "numeric",
@@ -570,57 +550,51 @@ export default function ClientDetailPanel({
       </section>
 
       {/* ── SECTION 2 : INDICATEURS ────────────────────────────────────────── */}
-      <section className={SECTION_CLASS}>
-        <div className={SECTION_TITLE_CLASS}>
+      <section className={`${DS_CARD} p-6`}>
+        <div className={`${DS_SECTION_HEADER} gap-2`}>
           <CurrencyCircleDollar
             size={13}
             weight="bold"
             className="text-slate-400"
           />
-          <span className={SECTION_TITLE_TEXT_CLASS}>Indicateurs</span>
+          <span className={DS_MICRO}>Indicateurs</span>
         </div>
 
         <div className="grid grid-cols-3 gap-3">
           {/* CA Total */}
           <div className={STAT_CARD_CLASS}>
-            <span className={cn(DS_MICRO, "text-[8px] text-slate-500")}>
-              CA TOTAL
+            <span className={DS_MICRO}>CA TOTAL</span>
+            <span className={cn(DS_MONO, "text-base font-bold text-slate-900")}>
+              {formatPriceCompact(totalCA)}
             </span>
-            <span className="text-base font-semibold tabular-nums text-slate-900">
-              {formatCompact(totalCA)}
-            </span>
-            <span className="text-[9px] font-mono text-slate-400">FCFA</span>
+            <span className={cn(DS_MONO, "text-slate-400")}>FCFA</span>
           </div>
 
           {/* Total Devis */}
           <div className={STAT_CARD_CLASS}>
-            <span className={cn(DS_MICRO, "text-[8px] text-slate-500")}>
-              TOTAL DEVIS
-            </span>
-            <span className="text-base font-semibold tabular-nums text-slate-900">
+            <span className={DS_MICRO}>TOTAL DEVIS</span>
+            <span className={cn(DS_MONO, "text-base font-bold text-slate-900")}>
               {totalDevis}
             </span>
-            <span className="text-[9px] font-mono text-slate-400">
+            <span className={cn(DS_MONO, "text-slate-400")}>
               {totalDevis > 1 ? "documents" : "document"}
             </span>
           </div>
 
           {/* Dernière activité */}
           <div className={STAT_CARD_CLASS}>
-            <span className={cn(DS_MICRO, "text-[8px] text-slate-500")}>
-              DERNIÈRE ACTIVITÉ
-            </span>
+            <span className={DS_MICRO}>DERNIÈRE ACTIVITÉ</span>
             {lastActivityDays !== null ? (
               <>
-                <span className="text-base font-semibold tabular-nums text-slate-900">
+                <span className={cn(DS_MONO, "text-base font-bold text-slate-900")}>
                   {lastActivityDays}
                 </span>
-                <span className="text-[9px] font-mono text-slate-400">
+                <span className={cn(DS_MONO, "text-slate-400")}>
                   {lastActivityDays > 1 ? "jours" : "jour"}
                 </span>
               </>
             ) : (
-              <span className="text-xs font-mono text-slate-300 mt-1.5">
+              <span className={cn(DS_MONO, "text-slate-300 mt-1.5")}>
                 Aucune
               </span>
             )}
@@ -629,10 +603,10 @@ export default function ClientDetailPanel({
       </section>
 
       {/* ── SECTION 3 : HISTORIQUE ─────────────────────────────────────────── */}
-      <section className={SECTION_CLASS}>
-        <div className={SECTION_TITLE_CLASS}>
+      <section className={`${DS_CARD} p-6`}>
+        <div className={`${DS_SECTION_HEADER} gap-2`}>
           <FileText size={13} weight="bold" className="text-slate-400" />
-          <span className={SECTION_TITLE_TEXT_CLASS}>
+          <span className={DS_MICRO}>
             Historique des devis
             {quotes.length > 0 && (
               <span className="ml-1 text-slate-300 font-normal">
@@ -643,11 +617,11 @@ export default function ClientDetailPanel({
         </div>
 
         {quotes.length === 0 ? (
-          <p className="text-[11px] font-mono text-slate-400 italic py-3 text-center">
+          <p className={cn(DS_MONO, "text-slate-400 italic py-3 text-center")}>
             Aucun devis pour ce client
           </p>
         ) : (
-          <div className="max-h-[280px] overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-200">
+          <div className="max-h-[280px] overflow-y-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-100">
@@ -680,12 +654,12 @@ export default function ClientDetailPanel({
                     }}
                   >
                     <td className="py-2 pr-2">
-                      <span className="text-[11px] font-mono text-indigo-600">
+                      <span className={cn(DS_MONO, "text-indigo-600")}>
                         {quote.number}
                       </span>
                     </td>
                     <td className="py-2 px-2">
-                      <span className="text-[10px] font-mono text-slate-400">
+                      <span className={cn(DS_MONO, "text-slate-400")}>
                         {new Date(quote.createdAt).toLocaleDateString("fr-FR", {
                           day: "2-digit",
                           month: "short",
@@ -697,15 +671,15 @@ export default function ClientDetailPanel({
                       <span
                         className={cn(
                           "inline-block px-1.5 py-0.5 rounded text-[8px] font-bold border leading-tight",
-                          BADGE_CLASSES[quote.status] || BADGE_CLASSES.DRAFT
+                          BADGE_MAP[quote.status] || BADGE_MAP.DRAFT
                         )}
                       >
                         {STATUS_LABELS[quote.status] || quote.status}
                       </span>
                     </td>
                     <td className="py-2 pl-2 text-right">
-                      <span className="text-[11px] font-mono tabular-nums font-medium text-slate-800">
-                        {formatCurrency(quote.totalAmount)}
+                      <span className={cn(DS_MONO, "font-bold text-slate-800")}>
+                        {formatPrice(quote.totalAmount)}
                       </span>
                     </td>
                   </tr>
@@ -717,19 +691,19 @@ export default function ClientDetailPanel({
       </section>
 
       {/* ── SECTION 4 : NOTES ──────────────────────────────────────────────── */}
-      <section className={SECTION_CLASS}>
-        <div className={SECTION_TITLE_CLASS}>
+      <section className={`${DS_CARD} p-6`}>
+        <div className={`${DS_SECTION_HEADER} gap-2`}>
           <TextAlignLeft size={13} weight="bold" className="text-slate-400" />
-          <span className={SECTION_TITLE_TEXT_CLASS}>Notes internes</span>
+          <span className={DS_MICRO}>Notes internes</span>
           <div className="ml-auto flex items-center gap-1.5">
             {notesSaving && (
-              <span className="flex items-center gap-1 text-[9px] font-mono text-slate-400">
+              <span className={cn(DS_MONO, "text-slate-400 flex items-center gap-1")}>
                 <Spinner size={10} className="animate-spin" />
                 Sauvegarde...
               </span>
             )}
             {notesSaved && !notesSaving && (
-              <span className="flex items-center gap-1 text-[9px] font-mono text-emerald-500">
+              <span className={cn(DS_MONO, "text-emerald-500 flex items-center gap-1")}>
                 <Check size={10} weight="bold" />
                 Enregistré
               </span>
@@ -743,7 +717,8 @@ export default function ClientDetailPanel({
           placeholder="Ajouter une note interne sur ce client…"
           rows={4}
           className={cn(
-            "w-full resize-none text-[11px] font-mono text-slate-700 placeholder:text-slate-300",
+            DS_MONO,
+            "w-full resize-none text-slate-700 placeholder:text-slate-300",
             "bg-white border border-slate-200 rounded-md p-3",
             "focus:border-indigo-300 focus:outline-none focus:ring-1 focus:ring-indigo-300",
             "transition-all"

@@ -43,7 +43,20 @@ export function formatDateTime(d: Date | string): string {
 // PRICE FORMATTERS
 // ═══════════════════════════════════════════════════════════════
 
-export function formatPrice(n: number): string {
+export interface FormatPriceOptions {
+  compact?: boolean;
+}
+
+export function formatPrice(n: number, opts?: FormatPriceOptions): string {
+  if (opts?.compact) {
+    if (n >= 1_000_000) {
+      return `${(n / 1_000_000).toFixed(1)}M`;
+    }
+    if (n >= 1_000) {
+      return `${(n / 1_000).toFixed(0)}k`;
+    }
+    return n.toString();
+  }
   return new Intl.NumberFormat("fr-FR", {
     style: "currency",
     currency: "XOF",

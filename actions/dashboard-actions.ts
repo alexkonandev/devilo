@@ -63,15 +63,60 @@ export async function getAdvancedDashboardData(): Promise<AdvancedDashboardData 
         ? (quotesValidees.length / user.quotes.length) * 100
         : 0;
 
-    const activity = user.quotes.slice(0, 5).map((q) => ({
-      id: q.id,
-      amount: getQuoteTotal(q.lines),
-      status: q.status as unknown as QuoteStatus,
-      clientName: q.client.name,
-      projectName: q.lines[0]?.title || "Prestation de service",
-      quoteNumber: q.number,
-      date: q.updatedAt,
-    }));
+    // Pré-calcul : moyenne des montants par client + quoteCount
+    const clientStats = new Map<string, { moyenne: number; quoteCount: number }>();
+    for (const c of user.clients) {
+      const totalClient = c.quotes.reduce((acc, q) => acc + getQuoteTotal(q.lines), 0);
+      clientStats.set(c.id, {
+        moyenne: c._count.quotes > 0 ? totalClient / c._count.quotes : 0,
+        quoteCount: c._count.quotes,
+      });
+    }
+
+    // Heuristique simple pour déduire une catégorie à partir du titre d'une ligne
+    function deduireCategorie(titre: string): string {
+      const t = titre.toLowerCase();
+      if (t.includes("site") || t.includes("dev") || t.includes("code") || t.includes("technique")) return "Tech";
+      if (t.includes("logo") || t.includes("design") || t.includes("graph") || t.includes("créatif")) return "Créatif";
+      if (t.includes("marketing") || t.includes("seo") || t.includes("pub") || t.includes("réseau")) return "Marketing";
+      if (t.includes("contenu") || t.includes("redac") || t.includes("copy") || t.includes("blog")) return "Content";
+      if (t.includes("conseil") || t.includes("consult") || t.includes("stratégie")) return "Consulting";
+      return "Prestation";
+    }
+
+    const activity = user.quotes.slice(0, 5).map((q) => {
+      const montant = getQuoteTotal(q.lines);
+      const clientInfo = clientStats.get(q.clientId);
+      const moyenneClient = clientInfo?.moyenne ?? 0;
+      const quoteCount = clientInfo?.quoteCount ?? 0;
+
+      // Calcul du délai en jours
+      const now = new Date();
+      const diffMs = now.getTime() - q.issueDate.getTime();
+      const delaiJours = Math.max(0, Math.round(diffMs / (1000 * 3600 * 24)));
+
+      const estUrgent = q.status === (PrismaQuoteStatus.SENT) && delaiJours > 7;
+      const categorie = q.lines[0]?.title ? deduireCategorie(q.lines[0].title) : "Prestation";
+      const variationMontant = moyenneClient > 0
+        ? Math.round(((montant - moyenneClient) / moyenneClient) * 100)
+        : 0;
+
+      return {
+        id: q.id,
+        amount: montant,
+        status: q.status as unknown as QuoteStatus,
+        clientName: q.client.name,
+        projectName: q.lines[0]?.title || "Prestation de service",
+        quoteNumber: q.number,
+        date: q.updatedAt,
+        delaiJours,
+        estUrgent,
+        moyenneClient,
+        variationMontant,
+        categorie,
+        quoteCount,
+      };
+    });
 
     const topClients = user.clients
       .map((c) => {

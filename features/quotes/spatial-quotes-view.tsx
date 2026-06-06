@@ -4,20 +4,18 @@ import React, { useState, useMemo, useCallback } from "react";
 import { useQuotes } from "./components/quote-context";
 import {
   cn,
-  formatPrice,
   applySort,
   type SortConfig,
 } from "@/lib/utils";
 import {
   FileTextIcon,
   PlusIcon,
-  CheckCircle,
-  ClockClockwise,
   CalendarBlank,
   XCircle,
 } from "@phosphor-icons/react";
 import { PageHeader } from "@/components/shared/layout/page-header";
 import { SearchBar } from "@/components/shared/ui/search-bar";
+import { CompletionAlert } from "./components/completion-alert";
 import { QuotesTable } from "./components/quotes-table";
 import { QuoteCreationSheet } from "./components/quote-creation-sheet";
 import { ExportActions } from "./components/export-actions";
@@ -38,9 +36,9 @@ export function SpatialQuotesView() {
     filteredQuotes,
     searchQuery,
     setSearchQuery,
-    stats,
     selectedQuoteIds,
     highlightThreshold,
+    setActiveStatus,
   } = useQuotes();
 
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -128,20 +126,7 @@ export function SpatialQuotesView() {
       <div className="shrink-0 px-6 pt-6">
         <PageHeader
           title="Devis"
-          description={
-            <span className="inline-flex items-center gap-3">
-              <span>{filteredQuotes.length} devis</span>
-              <span className="w-px h-3 bg-slate-200" />
-              <span className={cn(DS_MONO, "text-[10px] text-emerald-600 font-semibold")}>
-                <CheckCircle size={10} className="inline mr-0.5" weight="fill" />
-                {formatPrice(stats.totalCashCollected)} encaissé
-              </span>
-              <span className={cn(DS_MONO, "text-[10px] text-amber-600 font-semibold")}>
-                <ClockClockwise size={10} className="inline mr-0.5" weight="fill" />
-                {formatPrice(stats.totalPipelineValue)} en attente
-              </span>
-            </span>
-          }
+          description={`${filteredQuotes.length} devis`}
           actions={
             <>
               <SearchBar value={searchQuery} onChange={handleSearch} placeholder="Rechercher un devis…" />
@@ -152,6 +137,13 @@ export function SpatialQuotesView() {
               </button>
             </>
           }
+        />
+      </div>
+
+      <div className="shrink-0 px-6 pt-3">
+        <CompletionAlert
+          quotes={quotes}
+          onFilterStatus={setActiveStatus}
         />
       </div>
 

@@ -107,9 +107,9 @@ export function QuotesTable({ data, sortConfig, onSort, highlightThreshold }: Qu
     <div className="border border-slate-200 rounded-md overflow-hidden">
       <table className="w-full table-fixed border-collapse bg-white">
         <thead>
-          <tr className="border-b border-slate-200 bg-slate-50">
+          <tr className="border-b border-slate-100">
             <th
-              className={`${COL_CLIENT} px-2 py-2 text-left ${DS_LABEL} group cursor-pointer select-none hover:text-slate-700 transition-colors`}
+              className={`${COL_CLIENT} px-3 py-3 text-left ${DS_LABEL} group cursor-pointer select-none hover:text-slate-700 transition-colors`}
               onClick={() => onSort?.("client" as SortConfig["column"])}
             >
               <span className="inline-flex items-center">
@@ -118,7 +118,7 @@ export function QuotesTable({ data, sortConfig, onSort, highlightThreshold }: Qu
               </span>
             </th>
             <th
-              className={`${COL_NUMBER} px-2 py-2 text-left ${DS_LABEL} group cursor-pointer select-none hover:text-slate-700 transition-colors`}
+              className={`${COL_NUMBER} px-3 py-3 text-left ${DS_LABEL} group cursor-pointer select-none hover:text-slate-700 transition-colors`}
               onClick={() => onSort?.("number")}
             >
               <span className="inline-flex items-center">
@@ -127,7 +127,7 @@ export function QuotesTable({ data, sortConfig, onSort, highlightThreshold }: Qu
               </span>
             </th>
             <th
-              className={`${COL_DATE} px-2 py-2 text-left ${DS_LABEL} tabular-nums group cursor-pointer select-none hover:text-slate-700 transition-colors`}
+              className={`${COL_DATE} px-3 py-3 text-left ${DS_LABEL} tabular-nums group cursor-pointer select-none hover:text-slate-700 transition-colors`}
               onClick={() => onSort?.("issueDate")}
             >
               <span className="inline-flex items-center">
@@ -135,11 +135,11 @@ export function QuotesTable({ data, sortConfig, onSort, highlightThreshold }: Qu
                 <SortArrow column="issueDate" sortConfig={effectiveSort} />
               </span>
             </th>
-            <th className={`${COL_STATUS} px-2 py-2 text-left ${DS_LABEL}`}>
+            <th className={`${COL_STATUS} px-3 py-3 text-left ${DS_LABEL}`}>
               Statut
             </th>
             <th
-              className={`${COL_AMOUNT} px-2 py-2 text-right ${DS_LABEL} tabular-nums group cursor-pointer select-none hover:text-slate-700 transition-colors`}
+              className={`${COL_AMOUNT} px-3 py-3 text-right ${DS_LABEL} tabular-nums group cursor-pointer select-none hover:text-slate-700 transition-colors`}
               onClick={() => onSort?.("totalHT")}
             >
               <span className="inline-flex items-center justify-end">
@@ -166,27 +166,27 @@ export function QuotesTable({ data, sortConfig, onSort, highlightThreshold }: Qu
                     : "hover:bg-slate-50",
                 )}
               >
-                <td className={`${COL_CLIENT} px-2 py-2 text-left align-middle`}>
+                <td className={`${COL_CLIENT} px-3 py-3 text-left align-middle`}>
                   <span className={cn(DS_MONO, "font-semibold text-slate-900 truncate block text-xs")}>
                     {quote.client.name}
                   </span>
                 </td>
-                <td className={`${COL_NUMBER} px-2 py-2 text-left align-middle`}>
+                <td className={`${COL_NUMBER} px-3 py-3 text-left align-middle`}>
                   <span className={cn(DS_MONO, "text-xs text-slate-500")}>
                     {quote.number}
                   </span>
                 </td>
-                <td className={`${COL_DATE} px-2 py-2 text-left align-middle tabular-nums`}>
+                <td className={`${COL_DATE} px-3 py-3 text-left align-middle tabular-nums`}>
                   <span className={cn(DS_MONO, "text-[11px] text-slate-500")}>
                     {formatDateShort(quote.issueDate)}
                   </span>
                 </td>
-                <td className={`${COL_STATUS} px-2 py-2 text-left align-middle`}>
+                <td className={`${COL_STATUS} px-3 py-3 text-left align-middle`}>
                   <span className={STATUS_BADGE_CLASS[quote.status]}>
                     {STATUS_LABELS[quote.status]}
                   </span>
                 </td>
-                <td className={`${COL_AMOUNT} px-2 py-2 text-right align-middle tabular-nums`}>
+                <td className={`${COL_AMOUNT} px-3 py-3 text-right align-middle tabular-nums`}>
                   <span
                     className={cn(
                       DS_MONO,
@@ -221,7 +221,7 @@ export function QuotesTable({ data, sortConfig, onSort, highlightThreshold }: Qu
 
           {data.length === 0 && (
             <tr>
-              <td colSpan={5} className="px-2 py-12 text-center text-slate-400">
+              <td colSpan={5} className="px-3 py-12 text-center text-slate-400">
                 <span className={cn(DS_MONO, "text-xs")}>Aucun devis trouvé</span>
               </td>
             </tr>

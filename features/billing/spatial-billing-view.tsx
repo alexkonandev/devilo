@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useTransition, useEffect } from "react";
@@ -10,6 +11,7 @@ import {
   DS_MICRO,
   DS_LABEL,
   DS_MONO,
+  DS_TITLE,
   DS_BADGE_ACTIVE,
   DS_BADGE_SUCCESS,
   DS_BADGE_WARNING,
@@ -20,7 +22,10 @@ import {
   DS_BUTTON,
   DS_ICON_SM,
   DS_PAGE_SHELL,
+  DS_PAGE_PADDING,
   DS_PAGE_GRID,
+  DS_GAP_ITEMS,
+  DS_GAP_SECTIONS,
 } from "@/lib/design-system";
 import {
   CrownSimpleIcon,
@@ -37,9 +42,11 @@ import {
   TrendUpIcon,
   FileTextIcon,
   CurrencyCircleDollarIcon,
+  PuzzlePieceIcon,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { useKernelStore } from "@/hooks/use-kernel-store";
+import { PlanComparator, DEFAULT_PLAN_COMPARISON } from "./components/plan-comparator";
 import {
   type BillingProfile,
   createCheckoutSession,
@@ -92,45 +99,41 @@ export function SpatialBillingView({
   const hasStripe = !!billingProfile.stripeCustomerId;
 
   return (
-    <div className={cn(DS_PAGE_SHELL, "px-8 py-4")}>
+    <div className={cn(DS_PAGE_SHELL, DS_PAGE_PADDING)}>
       <div className="w-full">
         <div className={DS_PAGE_GRID}>
           {/* Row 1 — Statut + Analytics */}
           <BentoPlanStatus
             billingProfile={billingProfile}
-            className="col-span-12 lg:col-span-5"
+            className="col-span-12 md:col-span-6 lg:col-span-5"
           />
           <BentoAnalytics
             billingProfile={billingProfile}
-            className="col-span-12 lg:col-span-7"
+            className="col-span-12 md:col-span-6 lg:col-span-7"
           />
 
           {/* Row 2 — Manage/Upgrade + Financial Lifecycle */}
           {isPro ? (
             <BentoManage
               hasStripe={hasStripe}
-              className="col-span-12 lg:col-span-5"
+              className="col-span-12 md:col-span-6 lg:col-span-5"
             />
           ) : (
-            <BentoUpgrade className="col-span-12 lg:col-span-5" />
+            <BentoUpgrade
+              hasStripe={hasStripe}
+              className="col-span-12 md:col-span-6 lg:col-span-5"
+            />
           )}
           <BentoFinancialLifecycle
             billingProfile={billingProfile}
             isPro={isPro}
-            className="col-span-12 lg:col-span-7"
+            className="col-span-12 md:col-span-6 lg:col-span-7"
           />
 
-          {/* Row 3 — Paiement (FREE only) + Factures */}
-          {!isPro && (
-            <BentoPaymentAction
-              isPro={false}
-              hasStripe={hasStripe}
-              className="col-span-12 lg:col-span-5"
-            />
-          )}
+          {/* Row 3 — Factures */}
           <BentoInvoices
             invoices={billingProfile.invoices}
-            className={isPro ? "col-span-12" : "col-span-12 lg:col-span-7"}
+            className="col-span-12"
           />
         </div>
       </div>
@@ -171,10 +174,11 @@ function BentoPlanStatus({
               isPro ? "bg-indigo-50" : "bg-slate-50",
             )}
           >
-            <CrownSimpleIcon
-              size={DS_ICON_SM}
-              className={isPro ? "text-indigo-500" : "text-slate-400"}
-            />
+            {isPro ? (
+              <CrownSimpleIcon size={DS_ICON_SM} className="text-indigo-500" />
+            ) : (
+              <PuzzlePieceIcon size={DS_ICON_SM} className="text-slate-400" />
+            )}
           </div>
           <span className={cn(DS_MICRO, "text-slate-600")}>
             Statut Abonnement
@@ -187,7 +191,7 @@ function BentoPlanStatus({
 
       {/* Plan name */}
       <div className="mb-6">
-        <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+        <h2 className={cn(DS_TITLE, "mb-0")}>
           {isPro ? "Plein Potentiel" : "Plan Gratuit"}
         </h2>
         <p className={cn(DS_LABEL, "mt-1")}>
@@ -248,7 +252,7 @@ function BentoPlanStatus({
         <div
           className={cn(
             DS_TEL_BLOCK,
-            isPro ? "bg-emerald-50 border-emerald-100" : "",
+            isPro ? "bg-emerald-50 border-emerald-200" : "",
           )}
         >
           <div className="flex items-center gap-2 mb-1">
@@ -345,7 +349,7 @@ function BentoAnalytics({
       {/* Revenue highlight */}
       {isPro && (
         <div
-          className={cn(DS_TEL_BLOCK, "bg-emerald-50 border-emerald-100 mb-4")}
+          className={cn(DS_TEL_BLOCK, "bg-emerald-50 border-emerald-200 mb-4")}
         >
           <div className="flex items-center justify-between">
             <div>
@@ -353,9 +357,9 @@ function BentoAnalytics({
                 Revenu HT ce mois
               </span>
               <div className="flex items-baseline gap-1 mt-1">
-                <span className="text-xl font-black text-emerald-700">
-                  {monthlyStats.revenueThisMonth.toLocaleString("fr-FR")}
-                </span>
+                  <span className="text-xl font-black text-emerald-700 font-mono tabular-nums">
+                    {monthlyStats.revenueThisMonth.toLocaleString("fr-FR")}
+                  </span>
                 <span className={cn(DS_MONO, "text-emerald-500")}>
                   {billingProfile.nextPayment?.currency ?? "XOF"}
                 </span>
@@ -413,7 +417,25 @@ const PRO_FEATURES = [
   "Historique complet",
 ];
 
-function BentoUpgrade({ className }: { className?: string }) {
+function BentoUpgrade({
+  hasStripe,
+  className,
+}: {
+  hasStripe: boolean;
+  className?: string;
+}) {
+  const [isPending, startTransition] = useTransition();
+
+  const handleCheckout = () => {
+    startTransition(async () => {
+      const res = await createCheckoutSession();
+      if (res.success && res.url) {
+        window.location.href = res.url;
+      } else {
+        toast.error("Erreur Stripe", { description: res.error });
+      }
+    });
+  };
   return (
     <div className={cn(DS_BENTO_CARD, className)}>
       {/* Header */}
@@ -447,14 +469,14 @@ function BentoUpgrade({ className }: { className?: string }) {
       </div>
 
       {/* Price block */}
-      <div className={cn(DS_TEL_BLOCK, "bg-indigo-50 border-indigo-100")}>
+      <div className={cn(DS_TEL_BLOCK, "bg-indigo-50 border-indigo-200 mb-4")}>
         <div className="flex items-center justify-between">
           <div>
             <span className={cn(DS_LABEL, "text-indigo-500")}>
               Tarif mensuel
             </span>
             <div className="flex items-baseline gap-1 mt-1">
-              <span className="text-xl font-black text-indigo-700">12 500</span>
+              <span className="text-xl font-black text-indigo-700 font-mono tabular-nums">12 500</span>
               <span className={cn(DS_MONO, "text-indigo-500")}>FCFA/mois</span>
             </div>
           </div>
@@ -463,6 +485,26 @@ function BentoUpgrade({ className }: { className?: string }) {
             <span className={cn(DS_MONO, "text-[9px]")}>SSL</span>
           </div>
         </div>
+      </div>
+
+      {/* CTA button */}
+      <button
+        onClick={handleCheckout}
+        disabled={isPending}
+        className={cn(DS_BUTTON, "w-full justify-center")}
+      >
+        {isPending ? (
+          <SpinnerIcon size={DS_ICON_SM} className="animate-spin" />
+        ) : (
+          <CrownSimpleIcon size={DS_ICON_SM} />
+        )}
+        {isPending ? "Redirection..." : "Passer en PRO — 12 500 FCFA/mois"}
+      </button>
+      <div className="flex items-center justify-center gap-1.5 mt-2 text-slate-400">
+        <LockKeyIcon size={10} />
+        <span className="text-[9px] font-bold uppercase tracking-wider">
+          Paiement Sécurisé SSL
+        </span>
       </div>
     </div>
   );
@@ -549,15 +591,6 @@ function BentoManage({
 // TUILE — Financial Lifecycle
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const PLAN_COMPARISON = [
-  { feature: "Devis", free: "5 max", pro: "Illimités" },
-  { feature: "Filigrane", free: "Oui", pro: "Non" },
-  { feature: "Export PDF", free: "Standard", pro: "Haute Définition" },
-  { feature: "Support", free: "Email", pro: "Prioritaire 24/7" },
-  { feature: "Thèmes", free: "Basiques", pro: "Premium inclus" },
-  { feature: "Historique", free: "30 jours", pro: "Complet" },
-];
-
 function BentoFinancialLifecycle({
   billingProfile,
   isPro,
@@ -588,7 +621,7 @@ function BentoFinancialLifecycle({
       {/* Next payment block */}
       {isPro && nextPayment && nextPayment.date ? (
         <div className="space-y-3 mb-4">
-          <div className={cn(DS_TEL_BLOCK, "bg-violet-50 border-violet-100")}>
+          <div className={cn(DS_TEL_BLOCK, "bg-violet-50 border-violet-200")}>
             <span className={cn(DS_LABEL, "text-violet-500")}>
               Prochain prélèvement
             </span>
@@ -639,155 +672,12 @@ function BentoFinancialLifecycle({
         </div>
       ) : null}
 
-      {/* Plan comparator */}
-      <div>
-        <span className={cn(DS_LABEL, "text-slate-500 mb-2 block")}>
-          {isPro ? "Ce que vous avez débloqué" : "Comparatif des plans"}
-        </span>
-        <div className="rounded border border-slate-100 overflow-hidden">
-          <div className="grid grid-cols-3 bg-slate-50 px-2.5 py-1.5">
-            <span className={cn(DS_LABEL, "text-slate-400")}>
-              Fonctionnalité
-            </span>
-            <span className={cn(DS_LABEL, "text-slate-400 text-center")}>
-              Free
-            </span>
-            <span className={cn(DS_LABEL, "text-indigo-500 text-center")}>
-              Pro
-            </span>
-          </div>
-          {PLAN_COMPARISON.map((row) => (
-            <div
-              key={row.feature}
-              className="grid grid-cols-3 px-2.5 py-1.5 border-t border-slate-50 hover:bg-slate-50/50 transition-colors"
-            >
-              <span className="text-[10px] font-medium text-slate-600">
-                {row.feature}
-              </span>
-              <span
-                className={cn(
-                  DS_MONO,
-                  "text-center",
-                  isPro ? "text-slate-300 line-through" : "text-slate-500",
-                )}
-              >
-                {row.free}
-              </span>
-              <span
-                className={cn(
-                  DS_MONO,
-                  "text-center font-bold",
-                  isPro ? "text-emerald-600" : "text-indigo-600",
-                )}
-              >
-                {row.pro}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// TUILE C — Action paiement
-// ═══════════════════════════════════════════════════════════════════════════════
-
-function BentoPaymentAction({
-  isPro,
-  hasStripe,
-  className,
-}: {
-  isPro: boolean;
-  hasStripe: boolean;
-  className?: string;
-}) {
-  const [isPending, startTransition] = useTransition();
-
-  const handleCheckout = () => {
-    startTransition(async () => {
-      const res = await createCheckoutSession();
-      if (res.success && res.url) {
-        window.location.href = res.url;
-      } else {
-        toast.error("Erreur Stripe", { description: res.error });
-      }
-    });
-  };
-
-  const handlePortal = () => {
-    startTransition(async () => {
-      const res = await createPortalSession();
-      if (res.success && res.url) {
-        window.location.href = res.url;
-      } else {
-        toast.error("Erreur", { description: res.error });
-      }
-    });
-  };
-
-  return (
-    <div className={cn(DS_BENTO_CARD, className)}>
-      <div className={DS_SECTION_HEADER}>
-        <div className="flex items-center gap-2">
-          <div className={cn(DS_ICON_WRAPPER, "bg-indigo-50")}>
-            <CreditCardIcon size={DS_ICON_SM} className="text-indigo-500" />
-          </div>
-          <span className={cn(DS_MICRO, "text-slate-600")}>Paiement</span>
-        </div>
-      </div>
-
-      {isPro ? (
-        <div className="space-y-4">
-          <p className="text-xs text-slate-600 leading-relaxed">
-            {hasStripe
-              ? "Gérez votre moyen de paiement, changez de plan ou annulez depuis le portail sécurisé Stripe."
-              : "Votre plan PRO est actif. Connectez Stripe pour gérer votre abonnement."}
-          </p>
-          <button
-            onClick={hasStripe ? handlePortal : handleCheckout}
-            disabled={isPending}
-            className={cn(DS_BUTTON, "w-full justify-center")}
-          >
-            {isPending ? (
-              <SpinnerIcon size={DS_ICON_SM} className="animate-spin" />
-            ) : (
-              <ArrowSquareOutIcon size={DS_ICON_SM} />
-            )}
-            {isPending
-              ? "Ouverture..."
-              : hasStripe
-                ? "Portail Stripe"
-                : "Connecter Stripe"}
-          </button>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          <p className="text-xs text-slate-600 leading-relaxed">
-            Passez en PRO pour débloquer toutes les fonctionnalités. Paiement
-            sécurisé via Stripe.
-          </p>
-          <button
-            onClick={handleCheckout}
-            disabled={isPending}
-            className={cn(DS_BUTTON, "w-full justify-center")}
-          >
-            {isPending ? (
-              <SpinnerIcon size={DS_ICON_SM} className="animate-spin" />
-            ) : (
-              <CrownSimpleIcon size={DS_ICON_SM} />
-            )}
-            {isPending ? "Redirection..." : "Passer en PRO — 12 500 FCFA/mois"}
-          </button>
-          <div className="flex items-center justify-center gap-1.5 text-slate-400">
-            <LockKeyIcon size={10} />
-            <span className="text-[9px] font-bold uppercase tracking-wider">
-              Paiement Sécurisé SSL
-            </span>
-          </div>
-        </div>
-      )}
+      {/* Plan comparator — composant réutilisable */}
+      <PlanComparator
+        rows={DEFAULT_PLAN_COMPARISON}
+        isPro={isPro}
+        title={isPro ? "Ce que vous avez débloqué" : "Comparatif des plans"}
+      />
     </div>
   );
 }
@@ -839,7 +729,7 @@ function BentoInvoices({
           {invoices.map((inv) => (
             <div
               key={inv.id}
-              className="flex items-center justify-between p-2.5 rounded border border-slate-100 hover:bg-slate-50/50 transition-colors"
+              className="flex items-center justify-between p-2.5 rounded border border-slate-200 hover:bg-slate-50/50 transition-colors"
             >
               <div className="flex items-center gap-3">
                 <div className={cn(DS_ICON_WRAPPER, "bg-slate-50")}>

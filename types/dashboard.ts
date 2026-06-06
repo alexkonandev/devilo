@@ -18,7 +18,14 @@ export interface DashboardActivity {
   clientName: string;
   projectName: string;
   quoteNumber: string;
-  date: Date | string; // Ajout de string car les dates venant du serveur peuvent être sérialisées
+  date: Date | string;
+  // --- Nouveaux champs Phase 1 ---
+  delaiJours: number;
+  estUrgent: boolean;
+  moyenneClient: number;
+  variationMontant: number;
+  categorie: string;
+  quoteCount: number; // Nombre total de devis du client
 }
 
 export interface TopClient {
@@ -33,9 +40,8 @@ export interface TopClient {
 export interface SuggestedService {
   id: string;
   title: string;
-  price: number; // MODIFICATION : Doit correspondre au 'price' de ton action
-  category: string; // Gardé car présent dans ton action
-  // billingModel est supprimé ici car ton action ne le renvoie pas
+  price: number;
+  category: string;
 }
 
 export interface AdvancedDashboardData {

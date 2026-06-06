@@ -17,6 +17,12 @@ interface PaginationProps {
   totalPages: number;
   onPageChange: (page: number) => void;
   totalItems: number;
+  /** "client" = pagination côté client (Quotes), "server" = pagination côté serveur (Clients) */
+  mode?: "client" | "server";
+  /** Désactive les boutons et affiche "Chargement..." en mode serveur */
+  isLoading?: boolean;
+  /** Taille de page, utilisée en mode serveur pour calculer "start-end" */
+  pageSize?: number;
 }
 
 export interface PaginationState {
@@ -34,6 +40,9 @@ export function TablePagination({
   totalPages,
   onPageChange,
   totalItems,
+  mode = "client",
+  isLoading = false,
+  pageSize = PAGE_SIZE,
 }: PaginationProps) {
   if (totalPages <= 1) return null;
 
@@ -46,18 +55,36 @@ export function TablePagination({
     }
   }
 
+  // Calcul start-end pour le mode serveur
+  const start = mode === "server" ? (currentPage - 1) * pageSize + 1 : 0;
+  const end = mode === "server" ? Math.min(currentPage * pageSize, totalItems) : 0;
+
   return (
     <div className="flex items-center justify-between mt-3 px-1">
       <span className={cn(DS_MONO, "text-[10px] text-slate-400")}>
-        {totalItems} devis · Page {currentPage}/{totalPages}
+        {mode === "server" ? (
+          isLoading ? (
+            "Chargement..."
+          ) : (
+            <>
+              <span className="font-bold text-slate-700">{start}-{end}</span>
+              <span className="mx-1">sur</span>
+              <span className="font-bold text-slate-700">{totalItems}</span>
+            </>
+          )
+        ) : (
+          <>
+            {totalItems} devis · Page {currentPage}/{totalPages}
+          </>
+        )}
       </span>
       <div className="flex items-center gap-1">
         <button
           onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage <= 1}
+          disabled={currentPage <= 1 || isLoading}
           className={cn(
             "w-7 h-7 flex items-center justify-center rounded text-[10px] font-semibold transition-all",
-            currentPage <= 1
+            currentPage <= 1 || isLoading
               ? "text-slate-300 cursor-not-allowed"
               : "text-slate-500 hover:bg-slate-100",
           )}
@@ -73,11 +100,13 @@ export function TablePagination({
             <button
               key={p}
               onClick={() => onPageChange(p)}
+              disabled={isLoading}
               className={cn(
                 "w-7 h-7 flex items-center justify-center rounded text-[10px] font-semibold transition-all",
                 p === currentPage
                   ? "bg-slate-900 text-white"
                   : "text-slate-500 hover:bg-slate-100",
+                isLoading && "opacity-50 cursor-not-allowed",
               )}
             >
               {p}
@@ -86,10 +115,10 @@ export function TablePagination({
         )}
         <button
           onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage >= totalPages}
+          disabled={currentPage >= totalPages || isLoading}
           className={cn(
             "w-7 h-7 flex items-center justify-center rounded text-[10px] font-semibold transition-all",
-            currentPage >= totalPages
+            currentPage >= totalPages || isLoading
               ? "text-slate-300 cursor-not-allowed"
               : "text-slate-500 hover:bg-slate-100",
           )}

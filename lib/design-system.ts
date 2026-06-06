@@ -24,8 +24,8 @@ export const DS_BUTTON_SECONDARY =
   "flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-md font-mono text-[10px] uppercase tracking-wide transition-all";
 
 // ─── BentoCard wrapper — Swift-Bento style ──────────────────────────────────
-// Padding constant 1.5rem (24px), bordure 1px gris clair, pas d'ombres
-export const DS_BENTO_CARD = "bg-white border border-slate-200 rounded-md p-6";
+// Padding constant 1rem (16px), bordure 1px gris clair, pas d'ombres
+export const DS_BENTO_CARD = "bg-white border border-slate-200 rounded-md p-4";
 
 // ─── Section Header ─────────────────────────────────────────────────────────
 // Usage: <div className={DS_SECTION_HEADER}> <div className={DS_ICON_WRAPPER}> ...
@@ -53,7 +53,7 @@ export const DS_BADGE_CANCELLED =
 
 // ─── Telemetry (sidebar info blocks) ────────────────────────────────────────
 export const DS_TEL_BLOCK =
-  "p-2 bg-slate-50/80 rounded-md border border-slate-100";
+  "p-2 bg-slate-50/80 rounded-md border border-slate-200";
 
 // ─── Progress / Gauge ───────────────────────────────────────────────────────
 export const DS_PROGRESS_TRACK =
