@@ -13,7 +13,7 @@ import {
   DS_BADGE_ACCEPTED,
   DS_BADGE_CANCELLED,
 } from "@/lib/design-system";
-import { CaretUp, CaretDown } from "@phosphor-icons/react";
+import { CaretUp, CaretDown, CheckSquare, Square } from "@phosphor-icons/react";
 
 // ═══════════════════════════════════════════════════════════════════
 // BADGES STATUT
@@ -89,7 +89,7 @@ interface QuotesTableProps {
 }
 
 export function QuotesTable({ data, sortConfig, onSort, highlightThreshold }: QuotesTableProps) {
-  const { selectQuote, toggleSelection, activeQuoteId } = useQuotes();
+  const { selectQuote, toggleSelection, selectAll, clearSelection, selectedQuoteIds, activeQuoteId } = useQuotes();
 
   const effectiveSort: SortConfig = sortConfig ?? { column: null, direction: "asc" };
 
@@ -108,6 +108,25 @@ export function QuotesTable({ data, sortConfig, onSort, highlightThreshold }: Qu
       <table className="w-full table-fixed border-collapse bg-white">
         <thead>
           <tr className="border-b border-slate-100">
+            <th className="w-[36px] px-1 py-3 text-center">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (selectedQuoteIds.size === data.length) {
+                    clearSelection();
+                  } else {
+                    selectAll();
+                  }
+                }}
+                className="inline-flex items-center justify-center text-slate-400 hover:text-indigo-600 transition-colors"
+              >
+                {selectedQuoteIds.size === data.length && data.length > 0 ? (
+                  <CheckSquare size={14} weight="fill" className="text-indigo-600" />
+                ) : (
+                  <Square size={14} />
+                )}
+              </button>
+            </th>
             <th
               className={`${COL_CLIENT} px-3 py-3 text-left ${DS_LABEL} group cursor-pointer select-none hover:text-slate-700 transition-colors`}
               onClick={() => onSort?.("client" as SortConfig["column"])}
@@ -152,7 +171,7 @@ export function QuotesTable({ data, sortConfig, onSort, highlightThreshold }: Qu
         <tbody>
           {data.map((quote) => {
             const totalHT = computeTotalHT(quote);
-
+            const isSelected = selectedQuoteIds.has(quote.id);
             const isActive = activeQuoteId === quote.id;
 
             return (
@@ -161,11 +180,28 @@ export function QuotesTable({ data, sortConfig, onSort, highlightThreshold }: Qu
                 onClick={(e) => handleRowClick(quote.id, e)}
                 className={cn(
                   "border-b border-slate-100 transition-colors duration-200 cursor-pointer",
-                  isActive
+                  isActive && !isSelected
                     ? "bg-indigo-50 hover:bg-indigo-100"
-                    : "hover:bg-slate-50",
+                    : isSelected
+                      ? "bg-indigo-50/70 hover:bg-indigo-100/70"
+                      : "hover:bg-slate-50",
                 )}
               >
+                <td className="w-[36px] px-1 py-3 text-center align-middle">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleSelection(quote.id);
+                    }}
+                    className="inline-flex items-center justify-center text-slate-400 hover:text-indigo-600 transition-colors"
+                  >
+                    {isSelected ? (
+                      <CheckSquare size={14} weight="fill" className="text-indigo-600" />
+                    ) : (
+                      <Square size={14} />
+                    )}
+                  </button>
+                </td>
                 <td className={`${COL_CLIENT} px-3 py-3 text-left align-middle`}>
                   <span className={cn(DS_MONO, "font-semibold text-slate-900 truncate block text-xs")}>
                     {quote.client.name}
@@ -219,9 +255,9 @@ export function QuotesTable({ data, sortConfig, onSort, highlightThreshold }: Qu
             );
           })}
 
-          {data.length === 0 && (
+              {data.length === 0 && (
             <tr>
-              <td colSpan={5} className="px-3 py-12 text-center text-slate-400">
+              <td colSpan={6} className="px-3 py-12 text-center text-slate-400">
                 <span className={cn(DS_MONO, "text-xs")}>Aucun devis trouvé</span>
               </td>
             </tr>

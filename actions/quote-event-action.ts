@@ -94,3 +94,79 @@ export async function getQuoteEventsAction(
     return { success: false, error: "Impossible de charger la timeline" };
   }
 }
+
+/**
+ * DELETE : Supprime un événement de la timeline
+ */
+export async function deleteQuoteEventAction(
+  eventId: string,
+): Promise<ActionResponse> {
+  try {
+    const userId = await getClerkUserId();
+    if (!userId) return { success: false, error: "Non autorisé" };
+
+    // Vérifier que l'événement appartient à un devis de l'utilisateur
+    const event = await db.quoteEvent.findUnique({
+      where: { id: eventId },
+      include: { quote: { select: { userId: true } } },
+    });
+
+    if (!event) return { success: false, error: "Événement non trouvé" };
+    if (event.quote.userId !== userId) return { success: false, error: "Non autorisé" };
+
+    await db.quoteEvent.delete({
+      where: { id: eventId },
+    });
+
+    revalidatePath("/quotes");
+    return { success: true };
+  } catch (error) {
+    console.error("[DELETE_QUOTE_EVENT_ERROR]:", error);
+    return { success: false, error: "Impossible de supprimer l'événement" };
+  }
+}
+
+/**
+ * ADD NOTE : Ajoute une note personnalisée à la timeline
+ */
+export async function addQuoteNoteAction(
+  quoteId: string,
+  content: string,
+): Promise<ActionResponse> {
+  return logQuoteEventAction(quoteId, "note", { content });
+}
+
+/**
+ * UPDATE NOTE : Met à jour le contenu d'une note existante
+ */
+export async function updateQuoteNoteAction(
+  eventId: string,
+  content: string,
+): Promise<ActionResponse> {
+  try {
+    const userId = await getClerkUserId();
+    if (!userId) return { success: false, error: "Non autorisé" };
+
+    const event = await db.quoteEvent.findUnique({
+      where: { id: eventId },
+      include: { quote: { select: { userId: true } } },
+    });
+
+    if (!event) return { success: false, error: "Note non trouvée" };
+    if (event.quote.userId !== userId) return { success: false, error: "Non autorisé" };
+    if (event.type !== "note") return { success: false, error: "L'événement n'est pas une note" };
+
+    await db.quoteEvent.update({
+      where: { id: eventId },
+      data: {
+        metadata: { ...(event.metadata as Record<string, unknown> || {}), content },
+      },
+    });
+
+    revalidatePath("/quotes");
+    return { success: true };
+  } catch (error) {
+    console.error("[UPDATE_QUOTE_NOTE_ERROR]:", error);
+    return { success: false, error: "Impossible de mettre à jour la note" };
+  }
+}

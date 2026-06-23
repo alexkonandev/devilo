@@ -18,12 +18,45 @@ vi.mock("@/lib/auth", () => ({
 vi.mock("@/lib/prisma", () => ({
   __esModule: true,
   default: {
+    $transaction: vi.fn((fn: (tx: any) => any) => {
+      // Créer un mock de transaction avec les mêmes méthodes que db
+      const tx = {
+        quote: {
+          create: vi.fn(),
+          update: vi.fn(),
+          findUnique: vi.fn(),
+          findMany: vi.fn(),
+          findFirst: vi.fn(),
+          delete: vi.fn(),
+        },
+        client: {
+          create: vi.fn(),
+          update: vi.fn(),
+          findMany: vi.fn(),
+          findUnique: vi.fn(),
+          findFirst: vi.fn(),
+          count: vi.fn(),
+          delete: vi.fn(),
+          deleteMany: vi.fn(),
+        },
+        user: { findUnique: vi.fn(), update: vi.fn() },
+      };
+      return fn(tx);
+    }),
     quote: {
       create: vi.fn(),
       update: vi.fn(),
       findUnique: vi.fn(),
       findMany: vi.fn(),
       findFirst: vi.fn(),
+      delete: vi.fn(),
+      findUniqueOrThrow: vi.fn(),
+    },
+    quoteEvent: {
+      create: vi.fn(),
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      update: vi.fn(),
       delete: vi.fn(),
     },
     client: {
@@ -47,7 +80,6 @@ vi.mock("@/lib/prisma", () => ({
       delete: vi.fn(),
     },
     theme: { findMany: vi.fn(), create: vi.fn() },
-    // AJOUTER CES DEUX LIGNES :
     catalogOffer: { create: vi.fn(), update: vi.fn(), findMany: vi.fn() },
     user: { findUnique: vi.fn(), update: vi.fn() },
   },

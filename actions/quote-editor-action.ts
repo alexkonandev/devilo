@@ -125,7 +125,7 @@ export async function upsertQuoteAction(
     if (existingQuote) {
       // --- MODE UPDATE ---
       quote = await db.quote.update({
-        where: { id: existingQuote.id },
+        where: { id: existingQuote.id, userId: authId },
         data: {
           ...quoteDataBase,
           number: data.quote.number, // On garde le numéro envoyé par le client en update
@@ -136,57 +136,45 @@ export async function upsertQuoteAction(
         },
       });
     } else {
-      // --- MODE CRÉATION : GESTION DE L'INC RÉMENTATION AVEC SÉCURITÉ ---
+      // --- MODE CRÉATION : GESTION DE L'INCRÉMENTATION ATOMIQUE ---
+      // Utilisation d'une transaction Prisma pour éviter les race conditions TOCTOU
 
-      // 1. Récupérer les réglages de l'utilisateur
-      const userSettings = await db.user.findUnique({
-        where: { id: authId },
-        select: { quotePrefix: true, nextQuoteNumber: true },
-      });
-
-      const prefix = userSettings?.quotePrefix || "INV-";
-      let currentNum = userSettings?.nextQuoteNumber || 1;
-      let finalGeneratedNumber = `${prefix}${String(currentNum).padStart(
-        3,
-        "0",
-      )}`;
-
-      // 2. 🛡️ BOUCLE DE SÉCURITÉ : Vérifier si le numéro existe déjà
-      // Si INV-001 existe, on essaie INV-002, etc., jusqu'à trouver un trou libre.
-      let isUnique = false;
-      while (!isUnique) {
-        const existing = await db.quote.findUnique({
-          where: { number: finalGeneratedNumber },
+      const [generatedNumber] = await db.$transaction(async (tx) => {
+        // 1. Lire et verrouiller (via write) les réglages de l'utilisateur
+        const userSettings = await tx.user.findUnique({
+          where: { id: authId },
+          select: { quotePrefix: true, nextQuoteNumber: true },
         });
 
-        if (existing) {
-          currentNum++; // On incrémente si déjà pris
-          finalGeneratedNumber = `${prefix}${String(currentNum).padStart(
-            3,
-            "0",
-          )}`;
-        } else {
-          isUnique = true;
-        }
-      }
+        const prefix = userSettings?.quotePrefix || "INV-";
+        const currentNum = userSettings?.nextQuoteNumber || 1;
 
-      // 3. Création de la Quote avec le numéro garanti unique
-      quote = await db.quote.create({
-        data: {
-          ...quoteDataBase,
-          number: finalGeneratedNumber,
-          lines: {
-            create: linesData,
+        // 2. Générer un numéro unique (la contrainte unique @unique fera échouer si conflit)
+        const finalNumber = `${prefix}${String(currentNum).padStart(3, "0")}`;
+
+        // 3. Créer la quote (échoue avec Prisma P2002 si numéro en double)
+        const createdQuote = await tx.quote.create({
+          data: {
+            ...quoteDataBase,
+            number: finalNumber,
+            lines: {
+              create: linesData,
+            },
           },
-        },
+        });
+
+        // 4. Mettre à jour atomiquement le compteur
+        await tx.user.update({
+          where: { id: authId },
+          data: { nextQuoteNumber: currentNum + 1 },
+        });
+
+        return [finalNumber] as const;
       });
 
-      // 4. ✅ SYNCHRONISATION : On met à jour l'utilisateur avec le prochain numéro réel
-      await db.user.update({
-        where: { id: authId },
-        data: {
-          nextQuoteNumber: currentNum + 1,
-        },
+      // Récupérer la quote créée pour la retourner
+      quote = await db.quote.findUniqueOrThrow({
+        where: { number: generatedNumber },
       });
     }
 
@@ -217,6 +205,7 @@ export async function updateQuoteInlineAction(
   data: {
     number?: string;
     issueDate?: string;
+    status?: string;
     vatRatePercent?: number;
     clientName?: string;
     clientEmail?: string;
@@ -226,6 +215,13 @@ export async function updateQuoteInlineAction(
     clientPostalCode?: string;
     clientCountry?: string;
     clientTaxId?: string;
+    lines?: Array<{
+      id?: string;
+      title: string;
+      subtitle?: string;
+      quantity: number;
+      unitPrice: number;
+    }>;
   },
 ): Promise<ActionResponse<Quote>> {
   try {
@@ -254,6 +250,7 @@ export async function updateQuoteInlineAction(
     const quoteUpdate: Record<string, unknown> = {};
     if (data.number !== undefined) quoteUpdate.number = data.number;
     if (data.issueDate !== undefined) quoteUpdate.issueDate = new Date(data.issueDate);
+    if (data.status !== undefined) quoteUpdate.status = data.status as PrismaQuoteStatus;
     if (data.vatRatePercent !== undefined) quoteUpdate.vatRatePercent = data.vatRatePercent;
 
     // Mise à jour des champs du client
@@ -267,6 +264,19 @@ export async function updateQuoteInlineAction(
     if (data.clientCountry !== undefined) clientUpdate.country = data.clientCountry;
     if (data.clientTaxId !== undefined) clientUpdate.taxId = data.clientTaxId;
 
+    // Mise à jour des lignes si fournies
+    if (data.lines !== undefined) {
+      quoteUpdate.lines = {
+        deleteMany: {},
+        create: data.lines.map((line) => ({
+          title: line.title,
+          subtitle: line.subtitle || "",
+          quantity: Number(line.quantity),
+          unitPrice: Number(line.unitPrice),
+        })),
+      };
+    }
+
     // Appliquer les mises à jour
     const quote = await db.quote.update({
       where: { id },
@@ -277,6 +287,14 @@ export async function updateQuoteInlineAction(
           : undefined,
       },
     });
+
+    // Si le statut a changé, logger l'événement
+    if (data.status !== undefined && data.status !== existing.status) {
+      await logQuoteEventAction(quote.id, "status_changed", {
+        from: existing.status,
+        to: data.status,
+      });
+    }
 
     revalidatePath("/quotes");
     return { success: true, data: quote };

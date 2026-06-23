@@ -15,7 +15,6 @@ import { useKernelStore } from "@/hooks/use-kernel-store";
 import { QuoteEditorLayout } from "@/components/editor/quote-editor-layout";
 import { StudioSidebarLeft } from "@/components/editor/studio-sidebar-left";
 import { StudioSidebarRight } from "@/components/editor/studio-sidebar-right";
-import { FloatingToolbar } from "@/components/editor/floating-toolbar";
 import { QuoteVisualizer } from "@/components/editor/QuoteVisualizer";
 
 // --- TYPES ---
@@ -109,7 +108,7 @@ export default function CreateQuoteClient({
           taxIdLabel: user.taxIdLabel ?? "NCC",
           website: user.companyWebsite ?? "",
         },
-        client: { name: "", email: "", address: "", taxId: "" },
+        client: { name: "", email: "", address: "", taxId: "", phone: "", notes: "" },
         quote: {
           // ✅ Utilisation du numéro formaté ici
           number: formattedNumber,
@@ -260,7 +259,7 @@ export default function CreateQuoteClient({
 
   // 5. Sauvegarde automatique (Debounced)
   useEffect(() => {
-    if (!isDirty || isSaving || !activeQuote?.client.name) return;
+    if (!isDirty || isSaving || !activeQuote?.client.name || (activeQuote.items?.length ?? 0) < 1) return;
 
     const delayDebounceFn = setTimeout(() => {
       handleSave();
@@ -342,13 +341,8 @@ export default function CreateQuoteClient({
           <StudioSidebarRight availableThemes={initialThemes} totals={totals} />
         )
       }
-      bottomToolbar={
-        <FloatingToolbar
-          onPrint={handlePrint}
-          onSave={() => handleSave(true)}
-          themes={initialThemes}
-        />
-      }
+      onPrint={handlePrint}
+      themes={initialThemes}
     >
       <QuoteVisualizer
         data={activeQuote}

@@ -38,12 +38,15 @@ import {
   ListNumbers,
   Hash,
   PencilSimple,
+  NotePencilIcon,
+  XIcon,
 } from "@phosphor-icons/react";
 import { useQuotes } from "./quote-context";
 import { QuoteStatus } from "@/types/quote-registry";
 import { sendQuoteEmailAction } from "@/actions/send-quote-email";
 import { updateQuoteInlineAction } from "@/actions/quote-editor-action";
 import { deleteQuoteAction } from "@/actions/quote-registry-action";
+import { deleteQuoteEventAction, addQuoteNoteAction, updateQuoteNoteAction } from "@/actions/quote-event-action";
 import { notify } from "@/lib/notifications";
 import { useRouter } from "next/navigation";
 import {
@@ -191,13 +194,100 @@ function EmptyState() {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// NOTERENDERER — Note éditable dans la timeline
+// ═══════════════════════════════════════════════════════════════
+
+function NoteRenderer({
+  eventId,
+  content: initialContent,
+  isEditing,
+  loadTimeline,
+  quoteId,
+}: {
+  eventId: string;
+  content: string;
+  isEditing: boolean;
+  loadTimeline: (id: string) => Promise<void>;
+  quoteId: string;
+}) {
+  const [editContent, setEditContent] = useState(initialContent);
+  const [isLocalEditing, setIsLocalEditing] = useState(false);
+  const [isSavingNote, setIsSavingNote] = useState(false);
+
+  // Inline edit mode (when main édition is active)
+  if (isEditing && isLocalEditing) {
+    return (
+      <div className="space-y-1">
+        <textarea
+          value={editContent}
+          onChange={(e) => setEditContent(e.target.value)}
+          className="w-full text-xs text-slate-700 bg-white border border-indigo-200 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-400 resize-none"
+          rows={2}
+        />
+        <div className="flex items-center gap-1">
+          <button
+            disabled={isSavingNote}
+            onClick={async () => {
+              if (!editContent.trim()) return;
+              setIsSavingNote(true);
+              const res = await updateQuoteNoteAction(eventId, editContent.trim());
+              if (res.success) {
+                setIsLocalEditing(false);
+                await loadTimeline(quoteId);
+              } else {
+                notify.error("ERREUR_NOTE", "Impossible de modifier la note.");
+              }
+              setIsSavingNote(false);
+            }}
+            className="px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wide bg-indigo-600 text-white"
+          >
+            {isSavingNote ? "..." : "OK"}
+          </button>
+          <button
+            onClick={() => {
+              setEditContent(initialContent);
+              setIsLocalEditing(false);
+            }}
+            className="px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wide bg-white text-slate-500 border border-slate-200"
+          >
+            Annuler
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Read mode OR click-to-edit when main editing is active
+  return (
+    <div
+      onClick={() => { if (isEditing) setIsLocalEditing(true); }}
+      className={cn(
+        "text-xs text-slate-600 mt-0.5 leading-relaxed italic bg-slate-50 rounded p-1.5 border border-slate-100",
+        isEditing && "cursor-pointer hover:border-indigo-300 hover:bg-indigo-50/30 transition-colors",
+      )}
+    >
+      {initialContent}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
 // SINGLE MODE — Le panneau de consultation complet
 // ═══════════════════════════════════════════════════════════════
 
 // Champs éditables pour l'édition inline
+type EditableLineFields = {
+  id?: string;
+  title: string;
+  subtitle: string;
+  quantity: number;
+  unitPrice: number;
+};
+
 type EditableQuoteFields = {
   number: string;
   issueDate: string;
+  status: string;
   vatRatePercent: number;
   clientName: string;
   clientEmail: string;
@@ -207,6 +297,7 @@ type EditableQuoteFields = {
   clientPostalCode: string;
   clientCountry: string;
   clientTaxId: string;
+  lines: EditableLineFields[];
 };
 
 function SingleMode({
@@ -226,9 +317,12 @@ function SingleMode({
   onCancelEdit: () => void;
   onUpdateField: <K extends keyof EditableQuoteFields>(key: K, value: EditableQuoteFields[K]) => void;
 }) {
-  const { timeline, isLoadingTimeline } = useQuotes();
+  const { timeline, isLoadingTimeline, loadTimeline } = useQuotes();
   const [isSending, setIsSending] = useState(false);
   const [showEmailForm, setShowEmailForm] = useState(false);
+  const [noteContent, setNoteContent] = useState("");
+  const [isAddingNote, setIsAddingNote] = useState(false);
+  const [isDeletingEvent, setIsDeletingEvent] = useState<string | null>(null);
   const router = useRouter();
 
   // ── Calculs ──────────────────────────────────────────────
@@ -246,6 +340,7 @@ function SingleMode({
 
   // ── Tags du client ───────────────────────────────────────
   const clientTags = quote.client.tags ?? [];
+
 
   return (
     <motion.div
@@ -276,7 +371,7 @@ function SingleMode({
                     onChange={(e) => onUpdateField("number", e.target.value)}
                     className={cn(
                       DS_MONO,
-                      "w-full text-sm text-slate-800 bg-white border border-indigo-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-400",
+                      "w-full text-sm text-slate-800 bg-white border border-indigo-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-400"
                     )}
                   />
                 </div>
@@ -304,7 +399,7 @@ function SingleMode({
                     onChange={(e) => onUpdateField("issueDate", e.target.value)}
                     className={cn(
                       DS_MONO,
-                      "w-full text-sm text-slate-800 bg-white border border-indigo-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-400",
+                      "w-full text-sm text-slate-800 bg-white border border-indigo-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-400"
                     )}
                   />
                 </div>
@@ -317,15 +412,43 @@ function SingleMode({
               />
             )}
 
-            <InfoRow
-              label="Statut"
-              icon={<Lightning size={14} weight="duotone" />}
-              badge={
-                <span className={cn(STATUS_BADGE[quote.status], "inline-block")}>
-                  {STATUS_LABEL[quote.status]}
-                </span>
-              }
-            />
+            {/* Statut — éditable */}
+            {isEditing ? (
+              <div className="flex items-start gap-3">
+                <div className="w-7 h-7 rounded-md bg-slate-100 flex items-center justify-center text-slate-400 shrink-0 mt-0.5">
+                  <Lightning size={14} weight="duotone" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className={cn(DS_LABEL, "text-[9px] mb-0.5")}>Statut</p>
+                  <select
+                    value={editData?.status ?? "DRAFT"}
+                    onChange={(e) => onUpdateField("status", e.target.value)}
+                    className={cn(
+                      "w-full text-sm text-slate-800 bg-white border border-indigo-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-400",
+                      STATUS_BADGE[editData?.status as QuoteStatus] || DS_BADGE_NEUTRAL,
+                    )}
+                  >
+                    {Object.entries(STATUS_LABEL).map(([key, label]) => (
+                      <option key={key} value={key}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            ) : (
+              <InfoRow
+                label="Statut"
+                icon={<Lightning size={14} weight="duotone" />}
+                badge={
+                  <span
+                    className={cn(STATUS_BADGE[quote.status], "inline-block")}
+                  >
+                    {STATUS_LABEL[quote.status]}
+                  </span>
+                }
+              />
+            )}
             <InfoRow
               label="Montant TTC"
               value={formatPrice(totalTTC)}
@@ -335,7 +458,8 @@ function SingleMode({
             {quote.vatRatePercent > 0 && (
               <div className="ml-10 space-y-1">
                 <p className={cn(DS_MONO, "text-[10px] text-slate-400")}>
-                  HT : {formatPrice(totalHT)} — TVA ({quote.vatRatePercent}%) : {formatPrice(totalTVA)}
+                  HT : {formatPrice(totalHT)} — TVA ({quote.vatRatePercent}%) :{" "}
+                  {formatPrice(totalTVA)}
                 </p>
               </div>
             )}
@@ -355,57 +479,144 @@ function SingleMode({
             <div className="space-y-0">
               {/* ── Micro en-tête de colonnes (guide visuel discret) ── */}
               <div className="flex justify-between items-center pb-1.5 border-b border-slate-100 mb-0">
-                <span className={cn(DS_MONO, "text-[9px] text-slate-400 uppercase tracking-wider")}>
+                <span
+                  className={cn(
+                    DS_MONO,
+                    "text-[9px] text-slate-400 uppercase tracking-wider"
+                  )}
+                >
                   Description
                 </span>
                 <div className="flex items-center gap-6">
-                  <span className={cn(DS_MONO, "text-[9px] text-slate-400 uppercase tracking-wider")}>
+                  <span
+                    className={cn(
+                      DS_MONO,
+                      "text-[9px] text-slate-400 uppercase tracking-wider"
+                    )}
+                  >
                     Détails
                   </span>
-                  <span className={cn(DS_MONO, "text-[9px] text-slate-400 uppercase tracking-wider w-20 text-right")}>
+                  <span
+                    className={cn(
+                      DS_MONO,
+                      "text-[9px] text-slate-400 uppercase tracking-wider w-20 text-right"
+                    )}
+                  >
                     Total
                   </span>
                 </div>
               </div>
 
               {/* Blocs lignes — format liste verticale */}
-              {quote.lines.map((line, idx) => (
+              {editData?.lines.map((editableLine, idx) => (
                 <div
-                  key={line.id}
+                  key={editableLine.id || idx}
                   className={cn(
-                    "py-3",
-                    idx < quote.lines.length - 1 && "border-b border-slate-100",
+                    "py-3 space-y-2",
+                    idx < (editData?.lines.length ?? 0) - 1 && "border-b border-slate-100"
                   )}
                 >
-                  {/* Ligne 1 : Titre du produit/service */}
-                  <p className="text-[13px] font-semibold text-slate-900 whitespace-normal break-words leading-snug">
-                    {line.title}
-                  </p>
+                  {isEditing ? (
+                    <>
+                      {/* Titre éditable */}
+                      <input
+                        value={editableLine.title}
+                        onChange={(e) => {
+                          const newLines = [...(editData?.lines ?? [])];
+                          newLines[idx] = { ...newLines[idx], title: e.target.value };
+                          onUpdateField("lines", newLines);
+                        }}
+                        className="w-full text-[13px] font-semibold text-slate-900 bg-white border border-indigo-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                        placeholder="Titre de la prestation"
+                      />
+                      {/* Sous-titre éditable */}
+                      <textarea
+                        value={editableLine.subtitle}
+                        onChange={(e) => {
+                          const newLines = [...(editData?.lines ?? [])];
+                          newLines[idx] = { ...newLines[idx], subtitle: e.target.value };
+                          onUpdateField("lines", newLines);
+                        }}
+                        className="w-full text-xs text-slate-500 bg-white border border-indigo-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-400 resize-none"
+                        rows={2}
+                        placeholder="Description détaillée..."
+                      />
+                      {/* Quantité et Prix */}
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className="flex items-center gap-1">
+                          <span className="text-[9px] font-semibold text-slate-400">Qté</span>
+                          <input
+                            type="number"
+                            min={1}
+                            value={editableLine.quantity}
+                            onChange={(e) => {
+                              const newLines = [...(editData?.lines ?? [])];
+                              newLines[idx] = { ...newLines[idx], quantity: parseFloat(e.target.value) || 0 };
+                              onUpdateField("lines", newLines);
+                            }}
+                            className="w-16 text-[11px] font-mono text-slate-700 bg-white border border-indigo-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                          />
+                        </div>
+                        <span className="text-slate-300">×</span>
+                        <div className="flex items-center gap-1">
+                          <span className="text-[9px] font-semibold text-slate-400">P.U</span>
+                          <input
+                            type="number"
+                            min={0}
+                            value={editableLine.unitPrice}
+                            onChange={(e) => {
+                              const newLines = [...(editData?.lines ?? [])];
+                              newLines[idx] = { ...newLines[idx], unitPrice: parseFloat(e.target.value) || 0 };
+                              onUpdateField("lines", newLines);
+                            }}
+                            className="w-24 text-[11px] font-mono text-slate-700 bg-white border border-indigo-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                          />
+                        </div>
+                        <span className="flex-1 text-right text-[11px] font-mono font-bold text-slate-800">
+                          = {formatPrice(editableLine.quantity * editableLine.unitPrice)}
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      {/* Ligne 1 : Titre du produit/service */}
+                      <p className="text-[13px] font-semibold text-slate-900 whitespace-normal break-words leading-snug">
+                        {editableLine.title}
+                      </p>
 
-                  {/* Sous-titre optionnel */}
-                  {line.subtitle && (
-                    <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
-                      {line.subtitle}
-                    </p>
+                      {/* Sous-titre optionnel */}
+                      {editableLine.subtitle && (
+                        <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                          {editableLine.subtitle}
+                        </p>
+                      )}
+
+                      {/* Ligne 2 : Détails prix et total */}
+                      <div className="flex justify-between items-center mt-1.5">
+                        <span className="text-[11px] text-slate-500 font-mono">
+                          {editableLine.quantity}× {formatPrice(editableLine.unitPrice)}
+                        </span>
+                        <span className="text-[13px] font-bold text-slate-900 tabular-nums">
+                          {formatPrice(editableLine.unitPrice * editableLine.quantity)}
+                        </span>
+                      </div>
+                    </>
                   )}
-
-                  {/* Ligne 2 : Détails prix et total */}
-                  <div className="flex justify-between items-center mt-1.5">
-                    <span className="text-[11px] text-slate-500 font-mono">
-                      {line.quantity}× {formatPrice(line.unitPrice)}
-                    </span>
-                    <span className="text-[13px] font-bold text-slate-900 tabular-nums">
-                      {formatPrice(line.unitPrice * line.quantity)}
-                    </span>
-                  </div>
                 </div>
               ))}
 
               {/* Totaux */}
               <div className="border-t border-slate-200 pt-3 mt-0 space-y-1.5">
                 <div className="flex justify-between items-center">
-                  <span className={cn(DS_MONO, "text-[11px] text-slate-500")}>Total HT</span>
-                  <span className={cn(DS_MONO, "text-[11px] font-medium text-slate-700 tabular-nums")}>
+                  <span className={cn(DS_MONO, "text-[11px] text-slate-500")}>
+                    Total HT
+                  </span>
+                  <span
+                    className={cn(
+                      DS_MONO,
+                      "text-[11px] font-medium text-slate-700 tabular-nums"
+                    )}
+                  >
                     {formatPrice(totalHT)}
                   </span>
                 </div>
@@ -414,14 +625,31 @@ function SingleMode({
                     <span className={cn(DS_MONO, "text-[10px] text-slate-400")}>
                       TVA ({quote.vatRatePercent}%)
                     </span>
-                    <span className={cn(DS_MONO, "text-[10px] text-slate-500 tabular-nums")}>
+                    <span
+                      className={cn(
+                        DS_MONO,
+                        "text-[10px] text-slate-500 tabular-nums"
+                      )}
+                    >
                       {formatPrice(totalTVA)}
                     </span>
                   </div>
                 )}
                 <div className="flex justify-between items-center pt-1.5 border-t border-slate-100">
-                  <span className={cn(DS_MONO, "text-[11px] font-bold text-slate-900")}>Total TTC</span>
-                  <span className={cn(DS_MONO, "text-sm font-bold text-indigo-700 tabular-nums")}>
+                  <span
+                    className={cn(
+                      DS_MONO,
+                      "text-[11px] font-bold text-slate-900"
+                    )}
+                  >
+                    Total TTC
+                  </span>
+                  <span
+                    className={cn(
+                      DS_MONO,
+                      "text-sm font-bold text-indigo-700 tabular-nums"
+                    )}
+                  >
                     {formatPrice(totalTTC)}
                   </span>
                 </div>
@@ -443,10 +671,14 @@ function SingleMode({
                   <UserIcon size={14} weight="duotone" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className={cn(DS_LABEL, "text-[9px] mb-0.5")}>Nom / Société</p>
+                  <p className={cn(DS_LABEL, "text-[9px] mb-0.5")}>
+                    Nom / Société
+                  </p>
                   <input
                     value={editData?.clientName ?? ""}
-                    onChange={(e) => onUpdateField("clientName", e.target.value)}
+                    onChange={(e) =>
+                      onUpdateField("clientName", e.target.value)
+                    }
                     className="w-full text-sm text-slate-800 bg-white border border-indigo-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-400"
                   />
                 </div>
@@ -470,7 +702,9 @@ function SingleMode({
                   <input
                     type="email"
                     value={editData?.clientEmail ?? ""}
-                    onChange={(e) => onUpdateField("clientEmail", e.target.value)}
+                    onChange={(e) =>
+                      onUpdateField("clientEmail", e.target.value)
+                    }
                     className="w-full text-sm text-slate-800 bg-white border border-indigo-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-400"
                   />
                 </div>
@@ -495,7 +729,9 @@ function SingleMode({
                   <p className={cn(DS_LABEL, "text-[9px] mb-0.5")}>Téléphone</p>
                   <input
                     value={editData?.clientPhone ?? ""}
-                    onChange={(e) => onUpdateField("clientPhone", e.target.value)}
+                    onChange={(e) =>
+                      onUpdateField("clientPhone", e.target.value)
+                    }
                     className="w-full text-sm text-slate-800 bg-white border border-indigo-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-400"
                   />
                 </div>
@@ -521,34 +757,44 @@ function SingleMode({
                   <input
                     placeholder="Adresse"
                     value={editData?.clientAddress ?? ""}
-                    onChange={(e) => onUpdateField("clientAddress", e.target.value)}
+                    onChange={(e) =>
+                      onUpdateField("clientAddress", e.target.value)
+                    }
                     className="w-full text-sm text-slate-800 bg-white border border-indigo-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-400"
                   />
                   <div className="flex gap-1">
                     <input
                       placeholder="Code postal"
                       value={editData?.clientPostalCode ?? ""}
-                      onChange={(e) => onUpdateField("clientPostalCode", e.target.value)}
+                      onChange={(e) =>
+                        onUpdateField("clientPostalCode", e.target.value)
+                      }
                       className="w-1/3 text-sm text-slate-800 bg-white border border-indigo-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-400"
                     />
                     <input
                       placeholder="Ville"
                       value={editData?.clientCity ?? ""}
-                      onChange={(e) => onUpdateField("clientCity", e.target.value)}
+                      onChange={(e) =>
+                        onUpdateField("clientCity", e.target.value)
+                      }
                       className="flex-1 text-sm text-slate-800 bg-white border border-indigo-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-400"
                     />
                   </div>
                   <input
                     placeholder="Pays"
                     value={editData?.clientCountry ?? ""}
-                    onChange={(e) => onUpdateField("clientCountry", e.target.value)}
+                    onChange={(e) =>
+                      onUpdateField("clientCountry", e.target.value)
+                    }
                     className="w-full text-sm text-slate-800 bg-white border border-indigo-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-400"
                   />
                 </div>
               </div>
             ) : (
               <>
-                {(quote.client.address || quote.client.city || quote.client.postalCode) && (
+                {(quote.client.address ||
+                  quote.client.city ||
+                  quote.client.postalCode) && (
                   <InfoRow
                     label="Adresse"
                     icon={<MapPinIcon size={14} weight="duotone" />}
@@ -593,7 +839,7 @@ function SingleMode({
                         key={tag}
                         className={cn(
                           "px-2 py-0.5 rounded-md text-[9px] font-semibold",
-                          "bg-indigo-50 text-indigo-600 border border-indigo-200",
+                          "bg-indigo-50 text-indigo-600 border border-indigo-200"
                         )}
                       >
                         {tag}
@@ -611,6 +857,57 @@ function SingleMode({
           title="Timeline"
           icon={<ClockIcon size={14} weight="duotone" />}
         >
+          {/* ── Ajouter une note ── */}
+          {isAddingNote ? (
+            <div className="mb-3 space-y-2">
+              <textarea
+                value={noteContent}
+                onChange={(e) => setNoteContent(e.target.value)}
+                className="w-full text-xs text-slate-700 bg-white border border-indigo-200 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-400 resize-none"
+                rows={2}
+                placeholder="Écrire une note..."
+              />
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={async () => {
+                    if (!noteContent.trim()) return;
+                    setIsAddingNote(false);
+                    const res = await addQuoteNoteAction(quote.id, noteContent.trim());
+                    if (res.success) {
+                      setNoteContent("");
+                      await loadTimeline(quote.id);
+                      notify.success("NOTE_AJOUTÉE", "Note ajoutée à la timeline.");
+                    } else {
+                      notify.error("ERREUR_NOTE", "Impossible d'ajouter la note.");
+                    }
+                  }}
+                  className="px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-wide bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+                >
+                  Ajouter
+                </button>
+                <button
+                  onClick={() => {
+                    setIsAddingNote(false);
+                    setNoteContent("");
+                  }}
+                  className="px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-wide bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors"
+                >
+                  Annuler
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setIsAddingNote(true)}
+              className="w-full mb-3 py-2 border border-dashed border-slate-200 rounded-lg text-slate-400 flex items-center justify-center gap-1.5 hover:border-indigo-300 hover:text-indigo-500 transition-all"
+            >
+              <NotePencilIcon size={14} weight="regular" />
+              <span className="text-[9px] font-bold uppercase tracking-wider">
+                Ajouter une note
+              </span>
+            </button>
+          )}
+
           {isLoadingTimeline ? (
             <div className="flex items-center justify-center py-4">
               <div className="w-4 h-4 border-2 border-slate-300 border-t-indigo-500 rounded-full animate-spin" />
@@ -622,15 +919,18 @@ function SingleMode({
           ) : (
             <div className="space-y-2.5">
               {timeline.map((event) => {
-                const eventLabel = event.type === "created" ? "Création" :
-                  event.type === "sent" ? "Envoi email" :
-                  event.type === "status_changed" ? "Changement de statut" :
-                  event.type;
+                const eventLabel =
+                  event.type === "created"
+                    ? "Création"
+                    : event.type === "sent"
+                    ? "Envoi email"
+                    : event.type === "status_changed"
+                    ? "Changement de statut"
+                    : event.type === "note"
+                    ? "Note"
+                    : event.type;
                 return (
-                  <div
-                    key={event.id}
-                    className="flex items-start gap-3"
-                  >
+                  <div key={event.id} className="flex items-start gap-3 group">
                     <div className="w-6 h-6 rounded-md bg-slate-100 flex items-center justify-center text-slate-400 shrink-0 mt-0.5">
                       <ClockIcon size={12} weight="fill" />
                     </div>
@@ -640,26 +940,89 @@ function SingleMode({
                           {eventLabel}
                         </span>
                         <span className="text-[9px] text-slate-300">·</span>
-                        <span className={cn(DS_MONO, "text-[9px] text-slate-400")}>
+                        <span
+                          className={cn(DS_MONO, "text-[9px] text-slate-400")}
+                        >
                           {formatDateTime(event.createdAt)}
                         </span>
                       </div>
                       {event.type === "status_changed" && event.metadata && (
-                        <p className={cn(DS_MONO, "text-xs text-slate-700 mt-0.5 leading-snug")}>
-                          {String((event.metadata as Record<string, unknown>)?.from || "")} → {String((event.metadata as Record<string, unknown>)?.to || event.status || "")}
+                        <p
+                          className={cn(
+                            DS_MONO,
+                            "text-xs text-slate-700 mt-0.5 leading-snug"
+                          )}
+                        >
+                          {String(
+                            (event.metadata as Record<string, unknown>)?.from ||
+                              ""
+                          )}{" "}
+                          →{" "}
+                          {String(
+                            (event.metadata as Record<string, unknown>)?.to ||
+                              event.status ||
+                              ""
+                          )}
                         </p>
                       )}
                       {event.type === "created" && (
-                        <p className={cn(DS_MONO, "text-xs text-slate-500 mt-0.5 leading-snug")}>
+                        <p
+                          className={cn(
+                            DS_MONO,
+                            "text-xs text-slate-500 mt-0.5 leading-snug"
+                          )}
+                        >
                           Devis créé
                         </p>
                       )}
                       {event.type === "sent" && event.metadata && (
-                        <p className={cn(DS_MONO, "text-xs text-slate-500 mt-0.5 leading-snug")}>
-                          Envoyé à {String((event.metadata as Record<string, unknown>)?.email || "")}
+                        <p
+                          className={cn(
+                            DS_MONO,
+                            "text-xs text-slate-500 mt-0.5 leading-snug"
+                          )}
+                        >
+                          Envoyé à{" "}
+                          {String(
+                            (event.metadata as Record<string, unknown>)
+                              ?.email || ""
+                          )}
                         </p>
                       )}
+                      {event.type === "note" && event.metadata && (
+                        <NoteRenderer
+                          eventId={event.id}
+                          content={String((event.metadata as Record<string, unknown>)?.content || "")}
+                          isEditing={isEditing}
+                          loadTimeline={loadTimeline}
+                          quoteId={quote.id}
+                        />
+                      )}
                     </div>
+                    {/* Bouton suppression — toujours visible */}
+                    <button
+                      disabled={isDeletingEvent === event.id}
+                      onClick={async () => {
+                        if (event.type === "created" && !window.confirm("Supprimer l'événement de création ?")) return;
+                        setIsDeletingEvent(event.id);
+                        const res = await deleteQuoteEventAction(event.id);
+                        if (res.success) {
+                          await loadTimeline(quote.id);
+                          notify.success("ÉVÉNEMENT_SUPPRIMÉ", "Événement supprimé.");
+                        } else {
+                          notify.error("ERREUR_SUPPRESSION", res.error || "Échec de la suppression.");
+                        }
+                        setIsDeletingEvent(null);
+                      }}
+                      className="p-1 rounded text-slate-300 hover:text-rose-500 hover:bg-rose-50 shrink-0 mt-1"
+                      title="Supprimer l'événement"
+                    >
+                      {isDeletingEvent === event.id ? (
+                        <span className="w-3 h-3 border-2 border-slate-300 border-t-rose-500 rounded-full animate-spin block" />
+                      ) : (
+                        <XIcon size={12} weight="bold" />
+                      )}
+                    </button>
                   </div>
                 );
               })}
@@ -966,6 +1329,7 @@ export function QuoteDetailSidebar() {
       issueDate: currentQuote.createdAt instanceof Date
         ? currentQuote.createdAt.toISOString().split("T")[0]
         : new Date(currentQuote.createdAt).toISOString().split("T")[0],
+      status: currentQuote.status,
       vatRatePercent: currentQuote.vatRatePercent,
       clientName: currentQuote.client.name ?? "",
       clientEmail: currentQuote.client.email ?? "",
@@ -975,6 +1339,13 @@ export function QuoteDetailSidebar() {
       clientPostalCode: currentQuote.client.postalCode ?? "",
       clientCountry: currentQuote.client.country ?? "",
       clientTaxId: currentQuote.client.taxId ?? "",
+      lines: currentQuote.lines.map((l) => ({
+        id: l.id,
+        title: l.title,
+        subtitle: l.subtitle ?? "",
+        quantity: l.quantity,
+        unitPrice: l.unitPrice,
+      })),
     });
   }, [currentQuote]);
 
@@ -986,6 +1357,7 @@ export function QuoteDetailSidebar() {
       issueDate: currentQuote.createdAt instanceof Date
         ? currentQuote.createdAt.toISOString().split("T")[0]
         : new Date(currentQuote.createdAt).toISOString().split("T")[0],
+      status: currentQuote.status,
       vatRatePercent: currentQuote.vatRatePercent,
       clientName: currentQuote.client.name ?? "",
       clientEmail: currentQuote.client.email ?? "",
@@ -995,6 +1367,13 @@ export function QuoteDetailSidebar() {
       clientPostalCode: currentQuote.client.postalCode ?? "",
       clientCountry: currentQuote.client.country ?? "",
       clientTaxId: currentQuote.client.taxId ?? "",
+      lines: currentQuote.lines.map((l) => ({
+        id: l.id,
+        title: l.title,
+        subtitle: l.subtitle ?? "",
+        quantity: l.quantity,
+        unitPrice: l.unitPrice,
+      })),
     });
     setIsEditing(false);
   }, [currentQuote]);
@@ -1007,6 +1386,7 @@ export function QuoteDetailSidebar() {
       const res = await updateQuoteInlineAction(currentQuote.id, {
         number: editData.number,
         issueDate: editData.issueDate,
+        status: editData.status,
         vatRatePercent: editData.vatRatePercent,
         clientName: editData.clientName,
         clientEmail: editData.clientEmail,
@@ -1016,6 +1396,13 @@ export function QuoteDetailSidebar() {
         clientPostalCode: editData.clientPostalCode,
         clientCountry: editData.clientCountry,
         clientTaxId: editData.clientTaxId,
+        lines: editData.lines.map((l) => ({
+          id: l.id,
+          title: l.title,
+          subtitle: l.subtitle,
+          quantity: l.quantity,
+          unitPrice: l.unitPrice,
+        })),
       });
       if (!res.success) {
         notify.error("ERREUR_SAUVEGARDE", res.error ?? "Impossible de sauvegarder les modifications.");
@@ -1062,7 +1449,7 @@ export function QuoteDetailSidebar() {
   return (
     <div className="flex flex-col h-full bg-white border border-slate-200 rounded-md overflow-hidden">
       {/* Entête fixe de la sidebar — avec titre et boutons d'action */}
-      <div className="shrink-0 px-5 py-3  border-b border-slate-100 flex items-center justify-between gap-2">
+      <div className="shrink-0 px-5 py-3  border-b border-slate-200 flex items-center justify-between gap-2">
         <span className={cn(DS_LABEL, "uppercase tracking-wider text-[10px]")}>
           {mode === "single"
             ? "Consultation Devis"

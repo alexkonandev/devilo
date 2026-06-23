@@ -92,6 +92,31 @@ export async function updateQuoteStatusAction(
 /**
  * DELETE : Nettoyage d'archives
  */
+/**
+ * DELETE (multiple) : Suppression en masse de devis
+ */
+export async function deleteQuotesAction(ids: string[]): Promise<ActionResponse> {
+  try {
+    const userId = await getClerkUserId();
+    if (!userId) return { success: false, error: "Non autorisé" };
+
+    if (!ids.length) return { success: false, error: "Aucun devis sélectionné" };
+
+    await db.quote.deleteMany({
+      where: { id: { in: ids }, userId },
+    });
+
+    revalidatePath("/quotes");
+    return { success: true };
+  } catch (error) {
+    console.error("[DELETE_QUOTES_ERROR]:", error);
+    return { success: false, error: "Erreur lors de la suppression multiple" };
+  }
+}
+
+/**
+ * DELETE : Nettoyage d'archives
+ */
 export async function deleteQuoteAction(id: string): Promise<ActionResponse> {
   try {
     const userId = await getClerkUserId();

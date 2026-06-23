@@ -6,7 +6,7 @@
 
 // ─── Typographie ─────────────────────────────────────────────────────────────
 export const DS_LABEL =
-  "font-mono text-[9px] uppercase tracking-wide text-slate-500";
+  "font-mono text-[9px] uppercase tracking-wide text-slate-600";
 export const DS_MICRO = DS_LABEL; // alias — sera supprimé progressivement
 export const DS_MONO = "font-mono text-[11px] tabular-nums leading-snug";
 export const DS_TITLE = "font-mono text-xl uppercase tracking-tight text-slate-900";
@@ -51,9 +51,12 @@ export const DS_BADGE_NEUTRAL =
 export const DS_BADGE_CANCELLED =
   "px-1.5 py-0.5 rounded-md text-[8px] font-bold bg-slate-100 text-slate-400 border border-slate-300 line-through";
 
+// ─── Rounded — token d'arrondi unique pour inputs/surfaces ────────────────
+export const DS_ROUNDED = "rounded-md";
+
 // ─── Telemetry (sidebar info blocks) ────────────────────────────────────────
 export const DS_TEL_BLOCK =
-  "p-2 bg-slate-50/80 rounded-md border border-slate-200";
+  "p-2 bg-slate-50 rounded-md border border-slate-200";
 
 // ─── Progress / Gauge ───────────────────────────────────────────────────────
 export const DS_PROGRESS_TRACK =
@@ -172,6 +175,36 @@ export const DS_LP_GRAD_BTN_SHN = "absolute inset-0 rounded-md bg-white/5 opacit
 export const DS_LP_OUT_BTN = "inline-flex items-center gap-2 px-6 py-3 rounded-md font-mono text-[10px] uppercase tracking-wide text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-all";
 export const DS_LP_NAV_LIEN = "font-mono text-[10px] uppercase tracking-wide text-slate-500 hover:text-slate-900 transition-colors";
 export const DS_LP_NAV_CONN = "hidden sm:inline-flex items-center gap-1.5 px-4 py-2 font-mono text-[10px] uppercase tracking-wide text-slate-500 hover:text-slate-900 transition-colors";
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RÉGIME STUDIO — Tokens compacts pour l'éditeur de devis (quotes/new)
+// Dialecte officiel du design system, distinct du régime Dashboard.
+// Voir DESIGN_SYSTEM.md §10 pour la documentation complète.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const STUDIO_CARD =
+  "bg-white border border-slate-200 rounded-md p-3";
+export const STUDIO_TAB_ACTIVE =
+  "bg-white text-slate-900 border border-slate-200";
+export const STUDIO_TAB_INACTIVE =
+  "text-slate-500 hover:text-slate-800";
+export const STUDIO_INPUT =
+  "w-full bg-white border border-slate-200 px-2.5 py-1.5 font-mono text-[10px] text-slate-900 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 transition-all";
+export const STUDIO_LABEL =
+  "text-[8px] font-mono uppercase tracking-wider text-slate-600 mb-1 block";
+export const STUDIO_MONO =
+  "text-[10px] font-mono tabular-nums leading-snug";
+export const STUDIO_ICON_SM = 12;
+export const STUDIO_ICON_XS = 10;
+
+// ─── Étiquette ultra-compacte dans les headers / topbars ───────────────────
+// Usage: dans les boutons de l'éditeur où l'espace est critique (7px)
+export const STUDIO_HEADER_LABEL =
+  "text-[7px] font-mono uppercase tracking-wider font-semibold leading-none";
+export const STUDIO_HEADER_BTN =
+  "inline-flex items-center justify-center gap-1 h-7 px-2.5 rounded-md transition-all";
+export const STUDIO_HEADER_BTN_SM =
+  "inline-flex items-center justify-center h-7 w-7 rounded-md transition-all";
 
 // ─── Objet legacy (compat avec les fichiers existants) ──────────────────────
 export const DS = {

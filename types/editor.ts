@@ -64,6 +64,8 @@ export interface EditorActiveQuote {
     email: string;
     address: string;
     taxId: string;
+    phone: string;
+    notes: string;
   };
   quote: {
     number: string;

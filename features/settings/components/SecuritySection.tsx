@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useCallback } from "react";
@@ -9,77 +10,387 @@ import {
   XCircleIcon,
   EyeIcon,
   EyeSlashIcon,
-  WarningIcon,
-  ActivityIcon,
-  GlobeIcon,
+  ClockIcon,
+  LockKeyIcon,
 } from "@phosphor-icons/react";
 import {
   revokeSession,
+  updatePassword,
+  setInitialPassword,
   type SecurityProfile,
   type ParsedSession,
 } from "@/actions/security-action";
-
-// ─── Design System tokens (locaux) ───────────────────────────────────────────
-const DS = {
-  micro: "text-[9px] uppercase font-bold tracking-tighter",
-  label: "text-[10px] uppercase font-bold tracking-wider text-slate-400",
-  mono: "font-mono text-[11px] tabular-nums leading-none",
-  card: "bg-white border border-slate-100/60",
-  input:
-    "bg-slate-100/50 border-0 border-b border-slate-200 focus:border-indigo-400 focus:bg-white focus:ring-0 transition-all",
-  button:
-    "flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-[9px] font-bold uppercase tracking-wider transition-all",
-};
+import {
+  DS_BENTO_CARD,
+  DS_LABEL,
+  DS_MONO,
+  DS_MICRO,
+  DS_INPUT,
+  DS_ICON_WRAPPER,
+  DS_BADGE_SUCCESS,
+  DS_BADGE_DANGER,
+  DS_BADGE_NEUTRAL,
+  DS_PROGRESS_TRACK,
+  DS_PROGRESS_BAR,
+  DS_ICON_SM,
+  DS_ICON_XS,
+  DS_ROUNDED,
+} from "@/lib/design-system";
 
 // ─── zxcvbn lazy loader ───────────────────────────────────────────────────────
 let zxcvbnInitialized = false;
 async function getZxcvbn() {
   const { zxcvbn, zxcvbnOptions } = await import("@zxcvbn-ts/core");
   if (!zxcvbnInitialized) {
-    const { adjacencyGraphs, dictionary } =
-      await import("@zxcvbn-ts/language-common");
+    const { adjacencyGraphs, dictionary } = await import("@zxcvbn-ts/language-common");
     zxcvbnOptions.setOptions({ graphs: adjacencyGraphs, dictionary });
     zxcvbnInitialized = true;
   }
   return zxcvbn;
 }
 
-const PWD_LABELS = [
-  "Très faible",
-  "Faible",
-  "Moyen",
-  "Fort",
-  "Très fort",
-] as const;
-const PWD_COLORS = [
-  "bg-rose-500",
-  "bg-orange-400",
-  "bg-amber-400",
-  "bg-emerald-400",
-  "bg-emerald-600",
-] as const;
-const PWD_TEXT_COLORS = [
-  "text-rose-600",
-  "text-orange-500",
-  "text-amber-500",
-  "text-emerald-600",
-  "text-emerald-700",
-] as const;
+const PWD_LABELS = ["Très faible", "Faible", "Moyen", "Fort", "Très fort"] as const;
+const PWD_COLORS = ["bg-rose-500", "bg-orange-400", "bg-amber-400", "bg-emerald-400", "bg-emerald-600"] as const;
+const PWD_TEXT_COLORS = ["text-rose-600", "text-orange-500", "text-amber-500", "text-emerald-600", "text-emerald-700"] as const;
 
-// ═══════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+// StatutEmail — ligne compacte avec statut vérifié/non vérifié
+// ═══════════════════════════════════════════════════════════
+
+function StatutEmail({ verified }: { verified: boolean }) {
+  return (
+    <div className="flex items-center justify-between rounded-md border border-slate-200 bg-slate-50/60 px-2 py-1.5">
+      <div className="flex items-center gap-2">
+        <span className={DS_LABEL}>Email</span>
+        <span className={cn(DS_MONO, "text-[10px] text-slate-900")}>Authentifié</span>
+      </div>
+      <span className={cn(verified ? DS_BADGE_SUCCESS : DS_BADGE_DANGER, "text-[7px] leading-none")}>
+        {verified ? "VÉRIFIÉ" : "EN ATTENTE"}
+      </span>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════
+// PasswordStrength — input avec oeil + barre de progression (interne)
+// ═══════════════════════════════════════════════════════════
+
+function PasswordStrength({
+  value,
+  onChange,
+  show,
+  onToggleShow,
+  label,
+  placeholder,
+  autoComplete,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  show: boolean;
+  onToggleShow: () => void;
+  label: string;
+  placeholder?: string;
+  autoComplete: string;
+}) {
+  const [pwdScore, setPwdScore] = useState<0 | 1 | 2 | 3 | 4>(0);
+  const [pwdPending, setPwdPending] = useState(false);
+
+  const handleChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    onChange(val);
+    if (!val) { setPwdScore(0); return; }
+    setPwdPending(true);
+    const zxcvbn = await getZxcvbn();
+    const result = zxcvbn(val);
+    setPwdScore(result.score as 0 | 1 | 2 | 3 | 4);
+    setPwdPending(false);
+  }, [onChange]);
+
+  const barWidth = value ? `${(pwdScore + 1) * 20}%` : "0%";
+
+  return (
+    <div>
+      <span className={cn(DS_LABEL, "mb-1 block")}>{label}</span>
+      <div className="relative">
+        <input value={value} onChange={handleChange}
+          type={show ? "text" : "password"}
+          className={cn(DS_INPUT, DS_ROUNDED, "w-full text-xs pr-8")}
+          placeholder={placeholder ?? "••••••••"}
+          autoComplete={autoComplete} />
+        <button type="button" onClick={onToggleShow}
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 flex items-center justify-center w-4 h-4">
+          {show ? <EyeSlashIcon size={9} /> : <EyeIcon size={9} />}
+        </button>
+      </div>
+      {value && (
+        <>
+          <div className="mt-1 flex items-center gap-2">
+            <div className={cn(DS_PROGRESS_TRACK, "flex-1")}>
+              <div className={cn(DS_PROGRESS_BAR, PWD_COLORS[pwdScore])}
+                style={{ width: barWidth }} />
+            </div>
+            {!pwdPending && (
+              <span className={cn(DS_MONO, "text-[8px]", PWD_TEXT_COLORS[pwdScore])}>{PWD_LABELS[pwdScore]}</span>
+            )}
+          </div>
+          {pwdScore < 3 && (
+            <p className="text-[7px] text-amber-600 mt-0.5">Utilisez au moins 8 caractères avec lettres, chiffres et symboles</p>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════
+// PasswordField — champ simple avec toggle (pour current / confirm)
+// ═══════════════════════════════════════════════════════════
+
+function PasswordField({
+  value,
+  onChange,
+  show,
+  onToggleShow,
+  label,
+  placeholder,
+  autoComplete,
+  error,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  show: boolean;
+  onToggleShow: () => void;
+  label: string;
+  placeholder?: string;
+  autoComplete: string;
+  error?: string;
+}) {
+  return (
+    <div>
+      <span className={cn(DS_LABEL, "mb-1 block")}>{label}</span>
+      <div className="relative">
+        <input value={value} onChange={(e) => onChange(e.target.value)}
+          type={show ? "text" : "password"}
+          className={cn(DS_INPUT, DS_ROUNDED, "w-full text-xs pr-8", error && "border-rose-300 bg-rose-50/40")}
+          placeholder={placeholder ?? "••••••••"}
+          autoComplete={autoComplete} />
+        <button type="button" onClick={onToggleShow}
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 flex items-center justify-center w-4 h-4">
+          {show ? <EyeSlashIcon size={9} /> : <EyeIcon size={9} />}
+        </button>
+      </div>
+      {error && <p className="text-[7px] text-rose-500 mt-0.5">{error}</p>}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════
+// ChangePasswordForm — formulaire complet changement de mot de passe
+// ═══════════════════════════════════════════════════════════
+
+function ChangePasswordForm({ passwordEnabled }: { passwordEnabled: boolean }) {
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const [isPending, setIsPending] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{ current?: string; new?: string; confirm?: string }>({});
+
+  const passwordsMatch = confirmPassword === "" || confirmPassword === newPassword;
+  const newPasswordValid = newPassword === "" || newPassword.length >= 8;
+  const canSubmit = newPassword.length >= 8 && passwordsMatch && confirmPassword.length >= 1
+    && (passwordEnabled ? currentPassword.length >= 1 : true);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!canSubmit) return;
+
+    // Validation finale
+    const errors: { current?: string; new?: string; confirm?: string } = {};
+    if (passwordEnabled && !currentPassword) errors.current = "Mot de passe actuel requis";
+    if (newPassword.length < 8) errors.new = "Minimum 8 caractères";
+    if (confirmPassword !== newPassword) errors.confirm = "Les mots de passe ne correspondent pas";
+    if (passwordEnabled && currentPassword === newPassword) errors.new = "Le nouveau mot de passe doit être différent de l'actuel";
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
+
+    setFieldErrors({});
+    setIsPending(true);
+
+    // Utiliser setInitialPassword pour les utilisateurs OAuth, updatePassword sinon
+    const res = passwordEnabled
+      ? await updatePassword(currentPassword, newPassword)
+      : await setInitialPassword(newPassword);
+    setIsPending(false);
+
+    if (res.success) {
+      toast.success(passwordEnabled ? "Mot de passe mis à jour" : "Mot de passe créé", {
+        description: passwordEnabled
+          ? "Votre mot de passe a été changé avec succès"
+          : "Vous avez maintenant un mot de passe pour vous connecter",
+      });
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } else {
+      // Mapper les erreurs serveur sur les champs
+      if (res.error === "WRONG_CURRENT_PASSWORD") {
+        setFieldErrors({ current: res.message });
+      } else if (res.error === "SAME_AS_OLD") {
+        setFieldErrors({ new: res.message });
+      } else {
+        toast.error("Erreur", { description: res.message ?? "Impossible de changer le mot de passe" });
+      }
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-1.5">
+        <LockKeyIcon size={9} className="text-slate-500" />
+        <span className={cn(DS_LABEL, "text-slate-700")}>
+          {passwordEnabled ? "Changer le mot de passe" : "Créer un mot de passe"}
+        </span>
+      </div>
+
+      {!passwordEnabled && (
+        <div className="rounded-md bg-amber-50 border border-amber-200 px-2 py-1.5">
+          <p className="text-[7.5px] text-amber-700 leading-tight">
+            Vous utilisez actuellement une connexion via Google. Créez un mot de passe pour pouvoir vous connecter avec votre email.
+          </p>
+        </div>
+      )}
+
+      {passwordEnabled && (
+        <PasswordField
+          value={currentPassword}
+          onChange={(v) => { setCurrentPassword(v); if (fieldErrors.current) setFieldErrors((p) => ({ ...p, current: undefined })); }}
+          show={showCurrent}
+          onToggleShow={() => setShowCurrent((v) => !v)}
+          label="Mot de passe actuel"
+          autoComplete="current-password"
+          error={fieldErrors.current}
+        />
+      )}
+
+      <PasswordStrength
+        value={newPassword}
+        onChange={(v) => { setNewPassword(v); if (fieldErrors.new) setFieldErrors((p) => ({ ...p, new: undefined })); }}
+        show={showNew}
+        onToggleShow={() => setShowNew((v) => !v)}
+        label="Nouveau mot de passe"
+        autoComplete="new-password"
+      />
+      {fieldErrors.new && (
+        <p className="text-[7px] text-rose-500 -mt-2">{fieldErrors.new}</p>
+      )}
+
+      <PasswordField
+        value={confirmPassword}
+        onChange={(v) => { setConfirmPassword(v); if (fieldErrors.confirm) setFieldErrors((p) => ({ ...p, confirm: undefined })); }}
+        show={showConfirm}
+        onToggleShow={() => setShowConfirm((v) => !v)}
+        label="Confirmer le mot de passe"
+        autoComplete="new-password"
+        error={fieldErrors.confirm}
+      />
+
+      {/* Indicateur match */}
+      {confirmPassword && !passwordsMatch && (
+        <p className="text-[7px] text-rose-500 -mt-2">Les mots de passe ne correspondent pas</p>
+      )}
+
+      <button type="button" onClick={handleSubmit} disabled={!canSubmit || isPending}
+        className={cn(
+          "w-full flex items-center justify-center gap-1.5 py-1.5 rounded-md text-[9px] font-semibold uppercase tracking-wider transition-all",
+          canSubmit && !isPending
+            ? "bg-slate-900 text-white hover:bg-slate-800"
+            : "bg-slate-100 text-slate-300 cursor-not-allowed",
+        )}>
+        {isPending ? (
+          <>
+            <span className="w-2.5 h-2.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            Mise à jour…
+          </>
+        ) : (
+          "Mettre à jour le mot de passe"
+        )}
+      </button>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════
+// SessionItem — une ligne de session
+// ═══════════════════════════════════════════════════════════
+
+function SessionItem({
+  session,
+  isCurrent,
+  revoking,
+  renderTime,
+  onRevoke,
+}: {
+  session: ParsedSession;
+  isCurrent: boolean;
+  revoking: string | null;
+  renderTime: number;
+  onRevoke: (id: string) => void;
+}) {
+  const ago = new Date(session.lastActiveAt);
+  const diffMin = Math.floor((renderTime - ago.getTime()) / 60000);
+  const timeLabel = diffMin < 1 ? "Maintenant" : diffMin < 60 ? `${diffMin}min` : `${Math.floor(diffMin / 60)}h`;
+
+  return (
+    <div className={cn(
+      "flex items-center px-2 py-1.5 rounded-md border",
+      isCurrent ? "bg-emerald-50/60 border-emerald-100" : "bg-slate-50 border-slate-100",
+    )}>
+      <div className="flex items-center gap-2 min-w-0 flex-1">
+        <div className={cn("w-1.5 h-1.5 rounded-full shrink-0 mt-px self-center", isCurrent ? "bg-emerald-500" : "bg-slate-400")} />
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-medium text-slate-900 truncate leading-tight">
+            {session.browser} · {session.os}
+          </p>
+          <p className="text-[7px] text-slate-600 truncate leading-tight">
+            {session.city !== "—" ? `${session.city}` : session.ip !== "—" ? `IP: ${session.ip}` : "Localisation inconnue"}
+          </p>
+        </div>
+      </div>
+      <div className="flex items-center gap-2 shrink-0 ml-2">
+        <span className="flex items-center gap-0.5 text-[7px] text-slate-500 whitespace-nowrap">
+          <ClockIcon size={7} />{timeLabel}
+        </span>
+        {isCurrent ? (
+          <span className="text-[7px] font-bold text-emerald-600 uppercase tracking-wide whitespace-nowrap">Active</span>
+        ) : (
+          <button type="button" onClick={() => onRevoke(session.id)} disabled={revoking === session.id}
+            className="text-[7px] font-bold text-rose-500 hover:text-rose-700 uppercase tracking-wide disabled:opacity-40 whitespace-nowrap">
+            {revoking === session.id ? "…" : "Révoquer"}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════
 // BentoSecurityCard
-// ═══════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
 
 interface BentoSecurityCardProps {
-  showPassword: boolean;
-  setShowPassword: (v: boolean | ((prev: boolean) => boolean)) => void;
   securityProfile: SecurityProfile;
   className?: string;
 }
 
 export function BentoSecurityCard({
-  showPassword,
-  setShowPassword,
   securityProfile,
   className,
 }: BentoSecurityCardProps) {
@@ -87,27 +398,6 @@ export function BentoSecurityCard({
   const [sessions, setSessions] = useState<ParsedSession[]>(sp.sessions);
   const [revoking, setRevoking] = useState<string | null>(null);
   const [renderTime] = useState(() => Date.now());
-
-  const [pwdValue, setPwdValue] = useState("");
-  const [pwdScore, setPwdScore] = useState<0 | 1 | 2 | 3 | 4>(0);
-  const [pwdPending, setPwdPending] = useState(false);
-
-  const handlePwdChange = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const val = e.target.value;
-      setPwdValue(val);
-      if (!val) {
-        setPwdScore(0);
-        return;
-      }
-      setPwdPending(true);
-      const zxcvbn = await getZxcvbn();
-      const result = zxcvbn(val);
-      setPwdScore(result.score as 0 | 1 | 2 | 3 | 4);
-      setPwdPending(false);
-    },
-    [],
-  );
 
   const handleRevoke = useCallback(async (sessionId: string) => {
     setRevoking(sessionId);
@@ -121,317 +411,47 @@ export function BentoSecurityCard({
     setRevoking(null);
   }, []);
 
-  const pwdBarWidth = pwdValue ? `${(pwdScore + 1) * 20}%` : "0%";
-
   return (
-    <div className={cn(DS.card, "rounded-lg p-4", className)}>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded bg-rose-50 flex items-center justify-center">
-            <ShieldCheckIcon size={12} className="text-rose-500" />
+    <div className={cn(DS_BENTO_CARD, "p-3", className)}>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-1.5">
+          <div className="flex items-center justify-center w-5 h-5 shrink-0 rounded-md bg-indigo-50">
+            <ShieldCheckIcon size={10} className="text-indigo-500" />
           </div>
-          <span className={cn(DS.micro, "text-slate-600")}>Sécurité</span>
+          <span className={cn("text-[9px] font-mono uppercase tracking-wide text-slate-700")}>Sécurité</span>
         </div>
-        <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-rose-50 text-rose-600 border border-rose-200/60">
-          CRITIQUE
-        </span>
-      </div>
-
-      <div className="space-y-6">
-        {/* ── Email vérifié ── */}
-        <div>
-          <h4 className={cn(DS.label, "mb-3")}>Email Principal</h4>
-          <div className="p-3 bg-slate-50 rounded border border-slate-100">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-900">
-                  {sp.sessions[0]?.ip
-                    ? sp.sessions.find((s) => s.isCurrent)?.city
-                      ? `${sp.sessions.find((s) => s.isCurrent)?.city}`
-                      : "Authentifié"
-                    : "Authentifié"}
-                </p>
-                <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-                  {sp.emailVerified ? (
-                    <>
-                      <CheckCircleIcon size={10} className="text-emerald-500" />
-                      Email vérifié
-                    </>
-                  ) : (
-                    <>
-                      <XCircleIcon size={10} className="text-rose-500" />
-                      Email non vérifié
-                    </>
-                  )}
-                </p>
-              </div>
-              <span
-                className={cn(
-                  "px-1.5 py-0.5 rounded text-[8px] font-bold",
-                  sp.emailVerified
-                    ? "bg-emerald-50 text-emerald-600 border border-emerald-200/60"
-                    : "bg-rose-50 text-rose-600 border border-rose-200/60",
-                )}
-              >
-                {sp.emailVerified ? "VÉRIFIÉ" : "PENDING"}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* ── Force MDP temps réel ── */}
-        <div>
-          <h4 className={cn(DS.label, "mb-3")}>Nouveau mot de passe</h4>
-          <div className="relative">
-            <input
-              value={pwdValue}
-              onChange={handlePwdChange}
-              type={showPassword ? "text" : "password"}
-              className={cn(
-                DS.input,
-                "w-full px-3 py-2 text-sm rounded-t pr-10",
-              )}
-              placeholder="••••••••"
-              autoComplete="new-password"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword((v) => !v)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-            >
-              {showPassword ? (
-                <EyeSlashIcon size={12} />
-              ) : (
-                <EyeIcon size={12} />
-              )}
-            </button>
-          </div>
-          <div className="mt-2 flex items-center gap-2">
-            <div className="flex-1 h-1 bg-slate-200 rounded-full overflow-hidden">
-              <div
-                className={cn(
-                  "h-full transition-all duration-300",
-                  pwdValue ? PWD_COLORS[pwdScore] : "bg-transparent",
-                )}
-                style={{ width: pwdBarWidth }}
-              />
-            </div>
-            {pwdValue && !pwdPending && (
-              <span
-                className={cn(
-                  DS.mono,
-                  "text-[10px]",
-                  PWD_TEXT_COLORS[pwdScore],
-                )}
-              >
-                {PWD_LABELS[pwdScore]}
-              </span>
-            )}
-          </div>
-          {pwdValue && pwdScore >= 2 && (
-            <p className="mt-1.5 text-[10px] text-slate-400">
-              Appuyez sur Sauvegarder pour mettre à jour via Clerk.
-            </p>
-          )}
-        </div>
-
-        {/* ── Sessions actives réelles ── */}
-        <div>
-          <h4 className={cn(DS.label, "mb-3")}>
-            Sessions Actives
-            <span className="ml-2 px-1 py-0.5 rounded bg-slate-100 text-slate-500 text-[8px] font-bold">
-              {sessions.length}
-            </span>
-          </h4>
-          <div className="space-y-2">
-            {sessions.length === 0 && (
-              <p className={cn(DS.mono, "text-[10px] text-slate-400")}>
-                Aucune session active
-              </p>
-            )}
-            {sessions.map((s) => {
-              const ago = new Date(s.lastActiveAt);
-              const diffMin = Math.floor((renderTime - ago.getTime()) / 60000);
-              const timeLabel =
-                diffMin < 1
-                  ? "Maintenant"
-                  : diffMin < 60
-                    ? `${diffMin}min`
-                    : `${Math.floor(diffMin / 60)}h`;
-              return (
-                <div
-                  key={s.id}
-                  className={cn(
-                    "flex items-center justify-between p-2 rounded border",
-                    s.isCurrent
-                      ? "bg-emerald-50/60 border-emerald-100"
-                      : "bg-slate-50 border-slate-100",
-                  )}
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div
-                      className={cn(
-                        "w-1.5 h-1.5 rounded-full shrink-0",
-                        s.isCurrent ? "bg-emerald-500" : "bg-slate-300",
-                      )}
-                    />
-                    <div className="min-w-0">
-                      <p className="text-xs font-medium text-slate-800 truncate">
-                        {s.browser} · {s.os}
-                        {s.isCurrent && (
-                          <span className="ml-1.5 text-[8px] font-bold text-emerald-600 uppercase">
-                            Cette session
-                          </span>
-                        )}
-                      </p>
-                      <p className="text-[9px] text-slate-400 truncate">
-                        {s.ip !== "—" ? `IP: ${s.ip}` : "IP inconnue"}
-                        {s.city !== "—" ? ` · ${s.city}, ${s.country}` : ""}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0 ml-2">
-                    <span className={cn(DS.mono, "text-[9px] text-slate-400")}>
-                      {timeLabel}
-                    </span>
-                    {!s.isCurrent && (
-                      <button
-                        type="button"
-                        onClick={() => handleRevoke(s.id)}
-                        disabled={revoking === s.id}
-                        className="text-[9px] font-bold text-rose-500 hover:text-rose-700 uppercase tracking-wide disabled:opacity-40"
-                      >
-                        {revoking === s.id ? "…" : "Révoquer"}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── ScoreRow (déclaré hors composant pour éviter la recréation au render) ────
-function ScoreRow({ ok, label }: { ok: boolean; label: string }) {
-  return (
-    <div className="flex items-center gap-2">
-      {ok ? (
-        <CheckCircleIcon size={10} className="text-emerald-500 shrink-0" />
-      ) : (
-        <XCircleIcon size={10} className="text-rose-400 shrink-0" />
-      )}
-      <span className={cn("text-xs", ok ? "text-slate-600" : "text-slate-400")}>
-        {label}
-      </span>
-    </div>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// BentoSecurityTelemetry
-// ═══════════════════════════════════════════════════════════════════════════════
-
-interface BentoSecurityTelemetryProps {
-  securityProfile: SecurityProfile;
-  className?: string;
-}
-
-export function BentoSecurityTelemetry({
-  securityProfile,
-  className,
-}: BentoSecurityTelemetryProps) {
-  const sp = securityProfile;
-  const currentSession = sp.sessions.find((s) => s.isCurrent) ?? sp.sessions[0];
-
-  const scoreColor =
-    sp.score >= 75
-      ? "text-emerald-700"
-      : sp.score >= 50
-        ? "text-amber-600"
-        : "text-rose-600";
-
-  const scoreBg =
-    sp.score >= 75
-      ? "bg-emerald-50 border-emerald-100"
-      : sp.score >= 50
-        ? "bg-amber-50 border-amber-100"
-        : "bg-rose-50 border-rose-100";
-
-  const scoreBarColor =
-    sp.score >= 75
-      ? "bg-emerald-500"
-      : sp.score >= 50
-        ? "bg-amber-400"
-        : "bg-rose-400";
-
-  return (
-    <div className={cn(DS.card, "rounded-lg p-4", className)}>
-      <div className="flex items-center justify-between mb-4">
-        <span className={cn(DS.micro, "text-slate-600")}>Force du Compte</span>
+        <span className={DS_BADGE_NEUTRAL}>{sessions.length} session{sessions.length > 1 ? "s" : ""}</span>
       </div>
 
       <div className="space-y-3">
-        <div className={cn("p-3 rounded border", scoreBg)}>
-          <div className="flex items-center justify-between mb-2">
-            <span className={cn("text-sm font-bold", scoreColor)}>
-              Score : {sp.score}/100
-            </span>
-            {sp.score >= 75 ? (
-              <CheckCircleIcon size={16} className="text-emerald-500" />
-            ) : (
-              <WarningIcon size={16} className="text-amber-500" />
-            )}
-          </div>
-          <div className="h-1.5 bg-white/60 rounded-full overflow-hidden mb-3">
-            <div
-              className={cn(
-                "h-full rounded-full transition-all",
-                scoreBarColor,
-              )}
-              style={{ width: `${sp.score}%` }}
-            />
-          </div>
-          <div className="space-y-1">
-            <ScoreRow ok={sp.emailVerified} label="Email vérifié (+50 pts)" />
-            <ScoreRow ok={sp.score >= 75} label="Profil complet (+50 pts)" />
-          </div>
+        {/* Email */}
+        <StatutEmail verified={sp.emailVerified ?? false} />
+
+        {/* Mot de passe — formulaire complet */}
+        <div className="rounded-md border border-slate-200 bg-slate-50/60 px-2 py-2">
+          <ChangePasswordForm passwordEnabled={sp.passwordEnabled} />
         </div>
 
-        {currentSession && (
-          <>
-            <div className="p-2 bg-slate-50 rounded border border-slate-100">
-              <div className="flex items-center gap-2 mb-1">
-                <ActivityIcon size={12} className="text-slate-400" />
-                <span className={cn(DS.label, "text-slate-500")}>
-                  Session courante
-                </span>
-              </div>
-              <span className={cn(DS.mono, "text-slate-700 truncate block")}>
-                {currentSession.browser} · {currentSession.os}
-              </span>
-            </div>
-
-            <div className="p-2 bg-slate-50 rounded border border-slate-100">
-              <div className="flex items-center gap-2 mb-1">
-                <GlobeIcon size={12} className="text-slate-400" />
-                <span className={cn(DS.label, "text-slate-500")}>
-                  Localisation
-                </span>
-              </div>
-              <span className={cn(DS.mono, "text-slate-700")}>
-                {currentSession.city !== "—" && currentSession.country !== "—"
-                  ? `${currentSession.city}, ${currentSession.country}`
-                  : currentSession.ip !== "—"
-                    ? `IP : ${currentSession.ip}`
-                    : "Non disponible"}
-              </span>
-            </div>
-          </>
-        )}
+        {/* Sessions */}
+        <div>
+          <span className={cn(DS_LABEL, "mb-1.5 block")}>Sessions actives</span>
+          {sessions.length === 0 && (
+            <p className={cn(DS_MONO, "text-[9px] text-slate-600")}>Aucune session active</p>
+          )}
+          <div className="space-y-1">
+            {sessions.map((s) => (
+              <SessionItem
+                key={s.id}
+                session={s}
+                isCurrent={s.isCurrent}
+                revoking={revoking}
+                renderTime={renderTime}
+                onRevoke={handleRevoke}
+              />
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

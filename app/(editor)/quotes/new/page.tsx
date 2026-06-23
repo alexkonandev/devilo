@@ -2,7 +2,7 @@
 import { redirect } from "next/navigation";
 import { getClerkUserId } from "@/lib/auth";
 import db from "@/lib/prisma";
-import { getInventoryAction } from "@/actions/catalog-action";
+import { getInventoryAction } from "@/actions/inventory-action";
 import { getAvailableThemes } from "@/actions/design-action";
 import { getEditorClientsAction } from "@/actions/client-editor-action";
 import CreateQuoteClient from "@/components/editor/CreateQuoteClient";
@@ -33,7 +33,7 @@ export default async function EditorPage({ searchParams }: PageProps) {
   const selectedTheme = themes?.find((t) => t.id === themeId) || null;
 
   return (
-    <div className="h-[calc(100vh-2.5rem)] w-full overflow-hidden">
+    <div className="h-screen w-full overflow-hidden">
       <CreateQuoteClient
         initialCatalog={inventory.userServices || []}
         platformCatalog={inventory.platformServices || []}

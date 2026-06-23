@@ -55,44 +55,7 @@ export const clientSchema = z.object({
     .nullable()
     .optional(),
 
-  addressLine2: z
-    .string()
-    .nullable()
-    .optional(),
-
-  city: z
-    .string()
-    .nullable()
-    .optional(),
-
-  postalCode: z
-    .string()
-    .nullable()
-    .optional(),
-
-  country: z.string().default("CI"),
-
   taxId: z
-    .string()
-    .nullable()
-    .optional(),
-
-  tvaNumber: z
-    .string()
-    .nullable()
-    .optional(),
-
-  legalForm: z
-    .string()
-    .nullable()
-    .optional(),
-
-  representativeName: z
-    .string()
-    .nullable()
-    .optional(),
-
-  representativePosition: z
     .string()
     .nullable()
     .optional(),

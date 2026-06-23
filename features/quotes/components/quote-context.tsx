@@ -20,6 +20,7 @@ import {
 import {
   updateQuoteStatusAction,
   deleteQuoteAction,
+  deleteQuotesAction,
   getQuotesAction,
   getQuoteTimelineAction,
 } from "@/actions/quote-registry-action";
@@ -352,6 +353,12 @@ export function QuoteProvider({
     setIsLoadingTimeline(false);
   }, []);
 
+  const refreshTimeline = useCallback(async () => {
+    if (activeQuoteId) {
+      await loadTimeline(activeQuoteId);
+    }
+  }, [activeQuoteId, loadTimeline]);
+
   // ─── Reset tous les filtres ───
   const resetFilters = useCallback(() => {
     setDateRange(null);
@@ -443,6 +450,24 @@ export function QuoteProvider({
     }
   };
 
+  const deleteMultipleQuotes = async (ids: string[]) => {
+    const previousQuotes = [...quotes];
+    setQuotes((prev) => prev.filter((q) => !ids.includes(q.id)));
+    setSelectedQuoteIds(new Set());
+
+    const res = await deleteQuotesAction(ids);
+    if (!res.success) {
+      setQuotes(previousQuotes);
+      notify.error("ERREUR_SUPPRESSION", "Échec de la suppression multiple.");
+    } else {
+      notify.success("DEVIS SUPPRIMÉS", `${ids.length} devis supprimés.`);
+      if (activeQuoteId && ids.includes(activeQuoteId)) {
+        setActiveQuoteId(null);
+        setTimeline([]);
+      }
+    }
+  };
+
   return (
     <QuoteContext.Provider
       value={{
@@ -480,9 +505,11 @@ export function QuoteProvider({
         toggleSelection,
         selectAll,
         clearSelection,
+        loadTimeline,
         // Actions
         updateStatus,
         deleteQuote,
+        deleteMultipleQuotes,
         refresh,
         quickStatusChange,
       }}

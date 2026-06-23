@@ -1,6 +1,6 @@
 # DevisExpress — Design System Manifest
 
-> **Version**: 2.0 — Fintech Command Center  
+> **Version**: 2.1 — Fintech Command Center  
 > **Date**: Avril 2026  
 > **Status**: Source de Vérité Absolue  
 
@@ -12,9 +12,15 @@
 
 **SaaS Pro Standard**. Densité chirurgicale, typographie monospace pour les données, hiérarchie visuelle immédiate.
 
+**Deux régimes UI co-existent** :
+1. **Régime Dashboard** (pages spatial-*) → navigation, consultation, gestion
+2. **Régime Studio** (éditeur quotes/new) → création, édition, composition
+
+Ces régimes ont des contraintes UX différentes et **consomment des tokens distincts** (voir §10).
+
 ---
 
-## 2. LAYOUT GLOBAL
+## 2. LAYOUT GLOBAL — RÉGIME DASHBOARD
 
 ### Règles Absolues
 
@@ -38,7 +44,7 @@
 | **Scroll** | `overflow-hidden` global | Scroll délégué aux panneaux |
 | **Padding** | `pt-10 pl-16` | Compensation HUD |
 
-### Interdictions
+### Interdictions (Dashboard)
 
 - ❌ **PAS DE** `max-w-[1400px]` ou `mx-auto` sur le main
 - ❌ **PAS DE** `pb-12` ou margins bottom sur les conteneurs
@@ -48,7 +54,7 @@
 
 ---
 
-## 3. PALETTE & CONTENEURS
+## 3. PALETTE & CONTENEURS — RÉGIME DASHBOARD
 
 ### Fonds
 
@@ -77,7 +83,7 @@
 | **Inputs** | `rounded-md` | Champs de saisie |
 | **Avatars** | `rounded` ou `rounded-md` | Initiales clients |
 
-### Interdictions
+### Interdictions (Dashboard)
 
 - ❌ **PAS DE** `shadow-none` explicite (c'est le défaut)
 - ❌ **PAS DE** `rounded-xl`, `rounded-2xl`, `rounded-3xl`
@@ -86,7 +92,7 @@
 
 ---
 
-## 4. TYPOGRAPHIE
+## 4. TYPOGRAPHIE — RÉGIME DASHBOARD
 
 ### Grille Typo Standardisée (tokens DS)
 
@@ -134,7 +140,7 @@ Quantités:    font-mono tabular-nums
 
 ---
 
-## 5. DENSITÉ & SPACING
+## 5. DENSITÉ & SPACING — RÉGIME DASHBOARD
 
 ### Grid/Flex Gaps
 
@@ -164,7 +170,7 @@ Quantités:    font-mono tabular-nums
 
 ---
 
-## 6. STATUTS & BADGES
+## 6. STATUTS & BADGES — RÉGIME DASHBOARD
 
 ### Configuration Standard
 
@@ -282,7 +288,7 @@ const STATUS_CONFIG = {
 
 ---
 
-## 9. CHECKLIST DE VALIDATION
+## 9. CHECKLIST DE VALIDATION — RÉGIME DASHBOARD
 
 Avant de soumettre une refonte UI:
 
@@ -299,4 +305,198 @@ Avant de soumettre une refonte UI:
 
 ---
 
-**DERNIÈRE MISE À JOUR**: Dashboard & Quotes pages validées comme Source de Vérité.
+## 10. RÉGIME STUDIO — DIALECTE SPÉCIFIQUE À L'ÉDITEUR
+
+> L'éditeur de devis (`/quotes/new`) est un **environnement de composition** (type studio graphique / atelier).
+> Ses contraintes UX sont différentes du régime Dashboard : densité plus élevée, contrôles d'édition, preview A4.
+> Il définit **ses propres tokens locaux** dans `studio-sidebar-left.tsx` et `quote-editor-layout.tsx`.
+> **Ce n'est pas un bug, c'est une feature.** Les deux régimes sont officiels et co-existent.
+
+### 10.1 Tokens Studio — Locaux et Assumés
+
+```typescript
+// studio-sidebar-left.tsx — Tokens compacts pour l'atelier d'édition
+const SIDEBAR_CARD       = "bg-white border border-slate-200 rounded-md p-3";
+const SIDEBAR_TAB_ACTIVE = "bg-white text-slate-900 border border-slate-200";
+const SIDEBAR_TAB_INACTIVE = "text-slate-500 hover:text-slate-800";
+const SIDEBAR_INPUT      = "w-full bg-white border border-slate-200 px-2.5 py-1.5 font-mono text-[10px] text-slate-900 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 transition-all";
+const SIDEBAR_LABEL      = "text-[8px] font-mono uppercase tracking-wider text-slate-600 mb-1 block";
+```
+
+| Token Studio | Dashboard Equivalent | Différence Intentionnelle |
+|---|---|---|
+| `SIDEBAR_CARD = p-3` | `DS_BENTO_CARD = p-4` | Plus dense (atelier vs lecture) |
+| `SIDEBAR_LABEL = text-[8px]` | `DS_LABEL = text-[9px]` | Micro-typo pour sidebar outillage |
+| `SIDEBAR_INPUT = text-[10px] px-2.5` | `DS_INPUT = text-sm px-3` | Plus compact pour manipulation rapide |
+| `rounded-md` partout | `rounded-lg` partout | Même radius, cohérence préservée |
+| `border-slate-200` | `border-slate-200` | **Même couleur de bordure** |
+
+### 10.2 Layout Studio
+
+```
+┌─────────────────────────────────────────────────────────┐
+│ ┌─ Top Bar (h-12 / 48px) ──────────────────────────┐   │
+│ │ [Nouveau] [Supprimer]  Studio│Aperçu  -/+  Thème  Export│
+│ └───────────────────────────────────────────────────┘   │
+│ ┌─ Sidebar L (360px) ─┬─ Document A4 ─┬─ Sidebar R (300px)│
+│ │                     │  (centré,      │                    │
+│ │  Client / Lignes    │   zoomable)    │  Propriétés        │
+│ │  / Offres           │                │  du document       │
+│ │                     │                │                    │
+│ └─────────────────────┴────────────────┴────────────────────┘
+└─────────────────────────────────────────────────────────┘
+```
+
+**Différences clés avec le layout Dashboard :**
+- Top Bar : `h-12` (48px) vs `h-10` (40px) — plus d'outils d'édition
+- Pas de `SpatialDock` ni `SpatialStatusBar` — l'éditeur a ses propres contrôles
+- Pas de padding `pt-10 pl-16` — le layout est autonome
+- Sidebars de taille fixe (360px / 300px) vs ratio flexible (flex-[4]/flex-[6])
+- Le document A4 est centré et zoomable
+
+### 10.3 Typographie Studio vs Dashboard
+
+| Usage | Studio | Dashboard |
+|-------|--------|-----------|
+| **Labels sidebar** | `text-[7px]` à `text-[8px]` | `text-[9px]` |
+| **Données lignes** | `text-[10px] font-mono` | `text-[11px] DS_MONO` |
+| **Titres sections** | `text-[8px] uppercase` | `DS_LABEL` standard |
+| **Input values** | `text-[10px] font-mono` | `text-sm font-sans` |
+| **Noms items** | `text-[10px] font-mono font-bold` | `DS_BODY` |
+
+### 10.4 Sous-tabs et Variantes (Studio uniquement)
+
+Le Studio utilise des sous-tabs pour l'onglet Catalogue (Inventaire / Suggestion) avec un style distinct :
+
+```typescript
+// Sous-tabs Inventaire
+const SUBTAB_ACTIVE = "bg-white text-indigo-700 border border-indigo-200 shadow-[0_1px_2px_rgba(79,70,229,0.06)]";
+// Sous-tabs Suggestion (variante violette)
+const SUBTAB_VARIANT_SUGGESTION = "bg-white text-violet-700 border border-violet-200 shadow-[0_1px_2px_rgba(124,58,237,0.06)]";
+```
+
+Ces variantes sont propres au Studio et ne doivent **pas** être répliquées dans le régime Dashboard.
+
+### 10.5 Composants Internes Studio
+
+Le Studio définit ses propres composants internes compacts :
+- `NavTab` — navigation principale Client / Devis / Offres
+- `SubTabButton` — sous-onglets avec variante "suggestion" (violet)
+- `CompactField` — champ avec label
+- `CompactInput` / `CompactTextarea` — inputs réduits
+- `CompactAlert` — alertes compactes (type amber)
+- `SuggestionBadge` — badge de pertinence avec score (Match XX%)
+
+Ces composants sont internes au Studio et ne sont pas destinés à être partagés avec le Dashboard.
+
+### 10.6 Focus Mode
+
+Le Studio supporte un mode `focusMode` (via contexte `FocusContext`) qui masque les panneaux latéraux pour se concentrer sur le document. Ce mécanisme est propre à l'éditeur.
+
+---
+
+## 11. DOCUMENT A4 — APPLICATION DU DIALECTE STUDIO
+
+> Le document A4 imprimable/PDF (`printable-quote.tsx` → `generateQuoteHTML()`) doit **consommer les valeurs du dialecte Studio**, pas les tokens Dashboard.
+
+### État actuel (résolu)
+
+Le template HTML de print (`lib/print-template.ts`) expose désormais un objet `PRINT_STYLES` qui centralise tous les tokens du document A4, alignés sur le dialecte Studio.
+
+```typescript
+// lib/print-template.ts — Exporté et utilisable
+export const PRINT_STYLES = {
+  label:     "text-[7px] font-mono uppercase tracking-wider text-slate-400",
+  data:      "text-[10px] font-mono font-bold text-slate-700",
+  badge:     "inline-flex items-center gap-2 bg-slate-50 px-2 py-1 rounded-md border border-slate-100",
+  itemTitle: "text-[11px] font-bold text-slate-900 mb-0.5 uppercase",
+  totalCard: "w-[85mm] bg-slate-900 rounded-2xl p-6 text-white shadow-xl ...",
+  // ... tous les tokens print documentés
+};
+```
+
+Ces tokens sont utilisés via un shorthand `const S = PRINT_STYLES` dans le template HTML.
+
+### Correspondance A4 ↔ Studio
+
+| Zone A4 | Token PRINT_STYLES | Philosophie Studio |
+|---|---|---|
+| **Labels section** | `S.label` → `text-[7px] font-mono uppercase tracking-wider text-slate-400` | Aligné sur `STUDIO_LABEL` (même tracking, même font) |
+| **Données monospace** | `S.data` → `text-[10px] font-mono font-bold text-slate-700` | Aligné sur `STUDIO_MONO` (même taille 10px) |
+| **Badge / meta** | `S.badge` → `bg-slate-50 border border-slate-100` | Même pattern que CompactAlert / sidebar |
+| **Noms items** | `S.itemTitle` → `text-[11px] font-bold uppercase` | Densité Studio, taille adaptée print |
+| **Carte totale** | `S.totalCard` → `bg-white border border-slate-200 rounded-lg p-6 relative overflow-hidden` avec un dégradé doux `blur-[60px] opacity-25` couleur thème | Accent via un cercle flouté positionné `absolute -right-10 -top-10` — pas de fond contrasté, pas de bordure latérale |
+| **Couleur accent** | `themeColor` injecté dynamiquement | ✅ Même mécanisme qu'avant |
+| **Palette** | `slate-900` / `slate-700` / `slate-500` / `slate-400` / `indigo-600` | ✅ Identique à l'éditeur Studio |
+
+### Principes appliqués
+
+1. **Tailles print conservées** — les textes A4 sont plus grands que l'UI écran (11px items vs 10px Studio)
+2. **Palette alignée** — `slate-900`/`slate-700`/`slate-500`, `indigo-600` pour l'email
+3. **`font-sans` (Inter)** pour le corps — le monospace est réservé aux données techniques
+4. **Arrondis plus grands en print** — `rounded-xl`, `rounded-2xl` pour une hiérarchie visuelle renforcée
+5. **Ombres acceptables en print** — `shadow-xl` car artefact final, pas composant d'interface
+6. **Tokens centralisés et réutilisables** — `PRINT_STYLES` peut être importé par d'autres composants
+
+---
+
+## 12. COHABITATION DES DEUX RÉGIMES
+
+### Règle d'or
+
+**Le régime Studio ne doit PAS être forcé à consommer les tokens Dashboard, et inversement.**
+
+Ce qui les unit :
+- Même **palette de couleurs** (slate, indigo, emerald, amber, rose)
+- Même **philosophie** (bordures fines, pas de background patterns, typo monospace pour les données)
+- Même **radius de base** (`rounded-md` = 6px, `rounded-lg` = 8px)
+
+Ce qui les distingue :
+- **Densité** : Dashboard = aéré (p-4, gap-4) vs Studio = compact (p-3, gap-2)
+- **Échelle typo** : Dashboard = 9px/11px/14px vs Studio = 7px/8px/10px
+- **Layout** : Dashboard = master/detail fluide vs Studio = document centré + sidebars fixes
+- **Navigation** : Dashboard = SpatialDock vs Studio = top bar outillage
+
+### Interdictions transverses
+
+- ❌ **PAS DE** mélange des tokens (pas de `SIDEBAR_INPUT` dans une page Dashboard)
+- ❌ **PAS DE** duplication inutile (si un token Dashboard convient à l'éditeur, l'utiliser)
+- ❌ **PAS DE** composant Studio importé dans le Dashboard
+
+---
+
+## 13. CHECKLIST DE VALIDATION — RÉGIME STUDIO
+
+Avant de modifier l'éditeur :
+
+- [ ] Les tokens locaux `SIDEBAR_*` sont utilisés de façon cohérente
+- [ ] Pas d'import de tokens Dashboard (`DS_BENTO_CARD`, `DS_INPUT`) dans les composants Studio
+- [ ] Le document A4 print suit ses propres règles de lisibilité (pas calqué sur l'UI écran)
+- [ ] `rounded-2xl` et ombres sont réservés au print A4 uniquement
+- [ ] Pas de `SpatialDock` ou `SpatialStatusBar` dans l'éditeur
+- [ ] Le focus mode cache bien les deux sidebars (pas un seul côté)
+- [ ] Les sous-tabs violet (Suggestion) sont isolés au composant catalogue du Studio
+
+---
+
+## 14. CHECKLIST DE VALIDATION GLOBALE
+
+Avant de soumettre une refonte UI:
+
+- [ ] Le bon régime est identifié (Dashboard ou Studio) avant d'appliquer des tokens
+- [ ] Pas de `max-w` ou `mx-auto` sur les conteneurs principaux (Dashboard)
+- [ ] Height strict `calc(100vh-2.5rem)` sur le layout (Dashboard)
+- [ ] `overflow-hidden` global, scroll dans les enfants (Dashboard)
+- [ ] Cartes Studio : `bg-white border border-slate-200 rounded-md p-3`
+- [ ] Cartes Dashboard : `bg-white border border-slate-200 rounded-lg p-4`
+- [ ] A4 print : lisibilité avant tout, arrondis et ombres autorisés
+- [ ] Typographie monospace sur les montants/dates/IDs (les deux régimes)
+- [ ] Labels en `text-[9px] uppercase font-bold tracking-wider` (Dashboard)
+- [ ] Labels en `text-[8px] font-mono uppercase tracking-wider` (Studio)
+- [ ] Densité: `gap-2` ou `gap-3`, `p-3` ou `p-4`
+- [ ] Badges avec dot colorée et border
+- [ ] Empty states avec border-dashed explicite
+
+---
+
+**DERNIÈRE MISE À JOUR**: Ajout du régime Studio v2.0 — dialecte officiel de l'éditeur de devis.

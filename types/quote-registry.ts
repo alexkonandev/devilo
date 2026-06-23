@@ -101,10 +101,12 @@ export interface QuoteContextType {
   toggleSelection: (quoteId: string) => void;
   selectAll: () => void;
   clearSelection: () => void;
+  loadTimeline: (quoteId: string) => Promise<void>;
 
   // Actions (Mutations)
   updateStatus: (id: string, status: QuoteStatus) => Promise<void>;
   deleteQuote: (id: string) => Promise<void>;
+  deleteMultipleQuotes: (ids: string[]) => Promise<void>;
   refresh: () => Promise<void>;
 
   // NOUVEAU: Quick Actions

@@ -4,15 +4,18 @@ import React, { useState, useTransition } from "react";
 import { cn } from "@/lib/utils";
 import { WarningIcon, TrashIcon } from "@phosphor-icons/react";
 import { deleteAccountSecure } from "@/actions/security-action";
-
-const DS = {
-  micro: "text-[9px] uppercase font-bold tracking-tighter",
-  label: "text-[10px] uppercase font-bold tracking-wider text-slate-400",
-  input:
-    "bg-slate-100/50 border-0 border-b border-slate-200 focus:border-indigo-400 focus:bg-white focus:ring-0 transition-all",
-  button:
-    "flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-[9px] font-bold uppercase tracking-wider transition-all",
-};
+import {
+  DS_LABEL,
+  DS_MONO,
+  DS_MICRO,
+  DS_INPUT,
+  DS_BUTTON,
+  DS_BUTTON_SECONDARY,
+  DS_ICON_SM,
+  DS_ICON_XS,
+  DS_ICON_WRAPPER,
+  DS_ROUNDED,
+} from "@/lib/design-system";
 
 interface DangerZoneCardProps {
   userEmail: string;
@@ -48,67 +51,47 @@ export function DangerZoneCard({ userEmail, className }: DangerZoneCardProps) {
 
   return (
     <>
-      <div
-        className={cn(
-          "rounded-lg p-4 border border-rose-200/60 bg-rose-50/30",
-          className,
-        )}
-      >
-        <div className="flex items-start gap-3">
-          <div className="w-6 h-6 rounded bg-rose-100 flex items-center justify-center shrink-0">
-            <WarningIcon size={12} className="text-rose-500" weight="bold" />
+      <div className={cn("rounded-md border border-rose-200 bg-rose-50/30 p-2", className)}>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <div className={cn(DS_ICON_WRAPPER, "bg-rose-100 shrink-0 w-5 h-5")}>
+                <WarningIcon size={DS_ICON_XS} className="text-rose-500" weight="bold" />
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <span className={cn(DS_MICRO, "text-rose-600")}>Zone de Danger</span>
+                <span className="text-[9px] text-rose-500 leading-tight">
+                  Supprime définitivement votre compte et toutes les données associées.
+                </span>
+              </div>
+            </div>
           </div>
-          <div className="flex-1">
-            <h4 className={cn(DS.micro, "text-rose-600 mb-1")}>
-              Zone de Danger
-            </h4>
-            <p className="text-[11px] text-rose-500/80 mb-3 leading-relaxed">
-              Suppression définitive du compte. Toutes les données (clients,
-              devis, historique) seront effacées immédiatement et de façon
-              irréversible.
-            </p>
-            <button
-              type="button"
-              onClick={() => setOpen(true)}
-              className={cn(DS.button, "bg-rose-600 hover:bg-rose-500")}
-            >
-              <TrashIcon size={12} weight="bold" />
-              Supprimer définitivement
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className={cn(DS_BUTTON, "bg-rose-600 hover:bg-rose-500 h-6 text-[8px] px-2 shrink-0")}
+          >
+            <TrashIcon size={8} weight="bold" />
+            Supprimer
+          </button>
         </div>
       </div>
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-xl border border-rose-200 shadow-2xl w-full max-w-md p-6">
+          <div className="bg-white rounded-md border border-rose-200 w-full max-w-sm p-5">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-9 h-9 rounded-full bg-rose-100 flex items-center justify-center shrink-0">
-                <WarningIcon
-                  size={16}
-                  className="text-rose-600"
-                  weight="bold"
-                />
+              <div className="w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center shrink-0">
+                <WarningIcon size={14} className="text-rose-600" weight="bold" />
               </div>
               <div>
-                <h2 className="text-sm font-bold text-slate-900">
-                  Confirmer la suppression
-                </h2>
-                <p className="text-[11px] text-slate-500">
-                  Cette action est irréversible.
-                </p>
+                <h2 className={cn(DS_MICRO, "text-slate-900")}>Confirmer la suppression</h2>
+                <p className="text-[9px] text-slate-600">Action irréversible</p>
               </div>
             </div>
 
-            <div className="p-3 bg-rose-50 rounded-lg border border-rose-100 mb-5">
-              <p className="text-[11px] text-rose-700 leading-relaxed">
-                Votre compte, tous vos clients, devis et fichiers seront
-                supprimés définitivement. Aucune restauration ne sera possible.
-              </p>
-            </div>
-
-            <div className="mb-4">
-              <label className={cn(DS.label, "mb-2 block text-slate-600")}>
+            <div className="mb-3">
+              <label className={cn(DS_LABEL, "mb-1.5 block text-slate-600")}>
                 Saisissez votre email pour confirmer
               </label>
               <input
@@ -120,21 +103,22 @@ export function DangerZoneCard({ userEmail, className }: DangerZoneCardProps) {
                 }}
                 placeholder={userEmail || "votre@email.com"}
                 className={cn(
-                  DS.input,
-                  "w-full px-3 py-2 text-sm rounded-t",
+                  DS_INPUT,
+                  DS_ROUNDED,
+                  "font-sans w-full text-xs",
                   isMatch && inputEmail ? "bg-rose-50 border-rose-300" : "",
                 )}
                 autoComplete="off"
                 autoFocus
               />
               {error && (
-                <p className="mt-1 text-[10px] text-rose-600 flex items-center gap-1">
-                  <WarningIcon size={9} /> {error}
+                <p className="mt-1 text-[9px] text-rose-600 flex items-center gap-1">
+                  <WarningIcon size={DS_ICON_XS} /> {error}
                 </p>
               )}
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => {
@@ -142,7 +126,7 @@ export function DangerZoneCard({ userEmail, className }: DangerZoneCardProps) {
                   setInputEmail("");
                   setError("");
                 }}
-                className="flex-1 px-3 py-2 text-[11px] font-bold uppercase tracking-wider bg-slate-100 hover:bg-slate-200 text-slate-600 rounded transition-all"
+                className={DS_BUTTON_SECONDARY}
               >
                 Annuler
               </button>
@@ -151,13 +135,11 @@ export function DangerZoneCard({ userEmail, className }: DangerZoneCardProps) {
                 onClick={handleConfirm}
                 disabled={!isMatch || isPending}
                 className={cn(
-                  "flex-1 px-3 py-2 text-[11px] font-bold uppercase tracking-wider rounded transition-all flex items-center justify-center gap-2",
-                  isMatch && !isPending
-                    ? "bg-rose-600 hover:bg-rose-700 text-white"
-                    : "bg-rose-200 text-rose-400 cursor-not-allowed",
+                  DS_BUTTON,
+                  "bg-rose-600 hover:bg-rose-700 disabled:bg-rose-200 disabled:text-rose-400 disabled:cursor-not-allowed flex-1 justify-center",
                 )}
               >
-                <TrashIcon size={11} weight="bold" />
+                <TrashIcon size={DS_ICON_SM} weight="bold" />
                 {isPending ? "Suppression…" : "Confirmer"}
               </button>
             </div>
