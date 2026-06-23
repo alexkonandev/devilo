@@ -108,7 +108,15 @@ model Client {
   email     String?
   phone     String?
   address   String?
+  addressLine2 String?
+  city      String?
+  postalCode String?
+  country   String?  @default("CI")
   taxId     String?
+  tvaNumber String?
+  legalForm String?
+  representativeName String?
+  representativePosition String?
   notes     String?
   tags      String[]
   createdAt DateTime @default(now())
