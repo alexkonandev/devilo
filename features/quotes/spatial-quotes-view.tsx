@@ -1,137 +1,69 @@
 "use client";
 
-import React, { useState, useMemo, useCallback } from "react";
-import { useQuotes } from "./components/quote-context";
+import React from "react";
 import {
-  cn,
-  applySort,
-  type SortConfig,
-} from "@/lib/utils";
-import {
-  FileTextIcon,
   PlusIcon,
-  CalendarBlank,
-  XCircle,
 } from "@phosphor-icons/react";
-import { PageHeader } from "@/components/shared/layout/page-header";
-import { SearchBar } from "@/components/shared/ui/search-bar";
-import { CompletionAlert } from "./components/completion-alert";
-import { QuotesTable } from "./components/quotes-table";
-import { QuoteCreationSheet } from "./components/quote-creation-sheet";
-import { ExportActions } from "./components/export-actions";
+import { cn } from "@/lib/utils";
 import { DS_MONO } from "@/lib/design-system";
 import { BTN_PRIMARY, BTN_SECONDARY } from "@/components/shared/ui/constants";
+import { PageHeader } from "@/components/shared/layout/page-header";
+import { SearchBar } from "@/components/shared/ui/search-bar";
+import { ConfirmDialog } from "@/components/shared/ui/confirm-dialog";
+import { SuccessFeedback } from "@/components/shared/ui/success-feedback";
+
+import { useQuotesView } from "./hooks/use-quotes-view";
+import { CompletionAlert } from "./components/completion-alert";
+import { QuotesTable } from "./components/quotes-table";
+import { QuotesEmptyState } from "./components/quotes-empty-state";
+import { QuoteCreationSheet } from "./components/quote-creation-sheet";
+import { ExportActions } from "./components/export-actions";
 import { QuoteDetailSidebar } from "./components/quote-detail-sidebar";
 import { FiltersDropdown } from "./components/filters-dropdown";
-import { TablePagination, paginate } from "./components/table-pagination";
-import { PAGE_SIZE } from "./components/constants";
-
-// ═══════════════════════════════════════════════════════════════
-// MAIN — Spatial Quotes Registry View (orchestration pure)
-// ═══════════════════════════════════════════════════════════════
+import { TablePagination } from "./components/table-pagination";
 
 export function SpatialQuotesView() {
   const {
-    quotes,
-    filteredQuotes,
     searchQuery,
-    setSearchQuery,
     selectedQuoteIds,
     highlightThreshold,
+    bulkConfirmOpen,
+    bulkFeedback,
+    isSheetOpen,
+    currentPage,
+    safeCurrentPage,
+    totalPages,
+    paginatedQuotes,
+    isTotallyEmpty,
+    isSearchEmpty,
+    isFilterEmpty,
+    setCurrentPage,
+    setBulkConfirmOpen,
+    setIsSheetOpen,
+    setSearchQuery,
     setActiveStatus,
-  } = useQuotes();
+    handleSort,
+    handleSearch,
+    showBulkFeedback,
+    hideBulkFeedback,
+    deleteMultipleQuotes,
+    clearSelection,
+    sortConfig,
+  } = useQuotesView();
 
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [sortConfig, setSortConfig] = useState<SortConfig>({
-    column: null,
-    direction: "asc",
-  });
-  const [currentPage, setCurrentPage] = useState(1);
-  const resetPage = useCallback(() => setCurrentPage(1), []);
-
-  // Tri + pagination
-  const sortedQuotes = useMemo(
-    () => applySort(filteredQuotes, sortConfig.column, sortConfig.direction),
-    [filteredQuotes, sortConfig],
-  );
-  const totalPages = Math.max(1, Math.ceil(sortedQuotes.length / PAGE_SIZE));
-  const safeCurrentPage = Math.min(currentPage, totalPages);
-  const paginatedQuotes = useMemo(
-    () => paginate(sortedQuotes, safeCurrentPage, PAGE_SIZE),
-    [sortedQuotes, safeCurrentPage],
-  );
-
-  const handleSort = useCallback(
-    (column: SortConfig["column"]) => {
-      setSortConfig((prev) => ({
-        column,
-        direction: prev.column === column && prev.direction === "asc" ? "desc" : "asc",
-      }));
-      resetPage();
-    },
-    [resetPage],
-  );
-
-  const handleSearch = useCallback(
-    (q: string) => { setSearchQuery(q); resetPage(); },
-    [setSearchQuery, resetPage],
-  );
-
-  // États vides
-  const isTotallyEmpty = quotes.length === 0;
-  const isSearchEmpty = searchQuery && filteredQuotes.length === 0 && !isTotallyEmpty;
-  const isFilterEmpty = !searchQuery && !isTotallyEmpty && filteredQuotes.length === 0;
-
-  const renderEmptyState = () => {
-    if (isTotallyEmpty)
-      return (
-        <div className="flex flex-col items-center justify-center py-24 gap-3 bg-white border border-slate-200 rounded-md">
-          <FileTextIcon size={48} className="text-slate-200" weight="duotone" />
-          <p className={cn(DS_MONO, "text-slate-400")}>Aucun devis trouvé</p>
-          <p className={cn(DS_MONO, "text-[10px] text-slate-300 max-w-[250px] text-center")}>
-            Créez votre premier devis pour commencer
-          </p>
-        </div>
-      );
-    if (isSearchEmpty)
-      return (
-        <div className="flex flex-col items-center justify-center py-24 gap-3 bg-white border border-slate-200 rounded-md">
-          <span className="text-4xl text-slate-200">🔍</span>
-          <p className={cn(DS_MONO, "text-slate-400")}>Aucun devis ne correspond à votre recherche</p>
-          <p className={cn(DS_MONO, "text-[10px] text-slate-300 max-w-[250px] text-center")}>
-            Essayez de modifier vos filtres ou votre recherche
-          </p>
-          <button onClick={() => setSearchQuery("")} className={cn(BTN_SECONDARY, "mt-2 text-[10px]")}>
-            <XCircle size={10} weight="bold" /> Réinitialiser les filtres
-          </button>
-        </div>
-      );
-    if (isFilterEmpty)
-      return (
-        <div className="flex flex-col items-center justify-center py-24 gap-3 bg-white border border-slate-200 rounded-md">
-          <CalendarBlank size={48} className="text-slate-200" weight="duotone" />
-          <p className={cn(DS_MONO, "text-slate-400")}>Aucun devis dans cette période</p>
-          <p className={cn(DS_MONO, "text-[10px] text-slate-300 max-w-[250px] text-center")}>
-            Essayez de modifier vos filtres
-          </p>
-        </div>
-      );
-    return null;
-  };
-
-  const emptyState = renderEmptyState();
+  const emptyVariant = isTotallyEmpty ? "totallyEmpty" : isSearchEmpty ? "searchEmpty" : "filterEmpty";
 
   return (
     <div className="flex flex-col h-full w-full bg-slate-50">
       <div className="shrink-0 px-6 pt-6">
         <PageHeader
           title="Devis"
-          description={`${filteredQuotes.length} devis`}
+          description={`${paginatedQuotes.length} devis`}
           actions={
             <>
               <SearchBar value={searchQuery} onChange={handleSearch} placeholder="Rechercher un devis…" />
               <FiltersDropdown />
-              <ExportActions data={sortedQuotes} selectedIds={selectedQuoteIds} />
+              <ExportActions data={paginatedQuotes} selectedIds={selectedQuoteIds} />
               <button onClick={() => setIsSheetOpen(true)} className={BTN_PRIMARY}>
                 <PlusIcon size={12} weight="bold" /> Nouveau devis
               </button>
@@ -142,20 +74,31 @@ export function SpatialQuotesView() {
 
       <div className="shrink-0 px-6 pt-3">
         <CompletionAlert
-          quotes={quotes}
+          quotes={[]}
           onFilterStatus={setActiveStatus}
         />
       </div>
 
       <div className="flex w-full flex-1 min-h-0 px-6 pb-6 pt-4 overflow-hidden gap-6">
         <div className="flex-[4] min-w-0 flex flex-col">
-          {emptyState ?? (
+          {isTotallyEmpty || isSearchEmpty || isFilterEmpty ? (
+            <QuotesEmptyState
+              variant={emptyVariant}
+              setSearchQuery={setSearchQuery}
+            />
+          ) : (
             <>
               {selectedQuoteIds.size > 0 && (
-                <div className="mb-2 px-3 py-1.5 bg-indigo-50 border border-indigo-200 rounded-md">
+                <div className="mb-2 px-3 py-1.5 bg-indigo-50 border border-indigo-200 rounded-md flex items-center justify-between">
                   <span className={cn(DS_MONO, "text-[10px] text-indigo-700 font-semibold")}>
                     {selectedQuoteIds.size} devis sélectionné{selectedQuoteIds.size > 1 ? "s" : ""}
                   </span>
+                  <button
+                    onClick={() => setBulkConfirmOpen(true)}
+                    className="flex items-center gap-1 px-2 py-1 rounded-md bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all text-[8px] font-mono font-bold uppercase tracking-wider"
+                  >
+                    Supprimer
+                  </button>
                 </div>
               )}
               <div className="flex-1 min-h-0 overflow-auto">
@@ -170,7 +113,7 @@ export function SpatialQuotesView() {
                 currentPage={safeCurrentPage}
                 totalPages={totalPages}
                 onPageChange={setCurrentPage}
-                totalItems={sortedQuotes.length}
+                totalItems={paginatedQuotes.length}
               />
             </>
           )}
@@ -180,6 +123,29 @@ export function SpatialQuotesView() {
           <QuoteDetailSidebar />
         </aside>
       </div>
+
+      <ConfirmDialog
+        open={bulkConfirmOpen}
+        onConfirm={async () => {
+          await deleteMultipleQuotes(Array.from(selectedQuoteIds));
+          setBulkConfirmOpen(false);
+          showBulkFeedback({ title: "DEVIS SUPPRIMÉS", description: `${selectedQuoteIds.size} devis supprimés.` });
+          clearSelection();
+        }}
+        onCancel={() => setBulkConfirmOpen(false)}
+        variant="delete"
+        title="SUPPRIMER LES DEVIS"
+        description={`Cette action est irréversible. ${selectedQuoteIds.size} devis seront définitivement supprimés.`}
+      />
+
+      <SuccessFeedback
+        open={bulkFeedback.open}
+        onClose={hideBulkFeedback}
+        title={bulkFeedback.title}
+        description={bulkFeedback.description}
+        variant={bulkFeedback.variant}
+        autoClose={2500}
+      />
 
       <QuoteCreationSheet open={isSheetOpen} onOpenChange={setIsSheetOpen} />
     </div>

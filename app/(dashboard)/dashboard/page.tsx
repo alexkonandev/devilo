@@ -29,7 +29,7 @@ export default async function DashboardPage() {
 
   // Génération d'une sparkline à partir des montants d'activité récente
   const sparkline = rawData.activity.length > 0
-    ? rawData.activity.map((item) => item.amount)
+    ? rawData.activity.map((activity) => activity.amount)
     : [12, 18, 15, 25, 22, 30, 28, 35, 40, 38, 45, 50, 48, 55, 60, 58, 65, 70, 68, 75, 80, 78, 85, 90, 88, 95, 100, 98, 105, 110];
 
   // 3. MAPPING STRATÉGIQUE (On casse la redondance ici)
@@ -41,21 +41,21 @@ export default async function DashboardPage() {
       devisActifs: rawData.kpis.activeQuotes,
     },
     // FLUX : Focus sur l'opérationnel et le projet précis
-    fluxRecent: rawData.activity.map((item) => ({
-      id: item.id,
-      clientNom: item.clientName,
-      projetTitre: item.projectName,
-      montant: item.amount,
-      statut: item.status,
-      date: new Date(item.date).toLocaleDateString("fr-FR", {
+    fluxRecent: rawData.activity.map((activity) => ({
+      id: activity.id,
+      clientNom: activity.clientName,
+      projetTitre: activity.projectName,
+      montant: activity.amount,
+      statut: activity.status,
+      date: new Date(activity.date).toLocaleDateString("fr-FR", {
         day: "2-digit",
         month: "short",
       }),
-      delaiJours: item.delaiJours,
-      estUrgent: item.estUrgent,
-      variationMontant: item.variationMontant,
-      categorie: item.categorie,
-      quoteCount: item.quoteCount,
+      delaiJours: activity.delaiJours,
+      estUrgent: activity.estUrgent,
+      variationMontant: activity.variationMontant,
+      categorie: activity.categorie,
+      quoteCount: activity.quoteCount,
     })),
     // PORTEFEUILLE : Focus sur la santé financière et la dominance
     portefeuilleStrategique: rawData.topClients.map((client) => ({

@@ -97,8 +97,8 @@ export function WelcomeBanner({ firstName, kpis }: WelcomeBannerProps) {
 
       {/* Grille KPIs denses */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {kpiItems.map((item) => (
-          <KpiCard key={item.label} item={item} />
+        {kpiItems.map((kpi) => (
+          <KpiCard key={kpi.label} item={kpi} />
         ))}
       </div>
     </div>

@@ -54,10 +54,10 @@ export function DraftQuotesCard({ items }: DraftQuotesCardProps) {
         </Link>
       </div>
       <div className="max-h-48 overflow-y-auto p-2 space-y-1.5">
-        {items.map((item) => (
+        {items.map((draft) => (
           <Link
-            key={item.id}
-            href={`/quotes?id=${item.id}`}
+            key={draft.id}
+            href={`/quotes?id=${draft.id}`}
             className={cn(
               DS_BENTO_CARD,
               "block hover:border-indigo-300 transition-colors",
@@ -70,15 +70,15 @@ export function DraftQuotesCard({ items }: DraftQuotesCardProps) {
                   "font-bold text-slate-900 truncate max-w-[140px]",
                 )}
               >
-                {item.projetTitre}
+                {draft.projetTitre}
               </span>
               <span className={cn(DS_MONO, "font-bold text-slate-700")}>
-                {formatPriceCompact(item.montant)}
+                {formatPriceCompact(draft.montant)}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className={cn(DS_LABEL, "text-slate-500")}>{item.clientNom}</span>
-              <span className={cn(DS_MICRO, "text-slate-400")}>{item.date}</span>
+              <span className={cn(DS_LABEL, "text-slate-500")}>{draft.clientNom}</span>
+              <span className={cn(DS_MICRO, "text-slate-400")}>{draft.date}</span>
             </div>
           </Link>
         ))}

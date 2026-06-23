@@ -8,7 +8,6 @@ import {
   SquaresFourIcon,
   FileTextIcon,
   UsersThreeIcon,
-  PackageIcon,
   PlusIcon,
   CreditCardIcon,
   GearSixIcon,
@@ -66,8 +65,6 @@ const TOP_NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: SquaresFourIcon },
   { label: "Devis", href: "/quotes", icon: FileTextIcon, badge: "drafts" },
   { label: "Clients", href: "/clients", icon: UsersThreeIcon },
-  { label: "Catalogue", href: "/catalog", icon: PackageIcon },
-
 ];
 
 const BOTTOM_NAV_ITEMS: NavItem[] = [
@@ -91,10 +88,10 @@ export function SpatialDock() {
     >
       {/* ═══ SECTION HAUTE : Navigation Principale ═══ */}
       <nav className="flex-1 flex flex-col gap-0.5 pt-2">
-        {TOP_NAV_ITEMS.map((item) => (
+        {TOP_NAV_ITEMS.map((navItem) => (
           <RailIcon
-            key={item.href}
-            {...item}
+            key={navItem.href}
+            {...navItem}
           />
         ))}
       </nav>
@@ -104,8 +101,8 @@ export function SpatialDock() {
 
       {/* ═══ SECTION BASSE : Actions Secondaires ═══ */}
       <nav className="flex flex-col gap-0.5 pb-2">
-        {BOTTOM_NAV_ITEMS.map((item) => (
-          <RailIcon key={item.href} {...item} />
+        {BOTTOM_NAV_ITEMS.map((navItem) => (
+          <RailIcon key={navItem.href} {...navItem} />
         ))}
 
         {/* Séparateur fin avant profil */}

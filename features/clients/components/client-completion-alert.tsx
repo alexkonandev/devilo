@@ -1,20 +1,19 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React from "react";
 import { cn } from "@/lib/utils";
 import { DS_MONO, DS_BENTO_CARD } from "@/lib/design-system";
-import { QuoteRegistryItem, QuoteStatus } from "@/types/quote-registry";
 import {
-  NotePencil,
-  ClockClockwise,
-  BellRinging,
+  UsersThree,
+  ClockCountdown,
+  WarningCircle,
   CheckCircle,
+  ArrowRight,
 } from "@phosphor-icons/react";
 
 // ═══════════════════════════════════════════════════════════════
-// COMPLETION ALERT — Indicateur intelligent en pleine largeur
-// Affiche des actions concrètes : brouillons, attentes, relances
-// Ne s'affiche que s'il y a au moins un indicateur actif
+// CLIENT COMPLETION ALERT — Indicateur client en pleine largeur
+// Style identique au CompletionAlert des devis
 // ═══════════════════════════════════════════════════════════════
 
 interface AlertItem {
@@ -24,61 +23,58 @@ interface AlertItem {
   detail: string;
   color: string;
   dotColor: string;
-  filterStatus: QuoteStatus;
 }
 
-interface CompletionAlertProps {
-  quotes: QuoteRegistryItem[];
-  /** Callback pour filtrer par statut — relié à setActiveStatus */
-  onFilterStatus?: (status: QuoteStatus) => void;
+interface ClientCompletionAlertProps {
+  clientsSansDevisCount: number;
+  inactiveCount: number;
+  hasConcentrationAlert: boolean;
+  /** Callback pour activer un filtre spécifique */
+  onFilter?: (filter: "all" | "relance" | "inactif") => void;
 }
 
-const RELANCE_DAYS = 5;
+export function ClientCompletionAlert({
+  clientsSansDevisCount,
+  inactiveCount,
+  hasConcentrationAlert,
+  onFilter,
+}: ClientCompletionAlertProps) {
+  const alertItems: AlertItem[] = [];
 
-function daysSince(date: Date): number {
-  const now = new Date();
-  const diff = now.getTime() - date.getTime();
-  return Math.floor(diff / (1000 * 60 * 60 * 24));
-}
+  if (clientsSansDevisCount > 0) {
+    alertItems.push({
+      icon: <UsersThree size={14} weight="duotone" />,
+      count: clientsSansDevisCount,
+      label: "client à solliciter",
+      detail: "Aucun devis en cours",
+      color: "text-amber-700",
+      dotColor: "bg-amber-400",
+    });
+  }
 
-export function CompletionAlert({ quotes, onFilterStatus }: CompletionAlertProps) {
-  const alertItems: AlertItem[] = useMemo(() => {
-    const drafts = quotes.filter((q) => q.status === "DRAFT");
-    const sent = quotes.filter((q) => q.status === "SENT");
-    const sentOld = sent.filter((q) => daysSince(new Date(q.issueDate ?? q.createdAt)) >= RELANCE_DAYS);
+  if (inactiveCount > 0) {
+    alertItems.push({
+      icon: <ClockCountdown size={14} weight="duotone" />,
+      count: inactiveCount,
+      label: "client inactif",
+      detail: "+90 jours sans contact",
+      color: "text-indigo-600",
+      dotColor: "bg-indigo-400",
+    });
+  }
 
-    return [
-      {
-        icon: <NotePencil size={14} weight="duotone" />,
-        count: drafts.length,
-        label: "brouillon à finaliser",
-        detail: `Créé${drafts.length > 1 ? "s" : ""} mais pas envoyé${drafts.length > 1 ? "s" : ""}`,
-        color: "text-amber-700",
-        dotColor: "bg-amber-400",
-        filterStatus: "DRAFT" as QuoteStatus,
-      },
-      {
-        icon: <ClockClockwise size={14} weight="duotone" />,
-        count: sent.length,
-        label: "en attente client",
-        detail: `Envoyé${sent.length > 1 ? "s" : ""} sans réponse`,
-        color: "text-indigo-600",
-        dotColor: "bg-indigo-400",
-        filterStatus: "SENT" as QuoteStatus,
-      },
-      {
-        icon: <BellRinging size={14} weight="duotone" />,
-        count: sentOld.length,
-        label: "relance à envoyer",
-        detail: `J+${RELANCE_DAYS} sans réponse`,
-        color: "text-rose-600",
-        dotColor: "bg-rose-400",
-        filterStatus: "SENT" as QuoteStatus,
-      },
-    ].filter((alert) => alert.count > 0);
-  }, [quotes]);
+  if (hasConcentrationAlert) {
+    alertItems.push({
+      icon: <WarningCircle size={14} weight="duotone" />,
+      count: 1,
+      label: "concentration CA",
+      detail: "Un client > 30% du chiffre",
+      color: "text-rose-600",
+      dotColor: "bg-rose-400",
+    });
+  }
 
-  // Tout est vide → état "tout va bien"
+  // Tout va bien
   if (alertItems.length === 0) {
     return (
       <div
@@ -92,7 +88,7 @@ export function CompletionAlert({ quotes, onFilterStatus }: CompletionAlertProps
           <CheckCircle size={16} weight="duotone" />
         </span>
         <span className={cn(DS_MONO, "text-[10px] text-emerald-700 font-semibold uppercase")}>
-          Tout est en ordre
+          Portefeuille sain
         </span>
         <span className={cn(DS_MONO, "text-[10px] text-emerald-500")}>
           — Aucune action requise
@@ -112,10 +108,10 @@ export function CompletionAlert({ quotes, onFilterStatus }: CompletionAlertProps
       {/* Icône gauche */}
       <div className="flex items-center gap-2 shrink-0">
         <span className="text-amber-500">
-          <NotePencil size={16} weight="duotone" />
+          <UsersThree size={16} weight="duotone" />
         </span>
         <span className={cn(DS_MONO, "text-[10px] text-amber-700 font-semibold uppercase")}>
-          À traiter
+          Attention
         </span>
       </div>
 
@@ -124,11 +120,14 @@ export function CompletionAlert({ quotes, onFilterStatus }: CompletionAlertProps
 
       {/* Alertes */}
       <div className="flex items-center gap-4 flex-wrap">
-        {alertItems.map((alert) => (
+        {alertItems.map((alert, idx) => (
           <button
             key={alert.label}
             type="button"
-            onClick={() => onFilterStatus?.(alert.filterStatus)}
+            onClick={() => {
+              if (alert.label === "client à solliciter") onFilter?.("relance");
+              else if (alert.label === "client inactif") onFilter?.("inactif");
+            }}
             className={cn(
               "flex items-center gap-1.5 group",
               "transition-all hover:opacity-80",
@@ -142,11 +141,14 @@ export function CompletionAlert({ quotes, onFilterStatus }: CompletionAlertProps
               {alert.count}
             </span>
             <span className={cn(DS_MONO, "text-[10px] text-slate-500 group-hover:text-slate-700 transition-colors")}>
-              {alert.label}
+              {alert.label}{alert.count > 1 ? "s" : ""}
             </span>
             <span className={cn(DS_MONO, "text-[9px] text-slate-400 hidden sm:inline")}>
               — {alert.detail}
             </span>
+            {hasConcentrationAlert && idx === alertItems.length - 1 && (
+              <ArrowRight size={12} className="text-rose-400 shrink-0" />
+            )}
           </button>
         ))}
       </div>

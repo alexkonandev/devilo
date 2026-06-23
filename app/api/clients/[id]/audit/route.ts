@@ -55,6 +55,7 @@ export async function GET(
       phone: client.phone,
       taxId: client.taxId,
       address: client.address,
+      notes: client.notes,
       createdAt: client.createdAt,
       quotes: quotesWithAmount,
       totalSpent: quotesWithAmount.reduce(

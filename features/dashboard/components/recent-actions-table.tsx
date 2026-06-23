@@ -105,13 +105,13 @@ export function RecentActionsTable({ items }: RecentActionsTableProps) {
         </div>
         {/* ── Lignes ── */}
         <div className="divide-y divide-slate-100/60">
-          {items.map((item): ReactNode => {
-            const delai = formatDelai(item.delaiJours);
-            const categorieStyle = CATEGORIE_STYLES[item.categorie] ?? "bg-slate-50 text-slate-700 border-slate-200";
+          {items.map((action): ReactNode => {
+            const delai = formatDelai(action.delaiJours);
+            const categorieStyle = CATEGORIE_STYLES[action.categorie] ?? "bg-slate-50 text-slate-700 border-slate-200";
 
             return (
               <div
-                key={item.id}
+                key={action.id}
                 className="flex items-center px-3 py-2 hover:bg-slate-50/50 transition-colors cursor-pointer group"
               >
                 {/* ── Action (icône + titre) ── */}
@@ -119,33 +119,33 @@ export function RecentActionsTable({ items }: RecentActionsTableProps) {
                   <div
                     className={cn(
                       DS_ICON_WRAPPER,
-                      item.statut === "PAID"
+                      action.statut === "PAID"
                         ? "bg-indigo-50 text-indigo-600"
                         : "bg-slate-50 text-slate-500",
                     )}
                   >
-                    {item.statut === "PAID" ? (
+                    {action.statut === "PAID" ? (
                       <CheckCircleIcon size={DS_ICON_SM} weight="bold" />
                     ) : (
                       <FileTextIcon size={DS_ICON_SM} />
                     )}
                   </div>
                   <span className="text-xs font-medium text-slate-900 truncate max-w-[140px]">
-                    {item.projetTitre}
+                    {action.projetTitre}
                   </span>
                 </div>
 
                 {/* ── Client ── */}
                 <div className="flex-[1.5] min-w-0">
                   <span className={cn(DS_MONO, "text-slate-600 truncate block")}>
-                    {item.clientNom}
+                    {action.clientNom}
                   </span>
                 </div>
 
                 {/* ── Montant ── */}
                 <div className="flex-[1.2] text-left">
                   <span className={cn(DS_MONO, "font-bold text-slate-900")}>
-                    {formatPriceCompact(item.montant)}
+                    {formatPriceCompact(action.montant)}
                   </span>
                 </div>
 
@@ -166,7 +166,7 @@ export function RecentActionsTable({ items }: RecentActionsTableProps) {
 
                 {/* ── Urgence ── */}
                 <div className="flex-[1.5] text-left">
-                  {item.estUrgent ? (
+                  {action.estUrgent ? (
                     <span className="inline-flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse shrink-0" />
                       <span className="text-[10px] font-mono font-medium text-rose-600">
@@ -192,17 +192,17 @@ export function RecentActionsTable({ items }: RecentActionsTableProps) {
                     )}
                   >
                     <Tag size={10} className="shrink-0" />
-                    {item.categorie}
+                    {action.categorie}
                   </span>
                 </div>
 
                 {/* ── Action (bouton Relancer / lien devis) ── */}
                 <div className="flex-[1.2] flex justify-center">
-                  {item.estUrgent ? (
-                    <SendReminderButton quoteId={item.id} />
+                  {action.estUrgent ? (
+                    <SendReminderButton quoteId={action.id} />
                   ) : (
                     <a
-                      href={`/quotes?id=${item.id}`}
+                      href={`/quotes?id=${action.id}`}
                       className={cn(
                         "inline-flex items-center gap-1 px-2 py-1 rounded-md",
                         "text-[10px] font-mono font-medium uppercase tracking-wide",
