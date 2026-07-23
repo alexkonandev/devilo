@@ -37,7 +37,6 @@ interface CSVRow {
   representativeName?: string;
   representativePosition?: string;
   notes?: string;
-  tags?: string;
 }
 
 interface ValidationError {
@@ -123,8 +122,6 @@ export function ImportCSVModal({
           representativeName: "representativeName",
           Fonction: "representativePosition",
           representativePosition: "representativePosition",
-          Tags: "tags",
-          tags: "tags",
         };
 
         // Transform rows to handle both old and new formats
@@ -248,8 +245,7 @@ export function ImportCSVModal({
                 ou cliquez pour sélectionner
               </p>
               <p className={cn(DS_MICRO, "text-slate-300 mt-4")}>
-                Format attendu: name, email, phone, address, taxId, tvaNumber,
-                tags
+                Format attendu: name, email, phone, address, taxId, tvaNumber
               </p>
             </div>
           ) : importResult ? (

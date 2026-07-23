@@ -21,7 +21,7 @@ import {
   type ParsedSession,
 } from "@/actions/security-action";
 import {
-  DS_BENTO_CARD,
+  STUDIO_V2_CARD,
   DS_LABEL,
   DS_MONO,
   DS_MICRO,
@@ -412,7 +412,7 @@ export function BentoSecurityCard({
   }, []);
 
   return (
-    <div className={cn(DS_BENTO_CARD, "p-3", className)}>
+    <div className={cn(STUDIO_V2_CARD, className)}>
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-1.5">

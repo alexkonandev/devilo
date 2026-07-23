@@ -3,8 +3,7 @@
 import React, { useState, useCallback } from "react";
 import { useQuotes } from "./quote-context";
 import { cn } from "@/lib/utils";
-import { DS_MONO, DS_LABEL } from "@/lib/design-system";
-import { BTN_SECONDARY } from "@/components/shared/ui/constants";
+import { DS_MONO, DS_LABEL, STUDIO_V2_BTN } from "@/lib/design-system";
 import {
   FunnelSimple,
   XCircle,
@@ -50,8 +49,7 @@ export function FiltersDropdown() {
       <PopoverTrigger asChild>
         <button
           className={cn(
-            BTN_SECONDARY,
-            "text-[10px]",
+            STUDIO_V2_BTN,
             hasActiveFilters && "bg-indigo-50 border-indigo-200 text-indigo-700",
           )}
         >

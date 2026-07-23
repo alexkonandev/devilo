@@ -11,7 +11,7 @@ import type {
 } from "react-hook-form";
 import type { SettingsFormValues } from "@/lib/validations/settings";
 import {
-  DS_BENTO_CARD,
+  STUDIO_V2_CARD,
   DS_MONO,
   DS_MICRO,
   DS_INPUT,
@@ -118,7 +118,7 @@ export function BentoFiscalCard({
   void suggestedTaxLabel;
 
   return (
-    <div className={cn(DS_BENTO_CARD, "p-3", className)}>
+    <div className={cn(STUDIO_V2_CARD, className)}>
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-1.5">

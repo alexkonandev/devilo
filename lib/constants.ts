@@ -42,3 +42,9 @@ export const DOMAIN_MAP: {
     color: "text-pink-600 bg-pink-50 border-pink-100",
   },
 };
+
+/**
+ * Nombre maximum de lignes (prestations) autorisées par devis.
+ * Cette limite est appliquée à la fois côté UI (store) et côté serveur (action).
+ */
+export const MAX_QUOTE_LINES = 15;

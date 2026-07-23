@@ -12,7 +12,6 @@ export interface ClientListItem {
   taxId: string | null;
   address: string | null;
   notes: string | null;
-  tags?: string[];
   totalSpent: number;
   quoteCount: number;
   createdAt: Date;
@@ -37,7 +36,6 @@ export interface ClientFull {
   address: string | null;
   taxId: string | null;
   notes: string | null;
-  tags: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -53,7 +51,6 @@ export interface EditorClient {
   taxId?: string | null;
   address?: string | null;
   notes?: string | null;
-  tags?: string[];
 }
 
 export type ClientActionResponse = ActionResponse<Client>;

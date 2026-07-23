@@ -30,15 +30,6 @@ model User {
   companyAddressDetails String?
   companyCity           String?
 
-  // --- CHAMPS BANCAIRES (Phase 2 - Géo-spécifique) ---
-  paymentZone           PaymentZone    @default(AFRI)
-  bankName              String?
-  bankIBAN              String?
-  bankSWIFT             String?
-  bankBIC               String?
-  bankRoutingNumber     String?
-  bankAccountNumber     String?
-  showBankDetailsOnQuotes Boolean      @default(false)
   deletedAt             DateTime?
   catalogOffers         CatalogOffer[]
   clients               Client[]
@@ -118,7 +109,6 @@ model Client {
   representativeName String?
   representativePosition String?
   notes     String?
-  tags      String[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -167,15 +157,6 @@ model Quote {
   dueDate         DateTime?
   currency        Currency     @default(XOF)
   validityDays    Int          @default(30)
-
-  paymentZone         String?     @default("AFRI")
-  bankName            String?
-  bankIBAN            String?
-  bankSWIFT           String?
-  bankBIC             String?
-  bankRoutingNumber   String?
-  bankAccountNumber   String?
-  showBankDetails     Boolean     @default(false)
 
   number         String      @unique
   status         QuoteStatus @default(DRAFT)
@@ -255,9 +236,9 @@ enum PlanStatus {
 enum QuoteStatus {
   DRAFT
   SENT
-  ACCEPTED
   REJECTED
   PAID
+  ACCEPTED
   CANCELLED
 }
 
@@ -267,12 +248,6 @@ enum Profession {
   MARKETING
   CONTENT
   CONSULTING
-}
-
-enum PaymentZone {
-  USA
-  EUR
-  AFRI
 }
 
 enum BusinessModel {

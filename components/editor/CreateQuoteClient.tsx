@@ -16,6 +16,8 @@ import { QuoteEditorLayout } from "@/components/editor/quote-editor-layout";
 import { StudioSidebarLeft } from "@/components/editor/studio-sidebar-left";
 import { StudioSidebarRight } from "@/components/editor/studio-sidebar-right";
 import { QuoteVisualizer } from "@/components/editor/QuoteVisualizer";
+import { TemplateSelectorModal } from "@/components/editor/template-selector-modal";
+import { ClientSelectorView } from "@/components/editor/client-selector-view";
 
 // --- TYPES ---
 import {
@@ -29,10 +31,10 @@ import { User } from "@/app/generated/prisma/client";
 // --- ACTIONS ---
 import { upsertQuoteAction } from "@/actions/quote-editor-action";
 import { deleteQuoteAction } from "@/actions/quote-registry-action";
+import type { BillingProfile } from "@/actions/billing-action";
 
 interface CreateQuoteClientProps {
-  initialCatalog: EditorCatalogOffer[];
-  platformCatalog: EditorCatalogOffer[];
+  suggestions: EditorCatalogOffer[];
   initialThemes: EditorTheme[];
   initialClients: EditorClient[];
   user: User;
@@ -40,17 +42,18 @@ interface CreateQuoteClientProps {
   preSelectedOffer?: EditorCatalogOffer | null;
   existingQuoteId?: string;
   initialQuoteData?: EditorActiveQuote;
+  billing?: BillingProfile | null;
 }
 
 export default function CreateQuoteClient({
-  initialCatalog,
-  platformCatalog,
+  suggestions,
   initialThemes,
   initialClients,
   user,
   preSelectedTheme,
   existingQuoteId,
   initialQuoteData,
+  billing,
 }: CreateQuoteClientProps) {
   const router = useRouter();
   const printRef = useRef<HTMLDivElement>(null);
@@ -60,6 +63,7 @@ export default function CreateQuoteClient({
     activeQuote,
     setActiveQuote,
     setSettings,
+    setBilling,
     isSaving,
     setIsSaving,
     isDirty,
@@ -68,9 +72,12 @@ export default function CreateQuoteClient({
     zoom,
     activeThemeId,
     setActiveThemeId,
+    lastUserSync,
+    setLastUserSync,
   } = useKernelStore();
 
   const [mounted, setMounted] = useState(false);
+  const [templateModalOpen, setTemplateModalOpen] = useState(false);
 
   // 1. Montage initial
   useEffect(() => {
@@ -86,38 +93,83 @@ export default function CreateQuoteClient({
     return () => bc.close();
   }, [router]);
 
-  // 3. Hydratation et Initialisation de la donnée
+  // ─── Synchronisation des données billing dans le store ───
+  useEffect(() => {
+    if (!_hasHydrated || !mounted || !billing) return;
+    setBilling({
+      plan: billing.plan,
+      quotaUsed: billing.quotaUsed,
+      quotaLimit: billing.quotaLimit,
+    });
+  }, [_hasHydrated, mounted, billing, setBilling]);
+
+  // ─── REF POUR TRACKER L'HYDRATATION UNIQUE ───
+  // On ne doit réinitialiser activeQuote qu'une seule fois au montage,
+  // pas à chaque fois que activeQuote change (ce qui créerait une boucle)
+  const hydratedKeyRef = useRef<string | null>(null);
+
+  // 3. Hydratation et Initialisation de la donnée (une seule fois)
   useEffect(() => {
     if (!_hasHydrated || !mounted) return;
 
     setSettings(user);
 
-    if (!activeQuote) {
-      // ✅ MODIFICATION : Formatage dynamique du numéro basé sur l'objet user
-      const prefix = user.quotePrefix || "INV-";
-      const nextNum = user.nextQuoteNumber || 1;
-      const formattedNumber = `${prefix}${String(nextNum).padStart(3, "0")}`;
+    // ─── CALCUL DU HASH DES DONNÉES UTILISATEUR POUR DÉTECTER LES CHANGEMENTS ───
+    const userHash = JSON.stringify({
+      name: user.companyName,
+      email: user.companyEmail,
+      address: user.companyAddressDetails,
+      taxId: user.taxId,
+      website: user.companyWebsite,
+      currency: user.currency,
+      quotePrefix: user.quotePrefix,
+      nextQuoteNumber: user.nextQuoteNumber,
+      defaultTerms: user.defaultTerms,
+      defaultVatRate: user.defaultVatRate,
+    });
+
+    // ─── CLÉ D'HYDRATATION : combine userHash + initialQuoteData.id ───
+    // Permet de détecter : changement utilisateur OU changement de devis (via sélecteur)
+    const initialId = initialQuoteData?.id || "__new__";
+    const hydraKey = `${userHash}::${initialId}`;
+
+    console.log("[HYDRATION] Check:", {
+      hydraKey,
+      currentKey: hydratedKeyRef.current,
+      keysMatch: hydratedKeyRef.current === hydraKey,
+      initialQuoteDataId: initialQuoteData?.id,
+      initialQuoteDataItemsCount: initialQuoteData?.items?.length,
+      _hasHydrated,
+      mounted,
+    });
+
+    // ─── NE RÉINITIALISER QUE SI LA CLÉ A CHANGÉ ───
+    if (hydratedKeyRef.current !== hydraKey) {
+      console.log("[HYDRATION] CLÉ CHANGÉE → Réinitialisation du store");
+      hydratedKeyRef.current = hydraKey;
+
+      // Numérotation purement numérique : 001, 002, 003...
+      const formattedNumber = String(user.nextQuoteNumber || 1).padStart(3, "0");
 
       const defaultQuote: EditorActiveQuote = initialQuoteData || {
         title: "PROJET_INSTANCE",
         company: {
           name: user.companyName ?? "",
           email: user.companyEmail ?? "",
-          address: user.companyCity || "",
+          // ✅ CORRECTION : utiliser companyAddressDetails au lieu de companyCity
+          address: user.companyAddressDetails || user.companyCity || "",
           taxId: user.taxId ?? "",
           taxIdLabel: user.taxIdLabel ?? "NCC",
           website: user.companyWebsite ?? "",
         },
         client: { name: "", email: "", address: "", taxId: "", phone: "", notes: "" },
         quote: {
-          // ✅ Utilisation du numéro formaté ici
           number: formattedNumber,
           issueDate: new Date().toISOString().split("T")[0],
-          dueDate: undefined, // Sera calculé automatiquement
+          dueDate: undefined,
           terms: user.defaultTerms ?? "",
           status: "DRAFT",
         },
-        // ─── NOUVEAUX CHAMPS LÉGAUX (Phase 3 - Bloqueurs Critiques) ───
         currency: user.currency ?? "XOF",
         validityDays: 30,
         financials: {
@@ -126,7 +178,10 @@ export default function CreateQuoteClient({
         },
         items: [],
       };
+
       setActiveQuote(defaultQuote);
+      // Mettre à jour le hash de sync
+      setLastUserSync(userHash);
     }
 
     if (preSelectedTheme && !activeThemeId) {
@@ -136,13 +191,12 @@ export default function CreateQuoteClient({
     _hasHydrated,
     mounted,
     user,
-    initialQuoteData,
-    activeQuote,
-    activeThemeId,
+    initialQuoteData?.id, // Seulement l'ID, pas tout l'objet
+    preSelectedTheme,
     setSettings,
     setActiveQuote,
     setActiveThemeId,
-    preSelectedTheme,
+    setLastUserSync,
   ]);
 
   // --- LOGIQUE DE SAUVEGARDE ---
@@ -166,10 +220,6 @@ export default function CreateQuoteClient({
           if (!activeQuote.id && result.data.id) {
             setActiveQuote({ ...activeQuote, id: result.data.id });
           }
-
-          // ✅ SUPPRESSION DE LA REDIRECTION window.history.replaceState
-          // On se contente de rafraîchir les données en arrière-plan
-          router.refresh();
 
           if (showToast) toast.success("Devis enregistré en base de données");
           return true;
@@ -195,13 +245,19 @@ export default function CreateQuoteClient({
       setIsSaving,
     ],
   );
+  // ─── SAUVEGARDE MANUELLE (avec toast de confirmation) ───
+  const handleManualSave = useCallback(async () => {
+    await handleSave(true);
+  }, [handleSave]);
+
   // ═══════════════════════════════════════════════════════════════
   // NOUVELLES ACTIONS : TOP BAR (CENTRE)
   // ═══════════════════════════════════════════════════════════════
 
   /**
    * Crée un nouveau devis :
-   * Sauvegarde le travail actuel si nécessaire, vide le store et rafraîchit.
+   * Sauvegarde le travail actuel si nécessaire, vide le store,
+   * puis recharge la page pour obtenir les données fraîches du serveur.
    */
   const handleNewQuote = async () => {
     if (isDirty && activeQuote?.client.name) {
@@ -218,8 +274,9 @@ export default function CreateQuoteClient({
     setActiveQuote(null);
     setIsDirty(false);
 
-    // On redirige vers la page de création pure pour avoir un document vide
-    router.push("/quotes/new");
+    // On force un rechargement complet pour obtenir les données utilisateur à jour
+    // (activeQuote n'étant plus persisté, le store sera vide au reload)
+    window.location.href = "/quotes/new";
     toast.info("Nouveau devis initialisé");
   };
 
@@ -284,19 +341,18 @@ export default function CreateQuoteClient({
     return { subTotal, totalTTC: taxable + vat };
   }, [activeQuote?.items, activeQuote?.financials]);
 
-  const activeThemeObject = useMemo(() => {
-    return (
-      initialThemes.find((t) => t.id === activeThemeId) || initialThemes[0]
-    );
-  }, [activeThemeId, initialThemes]);
-
   const handlePrint = async () => {
+    // Ouvrir la modale de sélection de template au lieu d'exporter directement
+    setTemplateModalOpen(true);
+  };
+
+  const handleExportWithTemplate = async (templateId: string) => {
     const toastId = toast.loading("Génération du PDF...");
     try {
       const response = await fetch("/api/print", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...activeQuote, theme: activeThemeObject }),
+        body: JSON.stringify({ ...activeQuote, templateId }),
       });
       if (!response.ok) throw new Error("Erreur");
       const blob = await response.blob();
@@ -309,6 +365,11 @@ export default function CreateQuoteClient({
     }
   };
 
+  // ═══ EXTRAIRE LE FLAG ONBOARDING (avant tout early return) ═══
+  const {
+    editorOnboardingDone,
+  } = useKernelStore();
+
   if (!mounted || !_hasHydrated)
     return (
       <div className="h-screen w-full bg-slate-50 flex items-center justify-center">
@@ -320,35 +381,66 @@ export default function CreateQuoteClient({
 
   if (!activeQuote) return null;
 
+  // ═══ SI AUCUN CLIENT SÉLECTIONNÉ → AFFICHER LE SÉLECTEUR DE CLIENT (une seule fois) ═══
+  const hasActiveClient = activeQuote.client.name.length > 0;
+
+  if (!hasActiveClient && !editorOnboardingDone) {
+    return (
+      <>
+        <TemplateSelectorModal
+          open={templateModalOpen}
+          onClose={() => setTemplateModalOpen(false)}
+          onExport={handleExportWithTemplate}
+          billingPlan={billing?.plan || "FREE"}
+        />
+        <div className="h-screen w-full overflow-hidden bg-slate-50 flex flex-col">
+          <ClientSelectorView
+            initialClients={initialClients}
+            userId={user.id}
+          />
+        </div>
+      </>
+    );
+  }
+
   return (
-    <QuoteEditorLayout
+    <>
+      {/* Modale de sélection de template */}
+      <TemplateSelectorModal
+        open={templateModalOpen}
+        onClose={() => setTemplateModalOpen(false)}
+        onExport={handleExportWithTemplate}
+        billingPlan={billing?.plan || "FREE"}
+      />
+
+      <QuoteEditorLayout
       zoom={zoom}
       onNewQuote={handleNewQuote}
       onDeleteQuote={handleDeleteQuote}
+      onSave={handleManualSave}
+      isSaving={isSaving}
       leftSidebar={
         viewMode === "studio" && (
           <StudioSidebarLeft
-            catalogItems={initialCatalog}
-            platformCatalog={platformCatalog}
+            suggestions={suggestions}
             initialClients={initialClients}
             userId={user.id}
-            onBack={() => router.back()}
+            onBack={() => router.push('/home')}
           />
         )
       }
       rightSidebar={
         viewMode === "studio" && (
-          <StudioSidebarRight availableThemes={initialThemes} totals={totals} />
+          <StudioSidebarRight totals={totals} userId={user.id} />
         )
       }
       onPrint={handlePrint}
-      themes={initialThemes}
     >
       <QuoteVisualizer
         data={activeQuote}
-        theme={activeThemeObject}
         printRef={printRef as React.RefObject<HTMLDivElement>}
       />
     </QuoteEditorLayout>
+    </>
   );
 }

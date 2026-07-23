@@ -44,8 +44,8 @@ export async function sendReminderAction(quoteId: string) {
 
     // 3. Construire et envoyer l'email de relance
     const fromEmail = process.env.EMAIL_FROM || "alexkonan.dev@gmail.com";
-    const fromName = process.env.EMAIL_FROM_NAME || "Devis Express";
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://devis-express.app";
+    const fromName = process.env.EMAIL_FROM_NAME || "Devilo";
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://devilo.app";
 
     // Calcul du nombre de jours depuis l'envoi
     const daysSince = Math.floor(
@@ -81,7 +81,7 @@ export async function sendReminderAction(quoteId: string) {
                     </p>
                   </td>
                   <td align="right">
-                    <img src="${baseUrl}/logo.svg" alt="Devis Express" width="36" height="36" style="border-radius:8px;" />
+                    <img src="${baseUrl}/logo.svg" alt="Devilo" width="36" height="36" style="border-radius:8px;" />
                   </td>
                 </tr>
               </table>
@@ -113,7 +113,7 @@ export async function sendReminderAction(quoteId: string) {
           <tr>
             <td style="padding:24px 32px;background-color:#f8fafc;">
               <p style="margin:0;font-size:11px;color:#94a3b8;text-align:center;">
-                Cet email a été envoyé automatiquement depuis <strong style="color:#64748b;">Devis Express</strong>.
+                Cet email a été envoyé automatiquement depuis <strong style="color:#64748b;">Devilo</strong>.
               </p>
             </td>
           </tr>

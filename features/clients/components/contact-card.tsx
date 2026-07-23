@@ -3,7 +3,7 @@
 import React from "react";
 import { ClientListItem } from "@/types/client";
 import { cn } from "@/lib/utils";
-import { DS_MONO, DS_LABEL, DS_BENTO_CARD } from "@/lib/design-system";
+import { DS_MONO, DS_LABEL, STUDIO_V2_CARD } from "@/lib/design-system";
 import {
   EnvelopeSimple,
   Phone,
@@ -50,12 +50,12 @@ export function ContactCard({
     <div
       onClick={() => onSelect(client)}
       className={cn(
-        DS_BENTO_CARD,
-        "group relative p-4 cursor-pointer transition-all",
-        "hover:border-indigo-300 hover:shadow-sm hover:-translate-y-0.5",
+        STUDIO_V2_CARD,
+        "group relative cursor-pointer transition-colors",
+        "hover:border-indigo-300",
         isSelected
-          ? "border-indigo-400 ring-1 ring-indigo-200 bg-indigo-50/30"
-          : "border-slate-200"
+          ? "border-indigo-500 bg-indigo-50/60 shadow-sm shadow-indigo-100 ring-1 ring-indigo-200"
+          : "border-slate-200 hover:border-indigo-400"
       )}
     >
       {/* Actions rapides (apparaissent au hover) */}
@@ -103,18 +103,6 @@ export function ContactCard({
           >
             {client.name}
           </h3>
-          {client.tags && client.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-1">
-              {client.tags.slice(0, 3).map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-block px-1.5 py-0.5 rounded text-[7px] font-mono font-bold uppercase tracking-wide bg-slate-100 text-slate-500 border border-slate-200"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          )}
         </div>
       </div>
 

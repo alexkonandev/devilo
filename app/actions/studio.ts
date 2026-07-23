@@ -35,7 +35,7 @@ export async function getClientMetrics(clientId: string, userId: string) {
     where: {
       clientId,
       userId,
-      status: { in: ["DRAFT", "SENT", "ACCEPTED"] },
+      status: { in: ["DRAFT", "SENT", "PAID"] },
     },
     include: {
       lines: true,
@@ -54,7 +54,7 @@ export async function getClientMetrics(clientId: string, userId: string) {
   // Détermination de la santé (pour l'instant basé sur le statut des quotes)
   // On pourrait ajouter une logique de retard basée sur les dates d'échéance
   const hasOverdue = quotes.some(
-    (quote) => quote.status === "SENT" || quote.status === "ACCEPTED",
+    (quote) => quote.status === "SENT",
   );
   const health = hasOverdue ? "RETARD" : "À JOUR";
 

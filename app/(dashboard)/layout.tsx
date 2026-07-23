@@ -1,36 +1,33 @@
-"use client";
+import { redirect } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
+import db from "@/lib/prisma";
+import SoftwareLayoutClient from "./layout-client";
 
-import React, { ReactNode } from "react";
-import { SpatialDock } from "@/components/spatial-dock";
-import { SpatialStatusBar } from "@/components/spatial-status-bar";
-import { AnimatedBackground } from "@/features/dashboard/components/animated-background";
-import { useSpatialMouse } from "@/features/dashboard/hooks/use-spatial-mouse";
+export default async function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
 
-interface SoftwareLayoutProps {
-  children: ReactNode;
-}
+  // Vérification : nouvel utilisateur sans aucun devis ni client
+  // => rediriger vers la page d'onboarding (layout minimal sans dock)
+  const userStats = await db.user.findUnique({
+    where: { id: userId },
+    select: {
+      _count: { select: { quotes: true, clients: true } },
+    },
+  });
 
-export default function SoftwareLayout({ children }: SoftwareLayoutProps) {
-  // Global mouse tracking for the entire spatial experience
-  const { x: mouseX, y: mouseY } = useSpatialMouse();
+  const isNewUser =
+    userStats &&
+    userStats._count.quotes === 0 &&
+    userStats._count.clients === 0;
 
-  return (
-    <div className="relative h-screen w-screen overflow-hidden bg-slate-50 font-sans text-slate-900">
-      {/* ═══ GLOBAL Z=0 : VOID ═══ */}
-      <AnimatedBackground mouseX={mouseX} mouseY={mouseY} />
+  if (isNewUser) {
+    redirect("/onboarding");
+  }
 
-      {/* ═══ GLOBAL Z=50 : HUD ═══ */}
-      <SpatialStatusBar />
-      <SpatialDock />
-
-      {/* ═══ APP CONTENT LAYER ═══
-          - pt-10 : sous la Top Bar h-10
-          - pl-16 : rail sidebar w-16
-          - overflow-y-auto : scroll vertical libre, KPIs sticky dans les pages
-      */}
-      <main className="relative z-10 h-full w-full overflow-y-auto pt-10 pl-16">
-        {children}
-      </main>
-    </div>
-  );
+  return <SoftwareLayoutClient>{children}</SoftwareLayoutClient>;
 }

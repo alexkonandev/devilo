@@ -1,17 +1,18 @@
 "use client";
 import { forwardRef } from "react";
 import { generateQuoteHTML } from "@/lib/print-template";
-import { EditorActiveQuote, EditorTheme } from "@/types/editor";
+import { EditorActiveQuote } from "@/types/editor";
+import { resolveTemplate } from "@/lib/template-system";
 
 interface PrintableQuoteProps {
   quote: EditorActiveQuote;
-  theme: EditorTheme;
 }
 
 const PrintableQuote = forwardRef<HTMLDivElement, PrintableQuoteProps>(
-  function PrintableQuote({ quote, theme }, ref) {
-    // On génère le même HTML que l'API
-    const htmlContent = generateQuoteHTML(quote, theme?.color || "#4f46e5");
+  function PrintableQuote({ quote }, ref) {
+    // Style basique fixe dans l'éditeur — les templates sont réservés à l'export
+    const resolvedTemplate = resolveTemplate("minimal-invoice");
+    const htmlContent = generateQuoteHTML(quote, resolvedTemplate);
 
     return (
       <div

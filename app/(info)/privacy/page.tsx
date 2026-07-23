@@ -1,129 +1,93 @@
-// app/(info)/privacy/page.tsx
+"use client";
+
+import { motion } from "framer-motion";
+import { ShieldCheck, Lock, Eye, Trash, Envelope } from "@phosphor-icons/react";
+import {
+  DS_LP_TAG,
+  DS_LP_TITLE,
+  DS_LP_ACCENT,
+  DS_LP_CARD,
+} from "@/lib/design-system";
+
+const sections = [
+  {
+    icon: Eye,
+    title: "Donn\u00e9es collect\u00e9es",
+    content:
+      "Nous collectons uniquement les informations n\u00e9cessaires au fonctionnement du service : nom, adresse email, informations de facturation et documents que vous cr\u00e9ez. Aucune donn\u00e9e sensible n\u2019est stock\u00e9e sans votre consentement explicite.",
+  },
+  {
+    icon: Lock,
+    title: "Utilisation des donn\u00e9es",
+    content:
+      "Vos donn\u00e9es sont utilis\u00e9es exclusivement pour vous fournir le service, am\u00e9liorer votre exp\u00e9rience et vous assister en cas de besoin. Nous ne revendons aucune information \u00e0 des tiers. La publicit\u00e9 n\u2019est pas notre mod\u00e8le.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "S\u00e9curit\u00e9",
+    content:
+      "Toutes les donn\u00e9es sont chiffr\u00e9es en transit (TLS 1.3) et au repos (AES-256). L\u2019acc\u00e8s \u00e0 votre compte est prot\u00e9g\u00e9 par une authentification s\u00e9curis\u00e9e. Nous effectuons des audits r\u00e9guliers pour garantir l\u2019int\u00e9grit\u00e9 de notre infrastructure.",
+  },
+  {
+    icon: Trash,
+    title: "Vos droits",
+    content:
+      "Vous pouvez \u00e0 tout moment acc\u00e9der, modifier ou supprimer vos donn\u00e9es personnelles depuis votre tableau de bord. Pour une demande de suppression compl\u00e8te, contactez-nous : nous traitons toute requ\u00eate sous 48 heures ouvr\u00e9es.",
+  },
+  {
+    icon: Envelope,
+    title: "Contact",
+    content:
+      "Pour toute question relative \u00e0 vos donn\u00e9es personnelles, \u00e9crivez-nous \u00e0 privacy@devilo.com. Nous nous engageons \u00e0 vous r\u00e9pondre personnellement sous 24 heures.",
+  },
+];
+
+const TAG = "Confidentialit\u00e9";
+const TITLE = "Vos donn\u00e9es vous appartiennent";
+const DESC = "Nous croyons en une transparence radicale. Voici comment nous traitons vos informations.";
+const FOOTER = "Derni\u00e8re mise \u00e0 jour : juillet 2026. En cas de modification importante de cette politique, vous serez notifi\u00e9 par email.";
 
 export default function PrivacyPage() {
-  const dataPoints = [
-    {
-      label: "Identité",
-      type: "Professionnel",
-      storage: "Encrypted",
-      duration: "Active",
-    },
-    {
-      label: "Flux Financiers",
-      type: "Transactionnel",
-      storage: "Isolated",
-      duration: "7 Ans",
-    },
-    {
-      label: "Base Clients",
-      type: "Propriété Client",
-      storage: "Private",
-      duration: "Indéterminé",
-    },
-  ];
-
   return (
-    <div className="flex flex-col gap-16">
-      <header className="flex flex-col gap-4">
-        <div className="flex items-center gap-2">
-          <div className="h-[2px] w-12 bg-indigo-600" />
-          <span className="text-[11px] font-mono font-bold text-indigo-600 uppercase tracking-widest">
-            Security_Protocol_V1
-          </span>
-        </div>
-        <h1 className="text-[40px] font-black uppercase tracking-[0.05em] text-slate-950 leading-none">
-          Data_Privacy
-        </h1>
-        <p className="text-[15px] text-slate-500 font-medium max-w-xl">
-          Transparence totale sur l&apos;ingénierie de vos données. Nous bâtissons
-          une forteresse pour votre patrimoine entrepreneurial.
-        </p>
-      </header>
+    <div className="space-y-16">
+      {/* HERO */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="text-center pt-12"
+      >
+        <span className={DS_LP_TAG}>{TAG}</span>
+        <h1 className={DS_LP_TITLE}>{TITLE}</h1>
+        <p className="mt-4 text-lg text-zinc-400 max-w-2xl mx-auto leading-relaxed">{DESC}</p>
+        <div className={DS_LP_ACCENT} />
+      </motion.div>
 
-      {/* TABLEAU DE FLUX : Vision technique immédiate */}
-      <section className="border-2 border-slate-950">
-        <div className="bg-slate-950 p-4">
-          <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-white">
-            Architecture_des_Données
-          </h2>
-        </div>
-        <div className="divide-y divide-slate-200">
-          {dataPoints.map((point) => (
-            <div
-              key={point.label}
-              className="grid grid-cols-2 md:grid-cols-4 p-4 gap-4"
-            >
-              <div className="flex flex-col">
-                <span className="text-[9px] font-black text-slate-400 uppercase">
-                  Point_Entrée
-                </span>
-                <span className="text-[13px] font-bold text-slate-950">
-                  {point.label}
-                </span>
+      {/* SECTIONS */}
+      <div className="grid gap-6 max-w-3xl mx-auto">
+        {sections.map((section, i) => (
+          <motion.div
+            key={section.title}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 * i }}
+            className={DS_LP_CARD}
+          >
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0">
+                <section.icon size={20} className="text-[var(--lp-accent)]" />
               </div>
-              <div className="flex flex-col">
-                <span className="text-[9px] font-black text-slate-400 uppercase">
-                  Type_Data
-                </span>
-                <span className="text-[13px] font-mono text-slate-600 font-bold">
-                  {point.type}
-                </span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[9px] font-black text-slate-400 uppercase">
-                  Stockage
-                </span>
-                <span className="text-[13px] font-mono text-indigo-600 font-bold">
-                  {point.storage}
-                </span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[9px] font-black text-slate-400 uppercase">
-                  Rétention
-                </span>
-                <span className="text-[13px] font-bold text-slate-950">
-                  {point.duration}
-                </span>
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold text-white">{section.title}</h3>
+                <p className="text-sm text-zinc-400 leading-relaxed">{section.content}</p>
               </div>
             </div>
-          ))}
-        </div>
-      </section>
-
-      {/* CONTENU ANALYTIQUE */}
-      <div className="grid gap-12">
-        <div className="space-y-4">
-          <h3 className="text-[18px] font-black uppercase text-slate-950 border-b-2 border-slate-100 pb-2">
-            01. Zéro_Exploitation_Commerciale
-          </h3>
-          <p className="text-[15px] leading-relaxed text-slate-700">
-            Contrairement aux solutions &quot;gratuites&quot;, Devis Express n&apos;analyse pas
-            vos factures pour revendre des tendances de marché. Votre activité
-            reste votre secret industriel.
-          </p>
-        </div>
-
-        <div className="space-y-4">
-          <h3 className="text-[18px] font-black uppercase text-slate-950 border-b-2 border-slate-100 pb-2">
-            02. Chiffrement_End_to_End
-          </h3>
-          <p className="text-[15px] leading-relaxed text-slate-700">
-            Chaque tunnel de données est sécurisé par un chiffrement AES-256.
-            L&apos;accès à vos bases clients est restreint par des jetons
-            d&apos;authentification uniques et rotatifs.
-          </p>
-        </div>
+          </motion.div>
+        ))}
       </div>
 
-      <footer className="p-8 border-2 border-dashed border-slate-200 flex flex-col items-center text-center gap-4">
-        <span className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">
-          Data_Sovereignty_Confirmed
-        </span>
-        <p className="text-[13px] text-slate-500 max-w-sm italic">
-          &quot;Votre base client est votre plus grand actif. Notre mission est de la
-          rendre imprenable.&quot;
-        </p>
-      </footer>
+      {/* FOOTER NOTE */}
+      <p className="text-center text-xs text-zinc-600 max-w-md mx-auto">{FOOTER}</p>
     </div>
   );
 }

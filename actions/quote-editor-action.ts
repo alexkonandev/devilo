@@ -11,6 +11,7 @@ import {
 
 import { ActiveQuote, ActionResponse } from "@/types/quote-editor";
 import { upsertQuoteSchema, updateQuoteInlineSchema } from "@/lib/validations/quote";
+import { MAX_QUOTE_LINES } from "@/lib/constants";
 import { logQuoteEventAction } from "./quote-event-action";
 
 export async function upsertQuoteAction(
@@ -27,6 +28,14 @@ export async function upsertQuoteAction(
       return {
         success: false,
         error: parsed.error.errors.map((e) => e.message).join(", "),
+      };
+    }
+
+    // ─── VALIDATION LIMITE DE LIGNES ───
+    if (data.items.length > MAX_QUOTE_LINES) {
+      return {
+        success: false,
+        error: `Le devis ne peut pas contenir plus de ${MAX_QUOTE_LINES} lignes. Veuillez réduire le nombre de prestations.`,
       };
     }
 
@@ -53,17 +62,6 @@ export async function upsertQuoteAction(
         error: "Un client valide est requis pour sauvegarder le devis",
       };
     }
-
-    // Récupérer les coordonnées bancaires de l'utilisateur pour le snapshot
-    const userBankInfo = await db.user.findUnique({
-      where: { id: authId },
-      select: {
-        bankName: true,
-        bankIBAN: true,
-        bankSWIFT: true,
-        bankBIC: true,
-      },
-    });
 
     // Préparation des lignes avec baseCost
     const linesData = data.items.map((item) => ({
@@ -103,11 +101,6 @@ export async function upsertQuoteAction(
       dueDate: dueDate,
       currency,
       validityDays: validityDays,
-      // Snapshot des coordonnées bancaires pour figer les infos au moment de la création
-      bankName: userBankInfo?.bankName || null,
-      bankIBAN: userBankInfo?.bankIBAN || null,
-      bankSWIFT: userBankInfo?.bankSWIFT || null,
-      bankBIC: userBankInfo?.bankBIC || null,
       vatRatePercent: Number(data.financials.vatRatePercent) || 0,
       discount: Number(data.financials.discountAmount) || 0,
       terms: data.quote.terms || "",
@@ -124,58 +117,55 @@ export async function upsertQuoteAction(
 
     if (existingQuote) {
       // --- MODE UPDATE ---
+      console.log("[UPSERT_UPDATE] Mode UPDATE pour le devis:", existingQuote.id);
+      console.log("[UPSERT_UPDATE] linesData reçues:", JSON.stringify(linesData));
+      console.log("[UPSERT_UPDATE] data.items.length:", data.items.length);
+      console.log("[UPSERT_UPDATE] Nombre de lignes à créer:", linesData.length);
+      console.log("[UPSERT_UPDATE] Lignes existantes en DB avant update: non chargées (findUnique sans include lines)");
+
       quote = await db.quote.update({
         where: { id: existingQuote.id, userId: authId },
         data: {
           ...quoteDataBase,
-          number: data.quote.number, // On garde le numéro envoyé par le client en update
           lines: {
             deleteMany: {},
             create: linesData,
           },
         },
       });
-    } else {
-      // --- MODE CRÉATION : GESTION DE L'INCRÉMENTATION ATOMIQUE ---
-      // Utilisation d'une transaction Prisma pour éviter les race conditions TOCTOU
 
-      const [generatedNumber] = await db.$transaction(async (tx) => {
-        // 1. Lire et verrouiller (via write) les réglages de l'utilisateur
-        const userSettings = await tx.user.findUnique({
+      console.log("[UPSERT_UPDATE] UPDATE réussi, quote.lines après update:", "non inclus dans le retour");
+    } else {
+      // --- MODE CRÉATION : incrémentation atomique ---
+      // Numérotation purement numérique : 001, 002, 003...
+      // Retourner l'objet créé directement depuis la transaction
+      // (évite un findUniqueOrThrow après la transaction qui peut échouer)
+      const [createdQuote] = await db.$transaction(async (tx) => {
+        const currentNum = await tx.user.findUnique({
           where: { id: authId },
-          select: { quotePrefix: true, nextQuoteNumber: true },
+          select: { nextQuoteNumber: true },
         });
 
-        const prefix = userSettings?.quotePrefix || "INV-";
-        const currentNum = userSettings?.nextQuoteNumber || 1;
+        const nextNum = currentNum?.nextQuoteNumber || 1;
+        const finalNumber = String(nextNum).padStart(3, "0");
 
-        // 2. Générer un numéro unique (la contrainte unique @unique fera échouer si conflit)
-        const finalNumber = `${prefix}${String(currentNum).padStart(3, "0")}`;
-
-        // 3. Créer la quote (échoue avec Prisma P2002 si numéro en double)
-        const createdQuote = await tx.quote.create({
+        const newQuote = await tx.quote.create({
           data: {
             ...quoteDataBase,
             number: finalNumber,
-            lines: {
-              create: linesData,
-            },
+            lines: { create: linesData },
           },
         });
 
-        // 4. Mettre à jour atomiquement le compteur
         await tx.user.update({
           where: { id: authId },
-          data: { nextQuoteNumber: currentNum + 1 },
+          data: { nextQuoteNumber: nextNum + 1 },
         });
 
-        return [finalNumber] as const;
+        return [newQuote] as const;
       });
 
-      // Récupérer la quote créée pour la retourner
-      quote = await db.quote.findUniqueOrThrow({
-        where: { number: generatedNumber },
-      });
+      quote = createdQuote;
     }
 
     // Logger la création si c'est bien une création (pas un update)
@@ -193,6 +183,106 @@ export async function upsertQuoteAction(
   } catch (err) {
     console.error("[UPSERT_QUOTE_ERROR]:", err);
     return { success: false, error: "Erreur serveur lors de la sauvegarde" };
+  }
+}
+
+/**
+ * Mise à jour inline d'un devis depuis la sidebar
+ * Seuls les champs éditables inline sont modifiés
+ */
+/**
+ * Récupère les N derniers brouillons pour le sélecteur de devis
+ */
+export async function listDraftQuotesAction(limit = 20, clientName?: string) {
+  try {
+    const authId = await getClerkUserId();
+    if (!authId) return { success: false, error: "Non autorisé", data: [] };
+
+    const whereClause: Record<string, unknown> = { userId: authId };
+    if (clientName) {
+      whereClause.clientName = clientName;
+    }
+
+    const quotes = await db.quote.findMany({
+      where: whereClause,
+      orderBy: { updatedAt: "desc" },
+      take: limit,
+      select: {
+        id: true,
+        number: true,
+        clientName: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    return { success: true, data: quotes };
+  } catch (err) {
+    console.error("[LIST_DRAFT_QUOTES_ERROR]:", err);
+    return { success: false, error: "Erreur de récupération", data: [] };
+  }
+}
+
+/**
+ * Récupère un devis complet par son ID pour édition
+ */
+export async function getQuoteByIdAction(id: string) {
+  try {
+    const authId = await getClerkUserId();
+    if (!authId) return { success: false, error: "Non autorisé" };
+
+    const quote = await db.quote.findUnique({
+      where: { id, userId: authId },
+      include: { lines: true, client: true },
+    });
+
+    if (!quote) return { success: false, error: "Devis non trouvé" };
+
+    // Transformer en format EditorActiveQuote
+    const activeQuote: ActiveQuote = {
+      id: quote.id,
+      title: quote.title,
+      company: {
+        name: quote.companyName || "",
+        email: quote.companyEmail || "",
+        address: quote.companyAddress || "",
+        taxId: quote.companyTaxId || "",
+        taxIdLabel: quote.companyTaxIdL || "NCC",
+        website: quote.companyWebsite || "",
+      },
+      client: {
+        name: quote.clientName || "",
+        email: quote.clientEmail || "",
+        address: quote.clientAddress || "",
+        taxId: quote.clientTaxId || "",
+      },
+      quote: {
+        number: quote.number,
+        issueDate: quote.issueDate?.toISOString().split("T")[0] || "",
+        dueDate: quote.dueDate?.toISOString().split("T")[0],
+        terms: quote.terms || "",
+        status: quote.status as PrismaQuoteStatus,
+      },
+      currency: quote.currency || "XOF",
+      validityDays: quote.validityDays || 30,
+      financials: {
+        vatRatePercent: quote.vatRatePercent || 0,
+        discountAmount: quote.discount || 0,
+      },
+      items: quote.lines.map((line) => ({
+        title: line.title,
+        subtitle: line.subtitle || "",
+        quantity: line.quantity,
+        unitPrice: line.unitPrice,
+        baseCost: line.baseCost || 0,
+      })),
+    };
+
+    return { success: true, data: activeQuote };
+  } catch (err) {
+    console.error("[GET_QUOTE_BY_ID_ERROR]:", err);
+    return { success: false, error: "Erreur de récupération" };
   }
 }
 
@@ -263,6 +353,14 @@ export async function updateQuoteInlineAction(
     if (data.clientPostalCode !== undefined) clientUpdate.postalCode = data.clientPostalCode;
     if (data.clientCountry !== undefined) clientUpdate.country = data.clientCountry;
     if (data.clientTaxId !== undefined) clientUpdate.taxId = data.clientTaxId;
+
+    // ─── VALIDATION LIMITE DE LIGNES ───
+    if (data.lines !== undefined && data.lines.length > MAX_QUOTE_LINES) {
+      return {
+        success: false,
+        error: `Le devis ne peut pas contenir plus de ${MAX_QUOTE_LINES} lignes. Veuillez réduire le nombre de prestations.`,
+      };
+    }
 
     // Mise à jour des lignes si fournies
     if (data.lines !== undefined) {

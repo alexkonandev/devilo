@@ -2,7 +2,7 @@
 
 import React, { useMemo } from "react";
 import { cn } from "@/lib/utils";
-import { DS_MONO, DS_BENTO_CARD } from "@/lib/design-system";
+import { DS_MONO, STUDIO_V2_CARD } from "@/lib/design-system";
 import { QuoteRegistryItem, QuoteStatus } from "@/types/quote-registry";
 import {
   NotePencil,
@@ -83,7 +83,7 @@ export function CompletionAlert({ quotes, onFilterStatus }: CompletionAlertProps
     return (
       <div
         className={cn(
-          DS_BENTO_CARD,
+          STUDIO_V2_CARD,
           "flex items-center gap-3 px-4 py-2.5",
           "bg-emerald-50/60 border-emerald-200",
         )}
@@ -102,13 +102,13 @@ export function CompletionAlert({ quotes, onFilterStatus }: CompletionAlertProps
   }
 
   return (
-    <div
-      className={cn(
-        DS_BENTO_CARD,
-        "flex items-center gap-4 px-4 py-2.5",
-        "bg-amber-50/60 border-amber-200",
-      )}
-    >
+      <div
+        className={cn(
+          STUDIO_V2_CARD,
+          "flex items-center gap-4 px-4 py-2.5",
+          "bg-amber-50/60 border-amber-200",
+        )}
+      >
       {/* Icône gauche */}
       <div className="flex items-center gap-2 shrink-0">
         <span className="text-amber-500">

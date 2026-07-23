@@ -16,6 +16,9 @@ export function useClients(initialData?: ClientListItem[]) {
   const [totalPages, setTotalPages] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [creationSheetOpen, setCreationSheetOpen] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
 
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -122,6 +125,12 @@ export function useClients(initialData?: ClientListItem[]) {
     totalPages,
     isLoading,
     searchQuery,
+    viewMode,
+    setViewMode,
+    creationSheetOpen,
+    setCreationSheetOpen,
+    importModalOpen,
+    setImportModalOpen,
     selectedClientId,
     selectedIds,
     viewingClient,

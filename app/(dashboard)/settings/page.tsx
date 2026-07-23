@@ -39,14 +39,6 @@ export default async function SettingsPage() {
         quotePrefix: true,
         nextQuoteNumber: true,
         defaultTerms: true,
-        paymentZone: true,
-        bankName: true,
-        bankIBAN: true,
-        bankSWIFT: true,
-        bankBIC: true,
-        bankRoutingNumber: true,
-        bankAccountNumber: true,
-        showBankDetailsOnQuotes: true,
       },
     }),
     getSecurityProfile(),
@@ -68,17 +60,6 @@ export default async function SettingsPage() {
     quotePrefix: userSettings?.quotePrefix ?? "QT-",
     nextQuoteNumber: userSettings?.nextQuoteNumber ?? 1,
     defaultTerms: userSettings?.defaultTerms ?? "",
-    paymentZone: (userSettings?.paymentZone ?? "AFRI") as
-      | "USA"
-      | "EUR"
-      | "AFRI",
-    bankName: userSettings?.bankName ?? null,
-    bankIBAN: userSettings?.bankIBAN ?? null,
-    bankSWIFT: userSettings?.bankSWIFT ?? null,
-    bankBIC: userSettings?.bankBIC ?? null,
-    bankRoutingNumber: userSettings?.bankRoutingNumber ?? null,
-    bankAccountNumber: userSettings?.bankAccountNumber ?? null,
-    showBankDetailsOnQuotes: userSettings?.showBankDetailsOnQuotes ?? false,
   };
 
   return (

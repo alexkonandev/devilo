@@ -9,11 +9,13 @@ import { logQuoteEventAction } from "./quote-event-action";
 export interface SendQuoteEmailParams {
   quoteId: string;
   message?: string;
+  templateId?: string;
 }
 
 export async function sendQuoteEmailAction({
   quoteId,
   message,
+  templateId,
 }: SendQuoteEmailParams) {
   try {
     const authId = await getClerkUserId();
@@ -60,14 +62,6 @@ export async function sendQuoteEmailAction({
         taxId: true,
         taxIdLabel: true,
         currency: true,
-        bankName: true,
-        bankIBAN: true,
-        bankSWIFT: true,
-        bankBIC: true,
-        bankRoutingNumber: true,
-        bankAccountNumber: true,
-        showBankDetailsOnQuotes: true,
-        paymentZone: true,
       },
     });
 
@@ -109,14 +103,6 @@ export async function sendQuoteEmailAction({
       },
       currency: quote.currency,
       validityDays: quote.validityDays,
-      showBankDetails: quote.showBankDetails || user?.showBankDetailsOnQuotes || false,
-      paymentZone: quote.paymentZone || user?.paymentZone || "AFRI",
-      bankName: quote.bankName || user?.bankName || "",
-      bankIBAN: quote.bankIBAN || user?.bankIBAN || "",
-      bankSWIFT: quote.bankSWIFT || user?.bankSWIFT || "",
-      bankBIC: quote.bankBIC || user?.bankBIC || "",
-      bankRoutingNumber: quote.bankRoutingNumber || user?.bankRoutingNumber || "",
-      bankAccountNumber: quote.bankAccountNumber || user?.bankAccountNumber || "",
     };
 
     // 6. Appeler l'API print pour générer le PDF
@@ -124,7 +110,7 @@ export async function sendQuoteEmailAction({
     const pdfResponse = await fetch(`${appUrl}/api/print`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(quoteData),
+      body: JSON.stringify({ ...quoteData, templateId: templateId || "classic-indigo" }),
     });
 
     if (!pdfResponse.ok) {
@@ -140,7 +126,7 @@ export async function sendQuoteEmailAction({
     // 7. Envoyer l'email via Resend
     const emailResult = await sendQuoteEmail({
       to: client.email,
-      subject: `Votre devis ${quote.number} — ${user?.companyName || "Devis Express"}`,
+      subject: `Votre devis ${quote.number} — ${user?.companyName || "Devilo"}`,
       quoteNumber: quote.number,
       clientName: quote.clientName || client.name,
       pdfBuffer,

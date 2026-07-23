@@ -51,14 +51,6 @@ function makeQuote(id: string): QuoteRegistryItem {
     clientEmail: null,
     clientAddress: null,
     clientTaxId: null,
-    paymentZone: null,
-    bankName: null,
-    bankIBAN: null,
-    bankSWIFT: null,
-    bankBIC: null,
-    bankRoutingNumber: null,
-    bankAccountNumber: null,
-    showBankDetails: false,
     createdAt: new Date("2025-01-15T10:00:00Z"),
     updatedAt: new Date("2025-01-15T10:00:00Z"),
     client: {
@@ -78,7 +70,6 @@ function makeQuote(id: string): QuoteRegistryItem {
       representativeName: null,
       representativePosition: null,
       notes: null,
-      tags: [],
       createdAt: new Date("2025-01-01"),
       updatedAt: new Date("2025-01-01"),
     },
@@ -98,7 +89,7 @@ beforeEach(() => {
 // ─── Tests ───
 
 describe("ExportActions", () => {
-  it("devrait afficher les boutons CSV et PDF", () => {
+  it("devrait afficher les 2 boutons icône (import et export)", () => {
     const data = [makeQuote("q1")];
     render(
       <QuoteProvider initialQuotes={data}>
@@ -106,8 +97,24 @@ describe("ExportActions", () => {
       </QuoteProvider>
     );
 
-    expect(screen.getByText("CSV")).toBeInTheDocument();
-    expect(screen.getByText("PDF")).toBeInTheDocument();
+    const buttons = screen.getAllByRole("button");
+    expect(buttons).toHaveLength(2);
+  });
+
+  it("devrait exporter en CSV au clic sur le bouton export", () => {
+    const data = [makeQuote("q1")];
+    render(
+      <QuoteProvider initialQuotes={data}>
+        <ExportActions data={data} selectedIds={new Set()} />
+      </QuoteProvider>
+    );
+
+    const buttons = screen.getAllByRole("button");
+    // Le dernier bouton est l'export CSV
+    const exportBtn = buttons[1];
+    fireEvent.click(exportBtn);
+
+    expect(global.URL.createObjectURL).toHaveBeenCalledTimes(1);
   });
 
   it("devrait afficher le compteur de sélection quand selectedIds n'est pas vide", () => {

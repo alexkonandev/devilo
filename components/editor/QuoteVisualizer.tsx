@@ -2,11 +2,10 @@
 
 import React from "react";
 import PrintableQuote from "@/components/pdf/printable-quote";
-import { EditorActiveQuote, EditorTheme } from "@/types/editor";
+import { EditorActiveQuote } from "@/types/editor";
 
 interface QuoteVisualizerProps {
   data: EditorActiveQuote | null;
-  theme: EditorTheme | undefined;
   printRef: React.RefObject<HTMLDivElement | null>;
 }
 
@@ -19,10 +18,12 @@ interface QuoteVisualizerProps {
  *   - QuoteEditorLayout   → canvas, elevation shadows, ambient glow
  *
  * This keeps the document tree clean for `window.print()`.
+ *
+ * Le rendu A4 utilise désormais le templateId actif depuis le store
+ * via PrintableQuote, qui résout le TemplateDefinition correspondant.
  */
 export const QuoteVisualizer = ({
   data,
-  theme,
   printRef,
 }: QuoteVisualizerProps) => {
   // Loading state
@@ -42,25 +43,10 @@ export const QuoteVisualizer = ({
     );
   }
 
-  // Fallback theme — same shape as Prisma Theme model
-  const effectiveTheme = (theme || {
-    id: "default-fallback",
-    name: "Design Standard",
-    baseLayout: "swiss",
-    color: "#4f46e5",
-    config: {},
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    isPremium: false,
-    description: null,
-    isSystem: true,
-  }) as EditorTheme;
-
   return (
     <PrintableQuote
       ref={printRef}
       quote={data}
-      theme={effectiveTheme}
     />
   );
 };

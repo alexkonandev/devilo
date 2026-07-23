@@ -3,14 +3,17 @@
 import React from "react";
 import {
   PlusIcon,
+  FileTextIcon,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
-import { DS_MONO } from "@/lib/design-system";
-import { BTN_PRIMARY, BTN_SECONDARY } from "@/components/shared/ui/constants";
-import { PageHeader } from "@/components/shared/layout/page-header";
-import { SearchBar } from "@/components/shared/ui/search-bar";
+import {
+  DS_MONO,
+  STUDIO_V2_BTN_PRIMARY,
+  STUDIO_V2_CARD,
+} from "@/lib/design-system";
 import { ConfirmDialog } from "@/components/shared/ui/confirm-dialog";
 import { SuccessFeedback } from "@/components/shared/ui/success-feedback";
+import { SearchBar } from "@/components/shared/ui/search-bar";
 
 import { useQuotesView } from "./hooks/use-quotes-view";
 import { CompletionAlert } from "./components/completion-alert";
@@ -52,55 +55,83 @@ export function SpatialQuotesView() {
   } = useQuotesView();
 
   const emptyVariant = isTotallyEmpty ? "totallyEmpty" : isSearchEmpty ? "searchEmpty" : "filterEmpty";
+  const totalItems = paginatedQuotes.length;
+
+  // Pleine page empty state pour les nouveaux utilisateurs (aucun devis du tout)
+  if (isTotallyEmpty) {
+    return (
+      <div className="flex flex-col h-full w-full bg-slate-50">
+        <div className="flex-1 flex items-center justify-center">
+          <QuotesEmptyState
+            variant="totallyEmpty"
+            setSearchQuery={setSearchQuery}
+            onAddClient={() => setIsSheetOpen(true)}
+          />
+        </div>
+        <QuoteCreationSheet open={isSheetOpen} onOpenChange={setIsSheetOpen} />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full w-full bg-slate-50">
-      <div className="shrink-0 px-6 pt-6">
-        <PageHeader
-          title="Devis"
-          description={`${paginatedQuotes.length} devis`}
-          actions={
-            <>
-              <SearchBar value={searchQuery} onChange={handleSearch} placeholder="Rechercher un devis…" />
-              <FiltersDropdown />
-              <ExportActions data={paginatedQuotes} selectedIds={selectedQuoteIds} />
-              <button onClick={() => setIsSheetOpen(true)} className={BTN_PRIMARY}>
-                <PlusIcon size={12} weight="bold" /> Nouveau devis
-              </button>
-            </>
-          }
-        />
-      </div>
+      {/* === HEADER V2 === */}
+      <header className="flex items-center h-12 px-3 border-b border-slate-200 bg-white shrink-0 gap-2">
+        <div className="w-6 h-6 rounded-md bg-indigo-50 flex items-center justify-center">
+          <FileTextIcon size={12} className="text-indigo-600" weight="bold" />
+        </div>
+        <span className="text-[10px] font-mono font-bold text-slate-800 tracking-tight">
+          Devis
+        </span>
+        <span className="text-[8px] font-mono text-slate-400">
+          {totalItems} devis
+        </span>
+        <div className="flex-1" />
+        <SearchBar value={searchQuery} onChange={handleSearch} placeholder="Rechercher un devis…" />
+        <FiltersDropdown />
+        <ExportActions data={paginatedQuotes} selectedIds={selectedQuoteIds} />
+        <button onClick={() => setIsSheetOpen(true)} className={STUDIO_V2_BTN_PRIMARY}>
+          <PlusIcon size={12} weight="bold" />
+        </button>
+      </header>
 
-      <div className="shrink-0 px-6 pt-3">
+      {/* === COMPLETION ALERT === */}
+      <div className="shrink-0 px-4 pt-3">
         <CompletionAlert
           quotes={[]}
           onFilterStatus={setActiveStatus}
         />
       </div>
 
-      <div className="flex w-full flex-1 min-h-0 px-6 pb-6 pt-4 overflow-hidden gap-6">
-        <div className="flex-[4] min-w-0 flex flex-col">
-          {isTotallyEmpty || isSearchEmpty || isFilterEmpty ? (
+      {/* === CONTENU === */}
+      <div className="flex w-full flex-1 min-h-0 px-4 pb-4 pt-3 overflow-hidden gap-4">
+        <div className="flex-1 min-w-0 flex flex-col">
+          {/* Bulk selection bar */}
+          {selectedQuoteIds.size > 0 && (
+            <div className={cn(STUDIO_V2_CARD, "mb-2 px-3 py-2 flex items-center justify-between")}>
+              <span className={cn(DS_MONO, "text-[10px] text-slate-700 font-semibold")}>
+                {selectedQuoteIds.size} devis sélectionné{selectedQuoteIds.size > 1 ? "s" : ""}
+              </span>
+              <button
+                onClick={() => setBulkConfirmOpen(true)}
+                className={cn(
+                  "flex items-center gap-1 px-2 py-1 rounded-lg text-[8px] font-mono font-bold uppercase tracking-wider",
+                  "bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 transition-all"
+                )}
+              >
+                Supprimer
+              </button>
+            </div>
+          )}
+
+          {/* Content area */}
+          {isSearchEmpty || isFilterEmpty ? (
             <QuotesEmptyState
               variant={emptyVariant}
               setSearchQuery={setSearchQuery}
             />
           ) : (
             <>
-              {selectedQuoteIds.size > 0 && (
-                <div className="mb-2 px-3 py-1.5 bg-indigo-50 border border-indigo-200 rounded-md flex items-center justify-between">
-                  <span className={cn(DS_MONO, "text-[10px] text-indigo-700 font-semibold")}>
-                    {selectedQuoteIds.size} devis sélectionné{selectedQuoteIds.size > 1 ? "s" : ""}
-                  </span>
-                  <button
-                    onClick={() => setBulkConfirmOpen(true)}
-                    className="flex items-center gap-1 px-2 py-1 rounded-md bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all text-[8px] font-mono font-bold uppercase tracking-wider"
-                  >
-                    Supprimer
-                  </button>
-                </div>
-              )}
               <div className="flex-1 min-h-0 overflow-auto">
                 <QuotesTable
                   data={paginatedQuotes}
@@ -113,13 +144,13 @@ export function SpatialQuotesView() {
                 currentPage={safeCurrentPage}
                 totalPages={totalPages}
                 onPageChange={setCurrentPage}
-                totalItems={paginatedQuotes.length}
+                totalItems={totalItems}
               />
             </>
           )}
         </div>
 
-        <aside className="flex-[6] flex flex-col min-h-0 overflow-hidden">
+        <aside className="flex-1 flex flex-col min-h-0 overflow-hidden">
           <QuoteDetailSidebar />
         </aside>
       </div>

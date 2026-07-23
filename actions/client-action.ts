@@ -25,7 +25,7 @@ interface GetClientsPaginatedParams {
  * RÉCUPÉRATION PAGINÉE DES CLIENTS + SEARCH
  */
 export async function getClientsPaginated(
-  params: GetClientsPaginatedParams = {},
+  params: GetClientsPaginatedParams = {}
 ): Promise<GetClientsPaginatedResult> {
   const { page = 1, limit = 50, search } = params;
   try {
@@ -76,11 +76,14 @@ export async function getClientsPaginated(
         createdAt: quote.createdAt,
         totalAmount: quote.lines.reduce(
           (sum, line) => sum + line.quantity * line.unitPrice,
-          0,
+          0
         ),
       }));
 
-      const totalSpent = mappedQuotes.reduce((acc, q) => acc + q.totalAmount, 0);
+      const totalSpent = mappedQuotes.reduce(
+        (acc, q) => acc + q.totalAmount,
+        0
+      );
 
       return {
         id: client.id,
@@ -90,7 +93,6 @@ export async function getClientsPaginated(
         address: client.address,
         taxId: client.taxId,
         notes: client.notes,
-        tags: client.tags || [],
         createdAt: client.createdAt,
         quoteCount: client._count.quotes,
         totalSpent,
@@ -146,11 +148,14 @@ export async function getClients(): Promise<ClientListItem[]> {
         createdAt: quote.createdAt,
         totalAmount: quote.lines.reduce(
           (sum, line) => sum + line.quantity * line.unitPrice,
-          0,
+          0
         ),
       }));
 
-      const totalSpent = mappedQuotes.reduce((acc, q) => acc + q.totalAmount, 0);
+      const totalSpent = mappedQuotes.reduce(
+        (acc, q) => acc + q.totalAmount,
+        0
+      );
 
       return {
         id: client.id,
@@ -160,7 +165,6 @@ export async function getClients(): Promise<ClientListItem[]> {
         address: client.address,
         taxId: client.taxId,
         notes: client.notes,
-        tags: client.tags || [],
         createdAt: client.createdAt,
         quoteCount: client._count.quotes,
         totalSpent,
@@ -202,7 +206,6 @@ export async function upsertClient(data: Record<string, unknown>) {
         address: has("address") ? parsed.address ?? null : existing.address,
         taxId: has("taxId") ? parsed.taxId ?? null : existing.taxId,
         notes: has("notes") ? parsed.notes ?? null : existing.notes,
-        tags: has("tags") ? parsed.tags ?? [] : existing.tags,
       };
 
       try {
@@ -222,7 +225,8 @@ export async function upsertClient(data: Record<string, unknown>) {
         ) {
           return {
             success: false,
-            error: "Le client a été modifié par un autre utilisateur. Veuillez rafraîchir.",
+            error:
+              "Le client a été modifié par un autre utilisateur. Veuillez rafraîchir.",
           };
         }
         throw updateErr;
@@ -240,7 +244,6 @@ export async function upsertClient(data: Record<string, unknown>) {
       address: parsed.address ?? null,
       taxId: parsed.taxId ?? null,
       notes: parsed.notes ?? null,
-      tags: parsed.tags ?? [],
       user: { connect: { id: authId } },
     };
 
@@ -289,7 +292,7 @@ export async function getClientById(clientId: string) {
 
     if (!client) return null;
 
-    return { ...client, tags: client.tags || [] };
+    return client;
   } catch (err) {
     console.error("[GET_CLIENT_BY_ID_ERROR]:", err);
     return null;

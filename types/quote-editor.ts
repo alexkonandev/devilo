@@ -23,6 +23,7 @@ export interface QuoteItemLine {
  * et envoyé à l'action upsertQuoteAction.
  */
 export interface ActiveQuote {
+  id?: string;
   title: string;
   company: {
     name: string;

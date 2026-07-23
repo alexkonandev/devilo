@@ -51,8 +51,5 @@ export const ACTIVITY_META: Record<
 /** Limite par page pour la pagination */
 export const PAGE_LIMIT = 25;
 
-/** Nombre max de tags affichés sur une ContactCard */
-export const MAX_TAGS_DISPLAY = 3;
-
 /** Nombre max de devis affichés par défaut dans le profil */
 export const MAX_QUOTES_PREVIEW = 5;

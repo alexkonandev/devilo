@@ -6,11 +6,11 @@ import { useQuotes } from "./quote-context";
 import {
   DS_MONO,
   DS_LABEL,
+  STUDIO_V2_BADGE,
   DS_BADGE_ACTIVE,
   DS_BADGE_SUCCESS,
   DS_BADGE_DANGER,
   DS_BADGE_NEUTRAL,
-  DS_BADGE_ACCEPTED,
   DS_BADGE_CANCELLED,
 } from "@/lib/design-system";
 import { CaretUp, CaretDown, CheckSquare, Square } from "@phosphor-icons/react";
@@ -22,18 +22,18 @@ import { CaretUp, CaretDown, CheckSquare, Square } from "@phosphor-icons/react";
 const STATUS_BADGE_CLASS: Record<QuoteStatus, string> = {
   DRAFT: DS_BADGE_NEUTRAL,
   SENT: DS_BADGE_ACTIVE,
-  ACCEPTED: DS_BADGE_ACCEPTED,
   PAID: DS_BADGE_SUCCESS,
   REJECTED: DS_BADGE_DANGER,
+  ACCEPTED: DS_BADGE_SUCCESS,
   CANCELLED: DS_BADGE_CANCELLED,
 };
 
 const STATUS_LABELS: Record<QuoteStatus, string> = {
   DRAFT: "Brouillon",
   SENT: "Envoyé",
-  ACCEPTED: "Accepté",
   PAID: "Payé",
   REJECTED: "Refusé",
+  ACCEPTED: "Accepté",
   CANCELLED: "Annulé",
 };
 
@@ -104,7 +104,7 @@ export function QuotesTable({ data, sortConfig, onSort, highlightThreshold }: Qu
   };
 
   return (
-    <div className="border border-slate-200 rounded-md overflow-hidden">
+    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
       <table className="w-full table-fixed border-collapse bg-white">
         <thead>
           <tr className="border-b border-slate-100">

@@ -1,4 +1,4 @@
-// types/dashboard.ts
+// types/dashboard.ts — Types enrichis pour le Centre de Commandement
 
 export type QuoteStatus = "DRAFT" | "SENT" | "ACCEPTED" | "REJECTED" | "PAID";
 
@@ -19,13 +19,12 @@ export interface DashboardActivity {
   projectName: string;
   quoteNumber: string;
   date: Date | string;
-  // --- Nouveaux champs Phase 1 ---
   delaiJours: number;
   estUrgent: boolean;
   moyenneClient: number;
   variationMontant: number;
   categorie: string;
-  quoteCount: number; // Nombre total de devis du client
+  quoteCount: number;
 }
 
 export interface TopClient {
@@ -44,6 +43,21 @@ export interface SuggestedService {
   category: string;
 }
 
+export interface MonthlyProgress {
+  currentRevenue: number;
+  targetRevenue: number;
+  percentage: number;
+  daysRemaining: number;
+}
+
+export interface PipelineBreakdown {
+  paid: number;
+  sent: number;
+  draft: number;
+  accepted: number;
+  total: number;
+}
+
 export interface AdvancedDashboardData {
   kpis: {
     totalRevenue: number;
@@ -54,4 +68,9 @@ export interface AdvancedDashboardData {
   activity: DashboardActivity[];
   topClients: TopClient[];
   suggestedServices: SuggestedService[];
+  // --- Nouveaux champs Centre de Commandement ---
+  pipeline: PipelineBreakdown;
+  monthlyGoal: MonthlyProgress;
+  urgentCount: number;
+  totalClients: number;
 }

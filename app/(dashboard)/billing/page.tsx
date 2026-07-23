@@ -14,9 +14,14 @@ export default async function BillingPage() {
 
   const billingProfile = await getBillingProfile();
 
+  // Sécurité : si le profil n'a pas pu être chargé, on redirige vers le dashboard
+  if (!billingProfile) {
+    redirect("/dashboard");
+  }
+
   return (
     <div className="h-full w-full">
-      <SpatialBillingView billingProfile={billingProfile!} />
+      <SpatialBillingView billingProfile={billingProfile} />
     </div>
   );
 }

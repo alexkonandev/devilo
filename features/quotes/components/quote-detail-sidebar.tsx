@@ -11,14 +11,11 @@ import {
   DS_BADGE_WARNING,
   DS_BADGE_DANGER,
   DS_BADGE_NEUTRAL,
-  DS_BADGE_ACCEPTED,
   DS_BADGE_CANCELLED,
+  STUDIO_V2_CARD,
+  STUDIO_V2_BTN,
+  STUDIO_V2_BTN_PRIMARY,
 } from "@/lib/design-system";
-import {
-  BTN_PRIMARY,
-  BTN_SECONDARY,
-  BTN_DANGER,
-} from "@/components/shared/ui/constants";
 import {
   FileTextIcon,
   SelectionInverse,
@@ -30,7 +27,6 @@ import {
   CalendarBlank,
   UserIcon,
   MapPinIcon,
-  TagIcon,
   ClockIcon,
   PhoneIcon,
   EnvelopeSimple,
@@ -65,18 +61,18 @@ import { EmailSendForm } from "./email-send-form";
 const STATUS_BADGE: Record<QuoteStatus, string> = {
   DRAFT: DS_BADGE_NEUTRAL,
   SENT: DS_BADGE_ACTIVE,
-  ACCEPTED: DS_BADGE_ACCEPTED,
   PAID: DS_BADGE_SUCCESS,
   REJECTED: DS_BADGE_DANGER,
+  ACCEPTED: DS_BADGE_SUCCESS,
   CANCELLED: DS_BADGE_CANCELLED,
 };
 
 const STATUS_LABEL: Record<QuoteStatus, string> = {
   DRAFT: "Brouillon",
   SENT: "Envoyé",
-  ACCEPTED: "Accepté",
   PAID: "Payé",
   REJECTED: "Rejeté",
+  ACCEPTED: "Accepté",
   CANCELLED: "Annulé",
 };
 
@@ -108,9 +104,9 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-white border border-slate-200 rounded-md overflow-hidden">
+    <div className={cn(STUDIO_V2_CARD, "overflow-hidden")}>
       {/* En-tête de section */}
-      <div className="flex items-center gap-2 px-5 py-2.5 border-b border-slate-100 bg-slate-50/50">
+      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-slate-100 bg-slate-50/50 -mx-3.5 -mt-3.5 mb-3.5 rounded-t-xl">
         {icon && (
           <span className="text-slate-400 shrink-0">{icon}</span>
         )}
@@ -118,7 +114,7 @@ function SectionCard({
           {title}
         </span>
       </div>
-      <div className="p-5">
+      <div>
         {children}
       </div>
     </div>
@@ -338,10 +334,6 @@ function SingleMode({
 
   const totalTTC = totalHT + totalTVA;
 
-  // ── Tags du client ───────────────────────────────────────
-  const clientTags = quote.client.tags ?? [];
-
-
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
@@ -351,7 +343,7 @@ function SingleMode({
       className="flex-1 flex flex-col min-h-0"
     >
       {/* ── Contenu scrollable ── */}
-      <div className="flex-1 overflow-y-auto px-5 pt-4 pb-5 space-y-4">
+      <div className="flex-1 overflow-y-auto  pt-4 pb-5 space-y-4">
         {/* ═══ SECTION 1 : En-tête Devis ═══ */}
         <SectionCard
           title="En-tête Devis"
@@ -828,27 +820,6 @@ function SingleMode({
               </>
             )}
 
-            {!isEditing && clientTags.length > 0 && (
-              <InfoRow
-                label="Tags"
-                icon={<TagIcon size={14} weight="duotone" />}
-                value={
-                  <div className="flex flex-wrap gap-1.5 mt-0.5">
-                    {clientTags.map((tag) => (
-                      <span
-                        key={tag}
-                        className={cn(
-                          "px-2 py-0.5 rounded-md text-[9px] font-semibold",
-                          "bg-indigo-50 text-indigo-600 border border-indigo-200"
-                        )}
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                }
-              />
-            )}
           </div>
         </SectionCard>
 
@@ -1183,17 +1154,17 @@ function BatchMode({
 
       {/* Actions */}
       <div className="shrink-0 px-5 py-4 border-t border-slate-100 flex flex-col gap-2">
-        <button
-          onClick={() => setSendDialogOpen(true)}
-          className={BTN_PRIMARY + " w-full justify-center"}
-        >
+          <button
+            onClick={() => setSendDialogOpen(true)}
+            className={STUDIO_V2_BTN_PRIMARY + " w-full justify-center"}
+          >
           <PaperPlaneTilt size={12} weight="bold" />
           Envoyer sélection
         </button>
-        <button
-          onClick={() => setDeleteDialogOpen(true)}
-          className={BTN_DANGER + " w-full justify-center"}
-        >
+          <button
+            onClick={() => setDeleteDialogOpen(true)}
+            className={STUDIO_V2_BTN + " w-full justify-center bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100"}
+          >
           <TrashSimple size={12} weight="bold" />
           Supprimer sélection
         </button>
@@ -1447,9 +1418,9 @@ export function QuoteDetailSidebar() {
   }, []);
 
   return (
-    <div className="flex flex-col h-full bg-white border border-slate-200 rounded-md overflow-hidden">
+    <div className={cn(STUDIO_V2_CARD, "flex flex-col h-full overflow-hidden")}>
       {/* Entête fixe de la sidebar — avec titre et boutons d'action */}
-      <div className="shrink-0 px-5 py-3  border-b border-slate-200 flex items-center justify-between gap-2">
+      <div className="shrink-0  py-3  border-b border-slate-200 flex items-center justify-between gap-2">
         <span className={cn(DS_LABEL, "uppercase tracking-wider text-[10px]")}>
           {mode === "single"
             ? "Consultation Devis"
@@ -1465,15 +1436,15 @@ export function QuoteDetailSidebar() {
               onClick={() => setIsEditing(true)}
               className="inline-flex items-center justify-center gap-1 px-2 py-1 rounded-md text-[9px] font-bold uppercase tracking-wide bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
             >
-              <PencilSimple size={9} weight="bold" />
-              Éditer
+              <PencilSimple size={13}  />
+            
             </button>
 
             <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
               <AlertDialogTrigger asChild>
-                <button className="inline-flex items-center justify-center gap-1 px-2 py-1 rounded-md text-[9px] font-bold uppercase tracking-wide bg-white text-rose-600 border border-rose-200 hover:bg-rose-50 transition-colors">
-                  <TrashSimple size={9} weight="bold" />
-                  Suppr.
+                <button className="inline-flex items-center justify-center gap-1 px-2 py-1 rounded-md  font-bold uppercase tracking-wide bg-white text-rose-600 border border-rose-200 hover:bg-rose-50 transition-colors">
+                  <TrashSimple size={13}  />
+                  
                 </button>
               </AlertDialogTrigger>
               <AlertDialogContent>

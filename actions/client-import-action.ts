@@ -18,7 +18,6 @@ export interface ClientImportRow {
   representativeName?: string;
   representativePosition?: string;
   notes?: string;
-  tags?: string;
 }
 
 export async function importClientsAction(data: ClientImportRow[]) {
@@ -54,11 +53,6 @@ export async function importClientsAction(data: ClientImportRow[]) {
         continue;
       }
 
-      // Parse tags
-      const tags = row.tags
-        ? row.tags.split(";").map((t) => t.trim()).filter(Boolean)
-        : [];
-
       await prisma.client.create({
         data: {
           name: row.name.trim(),
@@ -75,7 +69,6 @@ export async function importClientsAction(data: ClientImportRow[]) {
           representativeName: row.representativeName?.trim() || null,
           representativePosition: row.representativePosition?.trim() || null,
           notes: row.notes?.trim() || null,
-          tags: tags.length > 0 ? tags : [],
           userId: authId,
         },
       });

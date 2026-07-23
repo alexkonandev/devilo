@@ -7,7 +7,6 @@ import {
   DS_LABEL,
 } from "@/lib/design-system";
 import { useKernelStore } from "@/hooks/use-kernel-store";
-import { EditorTheme } from "@/types/editor";
 import { EditorHeader } from "@/components/editor/editor-header";
 
 // ═══════════════════════════════════════════════════════════════
@@ -39,7 +38,8 @@ interface QuoteEditorLayoutProps {
   onNewQuote?: () => void;
   onDeleteQuote?: () => void;
   onPrint?: () => void;
-  themes: EditorTheme[];
+  onSave?: () => void;
+  isSaving?: boolean;
 }
 
 export const QuoteEditorLayout = ({
@@ -50,7 +50,8 @@ export const QuoteEditorLayout = ({
   onNewQuote,
   onDeleteQuote,
   onPrint,
-  themes,
+  onSave,
+  isSaving,
 }: QuoteEditorLayoutProps) => {
   const [focusMode, setFocusMode] = useState(false);
   const toggleFocus = () => setFocusMode((prev) => !prev);
@@ -68,7 +69,7 @@ export const QuoteEditorLayout = ({
   const isPreview = viewMode === "preview";
 
   // Soft-occlusion : on cache les panneaux latéraux si zoom > 90%
-  const isZoomed = zoom > 0.9;
+  const isZoomed = zoom > 1.1;
 
   return (
     <FocusContext.Provider value={{ focusMode, setFocusMode, toggleFocus }}>
@@ -79,15 +80,15 @@ export const QuoteEditorLayout = ({
         <EditorHeader
           zoom={zoom}
           viewMode={viewMode}
-          activeThemeId={activeThemeId}
           isPreview={isPreview}
           onNewQuote={onNewQuote}
           onDeleteQuote={onDeleteQuote}
           onPrint={onPrint}
+          onSave={onSave}
           setZoom={setZoom}
           setViewMode={setViewMode}
-          setActiveThemeId={setActiveThemeId}
-          themes={themes}
+          isSaving={isSaving}
+          isZoomed={isZoomed}
         />
 
         {/* ═══════════════════════════════════════════════════════════════ */}
@@ -96,7 +97,7 @@ export const QuoteEditorLayout = ({
         <div className="flex-1 flex min-h-0 relative">
           {/* --- SIDEBAR GAUCHE --- */}
           {leftSidebar && (showPanels && !isZoomed) && (
-            <aside className="shrink-0 w-[360px] border-r border-slate-200 bg-white overflow-y-auto animate-in fade-in slide-in-from-left-2 duration-300">
+            <aside className="shrink-0 w-[300px] border-r border-slate-200 bg-white overflow-y-auto animate-in fade-in slide-in-from-left-2 duration-300">
               <div className="h-full w-full">{leftSidebar}</div>
             </aside>
           )}

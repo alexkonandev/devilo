@@ -131,7 +131,6 @@ export async function getRemindersAction(): Promise<GetRemindersResponse> {
     const vipClients = await db.client.findMany({
       where: {
         userId: authId,
-        tags: { has: "VIP" },
         OR: [
           { quotes: { none: {} } },
           {

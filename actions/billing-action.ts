@@ -1,9 +1,10 @@
 "use server";
 
-import { getClerkUserId } from "@/lib/auth";
+import { getClerkUserId, getCurrentUser } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
 import db from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { QuoteStatus } from "@/app/generated/prisma/enums";
 
 // ─── Types exportés ─────────────────────────────────────────────────────────
 
@@ -49,11 +50,42 @@ export interface NextPayment {
 const FREE_QUOTA = 5;
 const PRO_QUOTA = Infinity;
 
+// ─── Helper : créer l'utilisateur en DB s'il n'existe pas ──────────────────
+
+async function ensureUserExists(userId: string) {
+  const existing = await db.user.findUnique({ where: { id: userId } });
+  if (existing) return existing;
+
+  // Création automatique du profil utilisateur via Clerk
+  try {
+    const clerkUser = await getCurrentUser();
+    const email = clerkUser?.emailAddresses?.[0]?.emailAddress;
+
+    if (!email) {
+      console.warn("[ENSURE_USER] Impossible de récupérer l'email Clerk — l'utilisateur sera créé sans email");
+      return db.user.create({
+        data: { id: userId, email: "" },
+      });
+    }
+
+    return db.user.create({
+      data: { id: userId, email },
+    });
+  } catch (error) {
+    console.error("[ENSURE_USER_ERROR]", error);
+    // Ne pas bloquer — on retourne undefined et le code continue
+    return undefined;
+  }
+}
+
 // ─── Récupération du profil billing ─────────────────────────────────────────
 
 export async function getBillingProfile(): Promise<BillingProfile | null> {
   const userId = await getClerkUserId();
   if (!userId) return null;
+
+  // Assurer que l'utilisateur existe en base (création auto si nouveau compte)
+  await ensureUserExists(userId);
 
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -81,9 +113,9 @@ export async function getBillingProfile(): Promise<BillingProfile | null> {
         where: {
           userId,
           createdAt: { gte: startOfMonth },
-          status: { in: ["ACCEPTED", "PAID"] },
+          status: { in: [QuoteStatus.ACCEPTED, QuoteStatus.PAID] },
         },
-        select: {
+        include: {
           lines: { select: { unitPrice: true, quantity: true } },
         },
       }),
@@ -204,7 +236,7 @@ export async function createCheckoutSession(): Promise<{
         : undefined,
       client_reference_id: userId,
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/billing?success=true`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/billing?canceled=true`,
       metadata: { userId },
     });
@@ -247,6 +279,44 @@ export async function createPortalSession(): Promise<{
       success: false,
       error: e instanceof Error ? e.message : "Erreur portail",
     };
+  }
+}
+
+// ─── Activation PRO via session Stripe (fallback sans webhook) ──────────────
+
+export async function activateProFromSession(sessionId: string): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  const userId = await getClerkUserId();
+  if (!userId) return { success: false, error: "UNAUTHORIZED" };
+
+  try {
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+    if (session.payment_status !== "paid" && session.payment_status !== "no_payment_required") {
+      return { success: false, error: "Paiement non confirmé" };
+    }
+
+    const customerId =
+      typeof session.customer === "string"
+        ? session.customer
+        : session.customer?.id;
+    const subscriptionId =
+      typeof session.subscription === "string"
+        ? session.subscription
+        : session.subscription?.id;
+
+    if (!customerId || !subscriptionId) {
+      return { success: false, error: "Session Stripe incomplète" };
+    }
+
+    await syncSubscription(userId, customerId, subscriptionId, "PRO", null);
+    return { success: true };
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Erreur Stripe";
+    console.error("[ACTIVATE_PRO_FROM_SESSION_ERROR]:", msg);
+    return { success: false, error: msg };
   }
 }
 

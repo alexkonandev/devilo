@@ -1,10 +1,11 @@
 // @/app/dashboard/quotes/create/page.tsx
 import { redirect } from "next/navigation";
-import { getClerkUserId } from "@/lib/auth";
+import { getClerkUserId, getCurrentUser } from "@/lib/auth";
 import db from "@/lib/prisma";
-import { getInventoryAction } from "@/actions/inventory-action";
+import { getSuggestionsAction } from "@/actions/suggestion-action";
 import { getAvailableThemes } from "@/actions/design-action";
 import { getEditorClientsAction } from "@/actions/client-editor-action";
+import { getBillingProfile } from "@/actions/billing-action";
 import CreateQuoteClient from "@/components/editor/CreateQuoteClient";
 
 // Type explicite pour Next.js App Router
@@ -19,15 +20,44 @@ export default async function EditorPage({ searchParams }: PageProps) {
   // Await des params (Next.js 15)
   const { themeId } = await searchParams;
 
+  // ─── REDIRECTION VERS LE DERNIER BROUILLON ───
+  // Évite le flash de quotes/new en redirigeant immédiatement
+  // vers le dernier devis DRAFT de l'utilisateur s'il existe.
+  const lastDraftQuote = await db.quote.findFirst({
+    where: { userId, status: "DRAFT" },
+    orderBy: { updatedAt: "desc" },
+    select: { id: true },
+  });
+
+  if (lastDraftQuote) {
+    redirect(`/quotes/${lastDraftQuote.id}`);
+  }
+
   // Récupération parallèle : Efficacité maximale (Profit-oriented)
-  const [inventory, themes, clients, user] = await Promise.all([
-    getInventoryAction(),
+  const [suggestions, themes, clients, billing] = await Promise.all([
+    getSuggestionsAction(),
     getAvailableThemes(),
     getEditorClientsAction(),
-    db.user.findUnique({ where: { id: userId } }),
+    getBillingProfile(),
   ]);
 
-  if (!user) redirect("/dashboard/settings");
+  let user = await db.user.findUnique({ where: { id: userId } });
+
+  if (!user) {
+    // Création automatique du profil utilisateur s'il n'existe pas en BDD
+    const clerkUser = await getCurrentUser();
+    const email = clerkUser?.emailAddresses?.[0]?.emailAddress;
+    if (!email) {
+      redirect("/dashboard/settings");
+    }
+
+    user = await db.user.create({
+      data: {
+        id: userId,
+        email,
+      },
+    });
+  }
 
   // On trouve le thème sélectionné si nécessaire pour matcher l'interface attendue
   const selectedTheme = themes?.find((t) => t.id === themeId) || null;
@@ -35,12 +65,12 @@ export default async function EditorPage({ searchParams }: PageProps) {
   return (
     <div className="h-screen w-full overflow-hidden">
       <CreateQuoteClient
-        initialCatalog={inventory.userServices || []}
-        platformCatalog={inventory.platformServices || []}
+        suggestions={suggestions || []}
         initialThemes={themes || []}
         initialClients={clients || []}
         user={user}
         preSelectedTheme={selectedTheme}
+        billing={billing}
       />
     </div>
   );

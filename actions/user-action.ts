@@ -26,12 +26,17 @@ export async function getUserProfile() {
 
 /**
  * METTRE À JOUR LES INFOS ENTREPRISE
+ * Les noms des champs du formulaire sont mappés vers les noms Prisma.
  */
 export async function updateCompanySettings(data: {
   companyName?: string;
   companyEmail?: string;
-  companyAddress?: string;
+  companyPhone?: string;
+  /** Correspond au champ taxId dans Prisma */
   companySiret?: string;
+  /** Correspond au champ companyAddressDetails dans Prisma */
+  companyAddress?: string;
+  companyCity?: string;
   quotePrefix?: string;
   currency?: string;
 }) {
@@ -39,11 +44,15 @@ export async function updateCompanySettings(data: {
     const authId = await getClerkUserId();
     if (!authId) return { success: false, error: "Non autorisé" };
 
-    const { currency: currencyRaw, ...rest } = data;
+    // Mapping explicite des noms de formulaire → noms Prisma
+    const { companySiret, companyAddress, currency: currencyRaw, ...rest } = data;
+
     await db.user.update({
       where: { id: authId },
       data: {
         ...rest,
+        ...(companySiret !== undefined ? { taxId: companySiret } : {}),
+        ...(companyAddress !== undefined ? { companyAddressDetails: companyAddress } : {}),
         ...(currencyRaw ? { currency: currencyRaw as Currency } : {}),
       },
     });

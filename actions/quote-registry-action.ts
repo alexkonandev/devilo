@@ -144,6 +144,57 @@ export async function deleteQuoteAction(id: string): Promise<ActionResponse> {
 }
 
 /**
+ * GET_RECENT : Récupère les N derniers devis pour la command palette
+ * Retourne les infos essentielles sans les relations lourdes.
+ */
+export async function getRecentQuotesAction(limit: number = 6) {
+  try {
+    const userId = await getClerkUserId();
+    if (!userId) return { success: false, data: [] as RecentQuoteItem[] };
+
+    const quotes = await db.quote.findMany({
+      where: { userId },
+      orderBy: { updatedAt: "desc" },
+      take: limit,
+      select: {
+        id: true,
+        number: true,
+        title: true,
+        status: true,
+        createdAt: true,
+        client: { select: { name: true } },
+        lines: { select: { quantity: true, unitPrice: true } },
+      },
+    });
+
+    const items: RecentQuoteItem[] = quotes.map((q) => ({
+      id: q.id,
+      number: q.number,
+      title: q.title,
+      status: q.status,
+      clientName: q.client?.name ?? "Client inconnu",
+      amount: q.lines.reduce((sum, l) => sum + l.quantity * l.unitPrice, 0),
+      createdAt: q.createdAt,
+    }));
+
+    return { success: true, data: items };
+  } catch (error) {
+    console.error("[GET_RECENT_QUOTES_ERROR]:", error);
+    return { success: false, error: "Impossible de charger les devis récents", data: [] as RecentQuoteItem[] };
+  }
+}
+
+export interface RecentQuoteItem {
+  id: string;
+  number: string;
+  title: string;
+  status: string;
+  clientName: string;
+  amount: number;
+  createdAt: Date;
+}
+
+/**
  * GET_TIMELINE : Récupère l'historique d'un devis (Audit Trail)
  * Utilise maintenant la table QuoteEvent. Fallback sur la timeline
  * synthétique si aucun événement n'est encore enregistré.

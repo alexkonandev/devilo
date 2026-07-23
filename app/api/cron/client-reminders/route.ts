@@ -72,7 +72,6 @@ export async function GET() {
       const vipClients = await db.client.findMany({
         where: {
           userId: user.id,
-          tags: { has: "VIP" },
           OR: [
             { quotes: { none: {} } },
             { quotes: { every: { createdAt: { lt: thirtyDaysAgo } } } },

@@ -69,7 +69,11 @@ export function QuoteProvider({
   );
 
   // ─── Master-Detail ───
-  const [activeQuoteId, setActiveQuoteId] = useState<string | null>(null);
+  // Initialisation : si des devis existent, sélectionner automatiquement le premier
+  // (le plus récent dans la liste) pour éviter l'affichage "Aucune sélection" dans la sidebar
+  const [activeQuoteId, setActiveQuoteId] = useState<string | null>(
+    initialQuotes.length > 0 ? initialQuotes[0].id : null
+  );
   const [selectedQuoteIds, setSelectedQuoteIds] = useState<Set<string>>(new Set());
   const [timeline, setTimeline] = useState<QuoteTimelineEvent[]>([]);
   const [isLoadingTimeline, setIsLoadingTimeline] = useState(false);
@@ -290,9 +294,9 @@ export function QuoteProvider({
       ALL: quotes.length,
       DRAFT: 0,
       SENT: 0,
-      ACCEPTED: 0,
       PAID: 0,
       REJECTED: 0,
+      ACCEPTED: 0,
       CANCELLED: 0,
     };
 
@@ -310,7 +314,7 @@ export function QuoteProvider({
 
       if (q.status === "CANCELLED") return;
       if (q.status === "SENT") pipeline += totalHT;
-      if (["DRAFT", "SENT", "ACCEPTED"].includes(q.status)) outstanding += totalHT;
+      if (["DRAFT", "SENT"].includes(q.status)) outstanding += totalHT;
       if (q.status === "PAID") collected += totalHT;
 
       const quoteDate = new Date(q.createdAt);
@@ -320,7 +324,7 @@ export function QuoteProvider({
       }
     });
 
-    const sentCount = counts["SENT"] + counts["ACCEPTED"] + counts["PAID"] + counts["REJECTED"];
+    const sentCount = counts["SENT"] + counts["PAID"] + counts["REJECTED"];
     const conversionRate = sentCount > 0 ? (counts["PAID"] / sentCount) * 100 : 0;
 
     return {
@@ -358,6 +362,15 @@ export function QuoteProvider({
       await loadTimeline(activeQuoteId);
     }
   }, [activeQuoteId, loadTimeline]);
+
+  // Charger la timeline au montage si un devis est déjà sélectionné
+  // (cas de l'initialisation avec le premier devis de la liste)
+  React.useEffect(() => {
+    if (activeQuoteId) {
+      loadTimeline(activeQuoteId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ─── Reset tous les filtres ───
   const resetFilters = useCallback(() => {

@@ -6,7 +6,7 @@ export const QuoteStatusEnum = z.enum([
   "SENT",
   "VIEWED",
   "ACCEPTED",
-  "REFUSED",
+  "REJECTED",
   "PAID",
   "CANCELLED",
 ]);
@@ -47,7 +47,7 @@ export const upsertQuoteSchema = z.object({
     website: z.string().optional().or(z.literal("")),
   }),
   financials: z.object({
-    vatRatePercent: z.number().min(0).max(100).optional().default(0),
+    vatRatePercent: z.number().min(0).max(30).optional().default(0),
     discountAmount: z.number().min(0).optional().default(0),
   }),
   currency: z.string().optional().default("XOF"),
@@ -70,7 +70,7 @@ export const updateQuoteInlineSchema = z.object({
     number: z.string().optional(),
     issueDate: z.string().optional(),
     status: QuoteStatusEnum.optional(),
-    vatRatePercent: z.number().min(0).max(100).optional(),
+    vatRatePercent: z.number().min(0).max(30).optional(),
     clientName: z.string().optional(),
     clientEmail: z.string().email("Email invalide").optional().or(z.literal("")),
     clientPhone: z.string().optional().or(z.literal("")),

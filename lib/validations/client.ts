@@ -64,8 +64,6 @@ export const clientSchema = z.object({
     .string()
     .nullable()
     .optional(),
-
-  tags: z.array(z.string()).default([]),
 });
 
 export type ClientFormValues = z.infer<typeof clientSchema>;

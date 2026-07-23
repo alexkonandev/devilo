@@ -7,7 +7,6 @@ export const STATUS_TABS: { label: string; value: QuoteStatus | "ALL" }[] = [
   { label: "Tous", value: "ALL" },
   { label: "Brouillon", value: "DRAFT" },
   { label: "Envoyé", value: "SENT" },
-  { label: "Accepté", value: "ACCEPTED" },
   { label: "Payé", value: "PAID" },
   { label: "Refusé", value: "REJECTED" },
   { label: "Annulé", value: "CANCELLED" },

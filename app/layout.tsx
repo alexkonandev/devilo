@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 // Importer Figtree et JetBrains Mono
-import { Figtree, JetBrains_Mono } from "next/font/google";
+import { Figtree, JetBrains_Mono, Playfair_Display } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { frFR } from '@clerk/localizations' // Optionnel : pour avoir l'interface en Français
 import "./globals.css";
@@ -21,8 +21,15 @@ const jetbrains = JetBrains_Mono({
   display: "swap",
 });
 
+// Police artistique ultra distinctive pour la hero section (uniquement landing page)
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-artistic",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "Devis Express",
+  title: "Devilo",
   description: "Générez vos devis professionnels en quelques secondes.",
 };
 
@@ -34,7 +41,7 @@ export default function RootLayout({
   return (
     // Appliquer les deux variables à la balise <html>
     <ClerkProvider localization={frFR}>
-      <html lang="fr" className={`${figtree.variable} ${jetbrains.variable}`}>
+      <html lang="fr" className={`${figtree.variable} ${jetbrains.variable} ${playfair.variable}`}>
         <body>
           {children}
           <Toaster position="top-center" />

@@ -1,7 +1,8 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
-import { CheckCircle2, TrendingUp, Lock, ArrowRight } from "lucide-react";
-import { Logo } from "@/components/ui/logo";
+import { RocketLaunch } from "@phosphor-icons/react";
 
 export default function AuthLayout({
   children,
@@ -9,100 +10,67 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex h-screen w-full bg-white font-sans text-slate-950 overflow-hidden">
-      {/* 1. COLONNE GAUCHE : SAS D'ACTION (VIDE) */}
-      <div className="w-full lg:w-1/2 h-full flex flex-col relative bg-white">
-        <div className="lg:hidden p-6 border-b border-slate-50">
-          <Link href="/">
-            <Logo variant="icon" className="h-10 w-10" />
+    <div className="flex min-h-screen bg-[var(--lp-bg)] text-[var(--lp-text)] font-sans antialiased">
+      {/* Colonne gauche : formulaire */}
+      <div className="flex-1 flex flex-col">
+        <div className="p-6">
+          <Link href="/" className="inline-flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-[var(--lp-accent)] flex items-center justify-center">
+              <RocketLaunch size={14} weight="fill" className="text-white" />
+            </div>
+            <span className="text-sm font-semibold text-[var(--lp-text)]">Devilo</span>
           </Link>
         </div>
-
-        <div className="flex-1 flex flex-col justify-center items-center px-6">
-          <div className="w-full max-w-[360px]">{children}</div>
-        </div>
-
-        <div className="p-8">
-          <div className="flex items-center gap-2 opacity-10 grayscale">
-            <Lock size={12} />
-            <span className="text-[9px] font-mono font-bold uppercase tracking-widest">
-              Auth_Gateway_v3
-            </span>
-          </div>
+        <div className="flex-1 flex items-center justify-center px-6 pb-16">
+          {children}
         </div>
       </div>
 
-      {/* 2. COLONNE DROITE : HUB DE MARQUE (TEXTES CENTRÉS, LOGO DÉCALÉ) */}
-      <div className="hidden lg:flex lg:w-1/2 h-full bg-slate-50 relative flex-col justify-center p-20 overflow-hidden border-l-2 border-slate-100">
-        {/* Background Blueprint */}
-        <div className="absolute inset-0 opacity-[0.4] bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] [background-size:40px_40px]" />
+      {/* Colonne droite : branding */}
+      <div className="hidden lg:flex lg:w-1/2 bg-[#111113] relative flex-col justify-center p-16 overflow-hidden border-l border-[var(--lp-border)]">
+        {/* Grille de fond subtile */}
+        <div className="absolute inset-0 opacity-[0.15] bg-[linear-gradient(to_right,#27272a_1px,transparent_1px),linear-gradient(to_bottom,#27272a_1px,transparent_1px)] [background-size:40px_40px]" />
 
-        {/* LOGO DÉCALÉ EN HAUT À DROITE */}
-        <div className="absolute top-12 right-12 z-20">
-          <Link href="/">
-            <Logo variant="full" className="h-8" />
-          </Link>
-          <div className="mt-2 flex justify-end">
-            <span className="text-[9px] font-mono font-black text-slate-400 uppercase tracking-[0.2em]">
-              Système_Certifié
-            </span>
-          </div>
-        </div>
-
-        {/* BLOC TEXTE ET METRICS : Centré verticalement pour l'impact */}
-        <div className="relative z-10 space-y-16">
-          <div className="space-y-6">
-            <div className="h-1.5 w-16 bg-indigo-600 mb-8" />
-            <h2 className="text-[56px] font-black leading-[0.85] tracking-tighter uppercase text-slate-950">
-              Arrêtez Le
+        <div className="relative z-10 space-y-12">
+          <div className="space-y-4">
+            <div className="w-12 h-1 bg-[var(--lp-accent)] rounded-full" />
+            <h2 className="text-4xl font-bold tracking-tight leading-tight text-[var(--lp-text)]">
+              La facturation,
               <br />
-              <span className="text-indigo-600">Bricolage.</span>
+              <span className="text-[var(--lp-accent)]">enfin devenue belle</span>
             </h2>
-            <p className="text-[16px] text-slate-600 leading-tight font-medium uppercase max-w-sm">
-              DevisExpress n&apos;est pas un outil de facturation. C&apos;est
-              une structure de profit pour bâtisseurs.
+            <p className="text-base text-zinc-400 leading-relaxed max-w-md">
+              Créez des devis élégants en quelques secondes. Suivez vos
+              paiements. Concentrez-vous sur votre vrai métier.
             </p>
           </div>
 
-          <div className="grid gap-4 max-w-md">
+          <div className="space-y-4">
             {[
-              {
-                label: "ROI_Immédiat",
-                desc: "Optimisation du cycle de cashflow",
-                icon: TrendingUp,
-              },
-              {
-                label: "Cloud_Sync",
-                desc: "Données souveraines et isolées",
-                icon: CheckCircle2,
-              },
+              { label: "Devis élégants", desc: "Générez des documents professionnels au design soigné" },
+              { label: "Création express", desc: "Remplissez, personnalisez et exportez en moins de 2 minutes" },
+              { label: "Paiements trackés", desc: "Suivez le statut de vos devis en temps réel" },
             ].map((item) => (
               <div
                 key={item.label}
-                className="bg-white border-2 border-slate-200 p-6 flex items-start gap-4 shadow-[6px_6px_0px_0px_rgba(0,0,0,0.03)]"
+                className="bg-[var(--lp-card)] border border-[var(--lp-border)] rounded-xl p-5 flex items-start gap-4"
               >
-                <div className="p-2 bg-slate-50 border border-slate-100">
-                  <item.icon className="w-5 h-5 text-indigo-600" />
+                <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0">
+                  <div className="w-2 h-2 rounded-full bg-[var(--lp-accent)]" />
                 </div>
-                <div className="space-y-1">
-                  <div className="text-[11px] font-black uppercase tracking-widest text-slate-950 flex items-center gap-2">
-                    {item.label}{" "}
-                    <ArrowRight size={10} className="text-indigo-600" />
-                  </div>
-                  <p className="text-[12px] font-medium text-slate-500 uppercase">
-                    {item.desc}
-                  </p>
+                <div>
+                  <div className="text-sm font-semibold text-[var(--lp-text)]">{item.label}</div>
+                  <p className="text-xs text-zinc-500 mt-0.5">{item.desc}</p>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Footer Discret */}
-        <div className="absolute bottom-12 left-20 right-20 flex justify-between items-center opacity-40">
-          <div className="h-[1px] flex-1 bg-slate-200 mr-8" />
-          <span className="text-[9px] font-mono font-bold uppercase text-slate-400 tracking-tighter whitespace-nowrap">
-            Infrastucture_Abidjan_2026
+        <div className="absolute bottom-8 left-16 right-16 flex items-center gap-4 opacity-20">
+          <div className="h-px flex-1 bg-[var(--lp-border)]" />
+          <span className="text-[9px] font-mono font-semibold uppercase tracking-widest text-zinc-500 whitespace-nowrap">
+            Infrastructure_Abidjan_2026
           </span>
         </div>
       </div>

@@ -31,7 +31,7 @@ export async function sendQuoteEmail(params: SendQuoteEmailParams) {
   }
 
   const fromEmail = process.env.EMAIL_FROM || "alexkonan.dev@gmail.com";
-  const fromName = process.env.EMAIL_FROM_NAME || "Devis Express";
+  const fromName = process.env.EMAIL_FROM_NAME || "Devilo";
 
   try {
     const msg = {
@@ -79,7 +79,7 @@ function buildQuoteEmailHtml({
   quoteNumber: string;
   message?: string;
 }): string {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://devis-express.app";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://devilo.app";
 
   return `
 <!DOCTYPE html>
@@ -107,7 +107,7 @@ function buildQuoteEmailHtml({
                     </p>
                   </td>
                   <td align="right">
-                    <img src="${baseUrl}/logo.svg" alt="Devis Express" width="36" height="36" style="border-radius:8px;" />
+                    <img src="${baseUrl}/logo.svg" alt="Devilo" width="36" height="36" style="border-radius:8px;" />
                   </td>
                 </tr>
               </table>
@@ -152,10 +152,10 @@ function buildQuoteEmailHtml({
           <tr>
             <td style="padding:24px 32px;background-color:#f8fafc;">
               <p style="margin:0 0 8px 0;font-size:11px;color:#94a3b8;text-align:center;">
-                Cet email a été envoyé automatiquement depuis <strong style="color:#64748b;">Devis Express</strong>.
+                Cet email a été envoyé automatiquement depuis <strong style="color:#64748b;">Devilo</strong>.
               </p>
               <p style="margin:0;font-size:10px;color:#cbd5e1;text-align:center;">
-                © ${new Date().getFullYear()} Devis Express — Tous droits réservés.
+                © ${new Date().getFullYear()} Devilo — Tous droits réservés.
               </p>
             </td>
           </tr>

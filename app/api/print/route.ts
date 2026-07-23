@@ -2,18 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import puppeteer from "puppeteer-core";
 import chromium from "@sparticuz/chromium";
 import { generateQuoteHTML } from "@/lib/print-template";
+import { resolveTemplate } from "@/lib/template-system";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
     // 1. ANALYSE ET EXTRACTION DES DONNÉES
-    // Selon tes logs, les items sont à la racine. On vérifie donc si le body
-    // contient directement les données ou s'il les contient dans une clé "quote".
     const quoteData = body?.items ? body : body?.quote;
 
-    // Extraction sécurisée du thème et de la couleur
-    const themeColor = body?.theme?.color || "#6366f1";
+    // Extraction du templateId (ou fallback classic-indigo)
+    const templateId = body?.templateId || body?.theme?.templateId || "minimal-invoice";
 
     // Récupération du numéro de devis pour le nom de fichier (fallback sur timestamp)
     const quoteNumber = quoteData?.quote?.number || `QT-${Date.now()}`;
@@ -41,9 +40,8 @@ export async function POST(req: NextRequest) {
 
     const page = await browser.newPage();
 
-    // 3. GÉNÉRATION DU CONTENU HTML
-    // On utilise ton template partagé avec les données extraites
-    const htmlContent = generateQuoteHTML(quoteData, themeColor);
+    // 3. GÉNÉRATION DU CONTENU HTML AVEC LE TEMPLATE
+    const htmlContent = generateQuoteHTML(quoteData, resolveTemplate(templateId));
 
     const fullHtml = `
       <!DOCTYPE html>
@@ -76,10 +74,10 @@ export async function POST(req: NextRequest) {
     await page.setContent(fullHtml, { waitUntil: "networkidle0" });
 
     // 4. GÉNÉRATION DU BUFFER PDF
+    // Les pages sont déjà explicites dans le HTML (divs A4 avec page-break-after)
     const pdfBuffer = await page.pdf({
       format: "A4",
       printBackground: true,
-      preferCSSPageSize: true,
       displayHeaderFooter: false,
     });
 

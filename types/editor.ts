@@ -99,11 +99,6 @@ export interface EditorUserSettings {
   defaultVatRate: number;
   defaultTerms: string;
   currency: string; // Devise par défaut (Phase 1)
-  // --- COORDONNÉES BANCAIRES (Phase 1 - Bloqueurs Critiques) ---
-  bankName?: string;
-  bankIBAN?: string;
-  bankSWIFT?: string;
-  bankBIC?: string;
 }
 
 export interface EditorActionResponse<T = void> {
@@ -111,3 +106,40 @@ export interface EditorActionResponse<T = void> {
   error?: string;
   data?: T;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RÉ-EXPORT DU SYSTÈME DE TEMPLATES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export type {
+  TemplateDefinition,
+  TemplateColors,
+  TemplateTypography,
+  TemplateSpacing,
+  TemplateOptions,
+  LabelCase,
+  TemplateTier,
+} from "@/lib/template-system";
+
+export {
+  resolveTemplate,
+  getAvailableTemplates,
+  TEMPLATES,
+  MINIMAL_INVOICE,
+  MODERN_OBSIDIAN,
+  EXECUTIVE_GOLD,
+  NORDIC_CLEAN,
+  DARK_PREMIUM,
+  VINTAGE_ELEGANCE,
+  TECH_BLUEPRINT,
+  LUXE_MINIMAL,
+  CREATIVE_STUDIO,
+  MIDNIGHT_SAPPHIRE,
+  ART_DECO,
+  WASHI_ZEN,
+  CYBER_NEON,
+  BOTANICAL,
+  CRIMSON_VELVET,
+  computeHeaderStyle,
+  computeBlurStyle,
+} from "@/lib/template-system";

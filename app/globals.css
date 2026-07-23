@@ -8,6 +8,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-figtree);
   --font-mono: var(--font-jetbrains-mono);
+  --font-artistic: var(--font-artistic);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -207,4 +208,18 @@
   to {
     width: 0%;
   }
+}
+
+/* ─── Landing Page V3 — Obsidian (Dark + Glass Premium) ─────────────── */
+:root {
+  --lp-bg: #0a0a0b;
+  --lp-card: #18181b;
+  --lp-border: #27272a;
+  --lp-accent: #4f46e5;
+  --lp-accent-glow: rgba(79, 70, 229, 0.15);
+  --lp-glass: rgba(255, 255, 255, 0.03);
+  --lp-glass-border: rgba(255, 255, 255, 0.06);
+  --lp-text: #fafafa;
+  --lp-text-secondary: #a1a1aa;
+  --lp-gradient-hero: linear-gradient(135deg, #0a0a0b 0%, #1c1c2e 50%, #0a0a0b 100%);
 }

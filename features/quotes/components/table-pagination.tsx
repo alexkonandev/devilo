@@ -2,7 +2,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
-import { DS_MONO } from "@/lib/design-system";
+import { DS_MONO, STUDIO_V2_BTN } from "@/lib/design-system";
 import { CaretLeft, CaretRight } from "@phosphor-icons/react";
 import { PAGE_SIZE } from "./constants";
 import { QuoteRegistryItem } from "@/types/quote-registry";
@@ -83,7 +83,7 @@ export function TablePagination({
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage <= 1 || isLoading}
           className={cn(
-            "w-7 h-7 flex items-center justify-center rounded text-[10px] font-semibold transition-all",
+            "w-7 h-7 flex items-center justify-center rounded-lg text-[10px] font-semibold transition-all",
             currentPage <= 1 || isLoading
               ? "text-slate-300 cursor-not-allowed"
               : "text-slate-500 hover:bg-slate-100",
@@ -102,7 +102,7 @@ export function TablePagination({
               onClick={() => onPageChange(p)}
               disabled={isLoading}
               className={cn(
-                "w-7 h-7 flex items-center justify-center rounded text-[10px] font-semibold transition-all",
+                "w-7 h-7 flex items-center justify-center rounded-lg text-[10px] font-semibold transition-all",
                 p === currentPage
                   ? "bg-slate-900 text-white"
                   : "text-slate-500 hover:bg-slate-100",
@@ -117,7 +117,7 @@ export function TablePagination({
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage >= totalPages || isLoading}
           className={cn(
-            "w-7 h-7 flex items-center justify-center rounded text-[10px] font-semibold transition-all",
+            "w-7 h-7 flex items-center justify-center rounded-lg text-[10px] font-semibold transition-all",
             currentPage >= totalPages || isLoading
               ? "text-slate-300 cursor-not-allowed"
               : "text-slate-500 hover:bg-slate-100",

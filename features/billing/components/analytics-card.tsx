@@ -3,7 +3,7 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import {
-  DS_BENTO_CARD,
+  STUDIO_V2_CARD,
   DS_ICON_WRAPPER,
   DS_MICRO,
   DS_LABEL,
@@ -62,7 +62,7 @@ export function AnalyticsCard({ billingProfile, className }: AnalyticsCardProps)
   const maxVal = Math.max(...stats.map((s) => s.value), 1);
 
   return (
-    <div className={cn(DS_BENTO_CARD, "p-3", className)}>
+    <div className={cn(STUDIO_V2_CARD, className)}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-1.5">
           <div className={cn(DS_ICON_WRAPPER, "bg-indigo-50")}>
