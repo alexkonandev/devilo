@@ -136,7 +136,7 @@ export async function sendReminderAction(quoteId: string) {
     });
 
     // 5. Revalider
-    revalidatePath("/dashboard");
+    revalidatePath("/home");
 
     return { success: true };
   } catch (err) {

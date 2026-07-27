@@ -48,7 +48,7 @@ export default async function EditorPage({ searchParams }: PageProps) {
     const clerkUser = await getCurrentUser();
     const email = clerkUser?.emailAddresses?.[0]?.emailAddress;
     if (!email) {
-      redirect("/dashboard/settings");
+      redirect("/settings");
     }
 
     user = await db.user.create({

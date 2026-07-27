@@ -34,7 +34,7 @@ export default async function EditorQuotePage({ params }: PageProps) {
   const user = await db.user.findUnique({ where: { id: userId } });
 
   if (!user) {
-    redirect("/dashboard/settings");
+    redirect("/settings");
   }
 
   // Transformer le devis existant en EditorActiveQuote

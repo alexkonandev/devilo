@@ -57,7 +57,7 @@ export async function updateCompanySettings(data: {
       },
     });
 
-    revalidatePath("/dashboard/settings");
+    revalidatePath("/settings");
     return { success: true };
   } catch (err) {
     console.error("[UPDATE_USER_ERROR]:", err);

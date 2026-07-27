@@ -24,7 +24,7 @@ export default function SignUpForm() {
       await signUp.authenticateWithRedirect({
         strategy: "oauth_google",
         redirectUrl: "/sso-callback",
-        redirectUrlComplete: "/dashboard",
+        redirectUrlComplete: "/home",
       });
     } catch (err) {
       console.error(err);
@@ -65,7 +65,7 @@ export default function SignUpForm() {
       });
       if (completeSignUp.status === "complete") {
         await setActive({ session: completeSignUp.createdSessionId });
-        router.push("/dashboard");
+        router.push("/home");
       } else {
         setError("CODE_INVALID");
       }

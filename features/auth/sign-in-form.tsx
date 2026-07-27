@@ -24,7 +24,7 @@ export default function SignInForm() {
       await signIn.authenticateWithRedirect({
         strategy: "oauth_google",
         redirectUrl: "/sso-callback",
-        redirectUrlComplete: "/dashboard",
+        redirectUrlComplete: "/home",
       });
     } catch (err: unknown) {
       console.error(err);
@@ -45,7 +45,7 @@ export default function SignInForm() {
 
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
-        router.push("/dashboard");
+        router.push("/home");
       } else {
         setError("AUTHENTIFICATION_MULTIF_REQUISE");
       }

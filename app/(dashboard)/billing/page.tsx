@@ -16,7 +16,7 @@ export default async function BillingPage() {
 
   // Sécurité : si le profil n'a pas pu être chargé, on redirige vers le dashboard
   if (!billingProfile) {
-    redirect("/dashboard");
+    redirect("/home");
   }
 
   return (
