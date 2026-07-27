@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useCallback } from "react";
@@ -36,6 +35,7 @@ import {
   DS_ICON_XS,
   DS_ROUNDED,
 } from "@/lib/design-system";
+import { DangerZoneCard } from "@/features/settings/components/DangerZoneSection";
 
 // ─── zxcvbn lazy loader ───────────────────────────────────────────────────────
 let zxcvbnInitialized = false;
@@ -57,16 +57,60 @@ const PWD_TEXT_COLORS = ["text-rose-600", "text-orange-500", "text-amber-500", "
 // StatutEmail — ligne compacte avec statut vérifié/non vérifié
 // ═══════════════════════════════════════════════════════════
 
-function StatutEmail({ verified }: { verified: boolean }) {
+function StatutEmail({ verified, email, passwordEnabled }: { verified: boolean; email: string; passwordEnabled: boolean }) {
   return (
-    <div className="flex items-center justify-between rounded-md border border-slate-200 bg-slate-50/60 px-2 py-1.5">
-      <div className="flex items-center gap-2">
-        <span className={DS_LABEL}>Email</span>
-        <span className={cn(DS_MONO, "text-[10px] text-slate-900")}>Authentifié</span>
-      </div>
-      <span className={cn(verified ? DS_BADGE_SUCCESS : DS_BADGE_DANGER, "text-[7px] leading-none")}>
-        {verified ? "VÉRIFIÉ" : "EN ATTENTE"}
+    <div className="flex items-center gap-2 rounded-md border border-slate-200 bg-slate-50/60 px-2 py-1.5">
+      <span className={cn(DS_LABEL, "shrink-0")}>Email</span>
+      <span className="text-[9px] font-mono text-slate-500 truncate">{email}</span>
+      <span className="text-[7px] text-slate-300">·</span>
+      <span className="flex items-center gap-1 text-[9px] font-sans text-slate-600">
+        {passwordEnabled ? "Mot de passe" : "Google"}
       </span>
+      <span className="text-[7px] text-slate-300">·</span>
+      <span className={cn(
+        "text-[9px] font-sans font-semibold",
+        verified ? "text-emerald-600" : "text-amber-600"
+      )}>
+        {verified ? "Vérifié" : "En attente"}
+      </span>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════
+// PasswordIndicator — barre de progression seule (sans input)
+// ═══════════════════════════════════════════════════════════
+
+function PasswordIndicator({ value }: { value: string }) {
+  const [pwdScore, setPwdScore] = useState<0 | 1 | 2 | 3 | 4>(0);
+  const [pwdPending, setPwdPending] = useState(false);
+
+  React.useEffect(() => {
+    if (!value) { setPwdScore(0); return; }
+    setPwdPending(true);
+    getZxcvbn().then((zxcvbn) => {
+      const result = zxcvbn(value);
+      setPwdScore(result.score as 0 | 1 | 2 | 3 | 4);
+      setPwdPending(false);
+    });
+  }, [value]);
+
+  const barWidth = value ? `${(pwdScore + 1) * 20}%` : "0%";
+
+  return (
+    <div className="space-y-0.5">
+      <div className="flex items-center gap-2">
+        <div className={cn(DS_PROGRESS_TRACK, "flex-1")}>
+          <div className={cn(DS_PROGRESS_BAR, PWD_COLORS[pwdScore])}
+            style={{ width: barWidth }} />
+        </div>
+        {!pwdPending && (
+          <span className="text-[8px] font-sans font-semibold lowercase text-slate-600">{PWD_LABELS[pwdScore]}</span>
+        )}
+      </div>
+      {pwdScore < 3 && (
+        <p className="text-[7px] text-amber-600">Utilisez au moins 8 caractères avec lettres, chiffres et symboles</p>
+      )}
     </div>
   );
 }
@@ -130,7 +174,7 @@ function PasswordStrength({
                 style={{ width: barWidth }} />
             </div>
             {!pwdPending && (
-              <span className={cn(DS_MONO, "text-[8px]", PWD_TEXT_COLORS[pwdScore])}>{PWD_LABELS[pwdScore]}</span>
+              <span className="text-[8px] font-sans font-semibold lowercase text-slate-600">{PWD_LABELS[pwdScore]}</span>
             )}
           </div>
           {pwdScore < 3 && (
@@ -268,61 +312,80 @@ function ChangePasswordForm({ passwordEnabled }: { passwordEnabled: boolean }) {
         </div>
       )}
 
-      {passwordEnabled && (
-        <PasswordField
-          value={currentPassword}
-          onChange={(v) => { setCurrentPassword(v); if (fieldErrors.current) setFieldErrors((p) => ({ ...p, current: undefined })); }}
-          show={showCurrent}
-          onToggleShow={() => setShowCurrent((v) => !v)}
-          label="Mot de passe actuel"
-          autoComplete="current-password"
-          error={fieldErrors.current}
-        />
-      )}
-
-      <PasswordStrength
-        value={newPassword}
-        onChange={(v) => { setNewPassword(v); if (fieldErrors.new) setFieldErrors((p) => ({ ...p, new: undefined })); }}
-        show={showNew}
-        onToggleShow={() => setShowNew((v) => !v)}
-        label="Nouveau mot de passe"
-        autoComplete="new-password"
-      />
-      {fieldErrors.new && (
-        <p className="text-[7px] text-rose-500 -mt-2">{fieldErrors.new}</p>
-      )}
-
-      <PasswordField
-        value={confirmPassword}
-        onChange={(v) => { setConfirmPassword(v); if (fieldErrors.confirm) setFieldErrors((p) => ({ ...p, confirm: undefined })); }}
-        show={showConfirm}
-        onToggleShow={() => setShowConfirm((v) => !v)}
-        label="Confirmer le mot de passe"
-        autoComplete="new-password"
-        error={fieldErrors.confirm}
-      />
-
-      {/* Indicateur match */}
-      {confirmPassword && !passwordsMatch && (
-        <p className="text-[7px] text-rose-500 -mt-2">Les mots de passe ne correspondent pas</p>
-      )}
-
-      <button type="button" onClick={handleSubmit} disabled={!canSubmit || isPending}
-        className={cn(
-          "w-full flex items-center justify-center gap-1.5 py-1.5 rounded-md text-[9px] font-semibold uppercase tracking-wider transition-all",
-          canSubmit && !isPending
-            ? "bg-slate-900 text-white hover:bg-slate-800"
-            : "bg-slate-100 text-slate-300 cursor-not-allowed",
-        )}>
-        {isPending ? (
-          <>
-            <span className="w-2.5 h-2.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            Mise à jour…
-          </>
-        ) : (
-          "Mettre à jour le mot de passe"
+      <div className="grid grid-cols-12 gap-3 items-end">
+        {passwordEnabled && (
+          <div className="col-span-4">
+            <PasswordField
+              value={currentPassword}
+              onChange={(v) => { setCurrentPassword(v); if (fieldErrors.current) setFieldErrors((p) => ({ ...p, current: undefined })); }}
+              show={showCurrent}
+              onToggleShow={() => setShowCurrent((v) => !v)}
+              label="Mot de passe actuel"
+              autoComplete="current-password"
+              error={fieldErrors.current}
+            />
+          </div>
         )}
-      </button>
+
+        {/* Nouveau mot de passe — input seul sans barre */}
+        <div className={passwordEnabled ? "col-span-3" : "col-span-5"}>
+          <span className={cn(DS_LABEL, "mb-1 block")}>Nouveau mot de passe</span>
+          <div className="relative">
+            <input value={newPassword}
+              onChange={(e) => { const val = e.target.value; setNewPassword(val); if (fieldErrors.new) setFieldErrors((p) => ({ ...p, new: undefined })); }}
+              type={showNew ? "text" : "password"}
+              className={cn(DS_INPUT, DS_ROUNDED, "w-full text-xs pr-8")}
+              placeholder="••••••••"
+              autoComplete="new-password" />
+            <button type="button" onClick={() => setShowNew((v) => !v)}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 flex items-center justify-center w-4 h-4">
+              {showNew ? <EyeSlashIcon size={9} /> : <EyeIcon size={9} />}
+            </button>
+          </div>
+        </div>
+
+        {/* Confirmer le mot de passe */}
+        <div className={passwordEnabled ? "col-span-3" : "col-span-5"}>
+          <PasswordField
+            value={confirmPassword}
+            onChange={(v) => { setConfirmPassword(v); if (fieldErrors.confirm) setFieldErrors((p) => ({ ...p, confirm: undefined })); }}
+            show={showConfirm}
+            onToggleShow={() => setShowConfirm((v) => !v)}
+            label="Confirmer le mot de passe"
+            autoComplete="new-password"
+            error={fieldErrors.confirm}
+          />
+        </div>
+
+        <button type="button" onClick={handleSubmit} disabled={!canSubmit || isPending}
+          className={cn(
+            "col-span-2 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-[9px] font-semibold uppercase tracking-wider transition-all",
+            canSubmit && !isPending
+              ? "bg-slate-900 text-white hover:bg-slate-800"
+              : "bg-slate-100 text-slate-300 cursor-not-allowed",
+          )}>
+          {isPending ? (
+            <>
+              <span className="w-2.5 h-2.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              Mise à jour…
+            </>
+          ) : (
+            "Mettre à jour"
+          )}
+        </button>
+      </div>
+
+      {/* Barre de force + messages sous la grille */}
+      <div className="mt-2 space-y-1">
+        {newPassword && <PasswordIndicator value={newPassword} />}
+        {fieldErrors.new && (
+          <p className="text-[7px] text-rose-500">{fieldErrors.new}</p>
+        )}
+        {confirmPassword && !passwordsMatch && (
+          <p className="text-[7px] text-rose-500">Les mots de passe ne correspondent pas</p>
+        )}
+      </div>
+
     </div>
   );
 }
@@ -350,29 +413,29 @@ function SessionItem({
 
   return (
     <div className={cn(
-      "flex items-center px-2 py-1.5 rounded-md border",
+      "flex items-center px-2 py-1.5 rounded-md border flex-1",
       isCurrent ? "bg-emerald-50/60 border-emerald-100" : "bg-slate-50 border-slate-100",
     )}>
       <div className="flex items-center gap-2 min-w-0 flex-1">
         <div className={cn("w-1.5 h-1.5 rounded-full shrink-0 mt-px self-center", isCurrent ? "bg-emerald-500" : "bg-slate-400")} />
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-medium text-slate-900 truncate leading-tight">
+          <p className="text-xs font-medium text-slate-900 truncate leading-tight">
             {session.browser} · {session.os}
           </p>
-          <p className="text-[7px] text-slate-600 truncate leading-tight">
+          <p className="text-[9px] text-slate-600 truncate leading-tight">
             {session.city !== "—" ? `${session.city}` : session.ip !== "—" ? `IP: ${session.ip}` : "Localisation inconnue"}
           </p>
         </div>
       </div>
       <div className="flex items-center gap-2 shrink-0 ml-2">
-        <span className="flex items-center gap-0.5 text-[7px] text-slate-500 whitespace-nowrap">
-          <ClockIcon size={7} />{timeLabel}
+        <span className="flex items-center gap-0.5 text-[9px] text-slate-500 whitespace-nowrap">
+          <ClockIcon size={8} />{timeLabel}
         </span>
         {isCurrent ? (
-          <span className="text-[7px] font-bold text-emerald-600 uppercase tracking-wide whitespace-nowrap">Active</span>
+          <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-wide whitespace-nowrap">Active</span>
         ) : (
           <button type="button" onClick={() => onRevoke(session.id)} disabled={revoking === session.id}
-            className="text-[7px] font-bold text-rose-500 hover:text-rose-700 uppercase tracking-wide disabled:opacity-40 whitespace-nowrap">
+            className="text-[9px] font-bold text-rose-500 hover:text-rose-700 uppercase tracking-wide disabled:opacity-40 whitespace-nowrap">
             {revoking === session.id ? "…" : "Révoquer"}
           </button>
         )}
@@ -382,16 +445,132 @@ function SessionItem({
 }
 
 // ═══════════════════════════════════════════════════════════
-// BentoSecurityCard
+// PasswordSecurityCard — Bloc gauche : mot de passe uniquement
+// ═══════════════════════════════════════════════════════════
+
+interface PasswordSecurityCardProps {
+  securityProfile: SecurityProfile;
+  userEmail: string;
+  className?: string;
+}
+
+export function PasswordSecurityCard({
+  securityProfile,
+  userEmail,
+  className,
+}: PasswordSecurityCardProps) {
+  return (
+    <div className={cn(STUDIO_V2_CARD, className)}>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-1.5">
+          <div className="flex items-center justify-center w-5 h-5 shrink-0 rounded-md bg-indigo-50">
+            <LockKeyIcon size={10} className="text-indigo-500" />
+          </div>
+          <span className="text-[9px] font-sans font-semibold uppercase tracking-wide text-slate-700">Mot de passe</span>
+        </div>
+        <span className={cn(securityProfile.emailVerified ? DS_BADGE_SUCCESS : DS_BADGE_DANGER, "text-[7px] leading-none")}>
+          {securityProfile.emailVerified ? "VÉRIFIÉ" : "EN ATTENTE"}
+        </span>
+      </div>
+
+      <div className="space-y-3">
+        <StatutEmail verified={securityProfile.emailVerified} email={userEmail} passwordEnabled={securityProfile.passwordEnabled} />
+
+        <div className="rounded-md border border-slate-200 bg-slate-50/60 px-2 py-2">
+          <ChangePasswordForm passwordEnabled={securityProfile.passwordEnabled} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════
+// SessionDangerCard — Bloc droit : sessions actives + zone de danger
+// ═══════════════════════════════════════════════════════════
+
+interface SessionDangerCardProps {
+  securityProfile: SecurityProfile;
+  userEmail: string;
+  className?: string;
+}
+
+export function SessionDangerCard({
+  securityProfile,
+  userEmail,
+  className,
+}: SessionDangerCardProps) {
+  const sp = securityProfile;
+  const [sessions, setSessions] = useState<ParsedSession[]>(sp.sessions);
+  const [revoking, setRevoking] = useState<string | null>(null);
+  const [renderTime] = useState(() => Date.now());
+
+  const handleRevoke = useCallback(async (sessionId: string) => {
+    setRevoking(sessionId);
+    const res = await revokeSession(sessionId);
+    if (res.success) {
+      setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+      toast.success("Session révoquée");
+    } else {
+      toast.error("Échec révocation", { description: res.error });
+    }
+    setRevoking(null);
+  }, []);
+
+  return (
+    <div className={cn(STUDIO_V2_CARD, className)}>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-1.5">
+          <div className="flex items-center justify-center w-5 h-5 shrink-0 rounded-md bg-indigo-50">
+            <ShieldCheckIcon size={10} className="text-indigo-500" />
+          </div>
+          <span className="text-[9px] font-sans font-semibold uppercase tracking-wide text-slate-700">Sessions & Sécurité</span>
+        </div>
+        <span className={DS_BADGE_NEUTRAL}>{sessions.length} session{sessions.length > 1 ? "s" : ""}</span>
+      </div>
+
+      <div className="space-y-3">
+        {/* Sessions */}
+        <div>
+          <span className={cn(DS_LABEL, "mb-1.5 block")}>Sessions actives</span>
+          {sessions.length === 0 && (
+            <p className="text-[9px] font-sans font-medium text-slate-600">Aucune session active</p>
+          )}
+          <div className="flex flex-col gap-2">
+            {sessions.map((s) => (
+              <SessionItem
+                key={s.id}
+                session={s}
+                isCurrent={s.isCurrent}
+                revoking={revoking}
+                renderTime={renderTime}
+                onRevoke={handleRevoke}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Zone de Danger */}
+        <DangerZoneCard userEmail={userEmail} />
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════
+// BentoSecurityCard — Version complète (legacy, gardée pour compat)
 // ═══════════════════════════════════════════════════════════
 
 interface BentoSecurityCardProps {
   securityProfile: SecurityProfile;
+  userEmail: string;
   className?: string;
 }
 
 export function BentoSecurityCard({
   securityProfile,
+  userEmail,
   className,
 }: BentoSecurityCardProps) {
   const sp = securityProfile;
@@ -419,15 +598,15 @@ export function BentoSecurityCard({
           <div className="flex items-center justify-center w-5 h-5 shrink-0 rounded-md bg-indigo-50">
             <ShieldCheckIcon size={10} className="text-indigo-500" />
           </div>
-          <span className={cn("text-[9px] font-mono uppercase tracking-wide text-slate-700")}>Sécurité</span>
+          <span className="text-[9px] font-sans font-semibold uppercase tracking-wide text-slate-700">Sécurité</span>
+          <span className={cn(sp.emailVerified ? DS_BADGE_SUCCESS : DS_BADGE_DANGER, "text-[7px] leading-none")}>
+            {sp.emailVerified ? "VÉRIFIÉ" : "EN ATTENTE"}
+          </span>
         </div>
         <span className={DS_BADGE_NEUTRAL}>{sessions.length} session{sessions.length > 1 ? "s" : ""}</span>
       </div>
 
       <div className="space-y-3">
-        {/* Email */}
-        <StatutEmail verified={sp.emailVerified ?? false} />
-
         {/* Mot de passe — formulaire complet */}
         <div className="rounded-md border border-slate-200 bg-slate-50/60 px-2 py-2">
           <ChangePasswordForm passwordEnabled={sp.passwordEnabled} />
@@ -437,9 +616,9 @@ export function BentoSecurityCard({
         <div>
           <span className={cn(DS_LABEL, "mb-1.5 block")}>Sessions actives</span>
           {sessions.length === 0 && (
-            <p className={cn(DS_MONO, "text-[9px] text-slate-600")}>Aucune session active</p>
+            <p className="text-[9px] font-sans font-medium text-slate-600">Aucune session active</p>
           )}
-          <div className="space-y-1">
+          <div className="flex gap-2">
             {sessions.map((s) => (
               <SessionItem
                 key={s.id}
@@ -452,6 +631,9 @@ export function BentoSecurityCard({
             ))}
           </div>
         </div>
+
+        {/* Zone de Danger */}
+        <DangerZoneCard userEmail={userEmail} />
       </div>
     </div>
   );

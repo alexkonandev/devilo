@@ -37,7 +37,7 @@ export function InvoicesCard({ invoices, className }: InvoicesCardProps) {
           </span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className={cn(DS_MONO, "text-[9px] text-slate-400")}>
+          <span className="text-[9px] font-sans font-medium text-slate-500">
             {invoices.length} facture{invoices.length !== 1 ? "s" : ""}
           </span>
         </div>
@@ -53,8 +53,8 @@ export function InvoicesCard({ invoices, className }: InvoicesCardProps) {
           >
             <ReceiptIcon size={16} className="text-slate-300" />
           </div>
-          <p className="text-xs text-slate-400 mb-1">Aucune facture</p>
-          <p className="text-[10px] text-slate-300">
+          <p className="text-xs text-slate-500 mb-1">Aucune facture</p>
+          <p className="text-[10px] text-slate-500">
             Vos factures apparaîtront ici après votre premier paiement.
           </p>
         </div>
@@ -70,20 +70,20 @@ export function InvoicesCard({ invoices, className }: InvoicesCardProps) {
                   <ReceiptIcon size={DS_ICON_SM} className="text-slate-400" />
                 </div>
                 <div>
-                  <span className={cn(DS_MONO, "text-slate-700 block")}>
+                  <span className="text-[11px] font-sans font-medium text-slate-700 block">
                     {new Date(inv.date).toLocaleDateString("fr-FR", {
                       day: "2-digit",
                       month: "short",
                       year: "numeric",
                     })}
                   </span>
-                  <span className="text-[9px] text-slate-400">
+                  <span className="text-[9px] text-slate-500">
                     {inv.id.slice(0, 16)}...
                   </span>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <span className={cn(DS_MONO, "text-slate-900 font-bold")}>
+                <span className="text-[11px] font-sans font-bold text-slate-900 tabular-nums">
                   {inv.amount.toLocaleString("fr-FR")} {inv.currency}
                 </span>
                 <span

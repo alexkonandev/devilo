@@ -190,12 +190,12 @@ export function BentoProfileCard({
         {/* Aperçu PDF */}
         <div className="p-2 bg-slate-50 rounded border border-slate-100">
           <div className="flex items-center gap-1.5 mb-1">
-            <FileTextIcon size={9} className="text-slate-400" />
+            <FileTextIcon size={9} className="text-slate-500" />
             <span className={cn(DS_MICRO, "text-slate-500")}>Aperçu En-tête PDF</span>
             {getAddressLength() > 80 && <span className="px-1 py-0.5 rounded text-[7px] font-bold bg-amber-50 text-amber-600 border border-amber-200">TROP LONG</span>}
           </div>
           <div className="bg-white p-2 rounded border border-slate-100">
-            <div className={cn(DS_MONO, "text-[10px] text-slate-700")}>
+            <div className="text-[10px] font-sans font-medium text-slate-700 leading-snug">
               {watchedValues.companyName || "Studio Digital Ivoire"} — {watchedValues.taxIdLabel || "NCC"} : {watchedValues.taxId || "CI-ABJ-2023-A-12345"} — {formatAddressForPDF()}
             </div>
           </div>

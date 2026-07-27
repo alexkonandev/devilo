@@ -13,9 +13,10 @@ import LandingFooter from "@/components/landing/landing-footer";
 
 interface LandingPageViewProps {
   userId: string | null;
+  hasQuote: boolean;
 }
 
-export default function LandingPageView({ userId }: LandingPageViewProps) {
+export default function LandingPageView({ userId, hasQuote }: LandingPageViewProps) {
   return (
     <div className="min-h-screen bg-[var(--lp-bg)] text-white font-sans antialiased">
       <LandingNav userId={userId} />
@@ -25,7 +26,7 @@ export default function LandingPageView({ userId }: LandingPageViewProps) {
       <LandingFeatures />
       <LandingPricing userId={userId} />
       <LandingFaq />
-      <LandingCta userId={userId} />
+      <LandingCta userId={userId} hasQuote={hasQuote} />
       <LandingFooter />
     </div>
   );

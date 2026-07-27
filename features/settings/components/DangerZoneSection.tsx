@@ -6,7 +6,6 @@ import { WarningIcon, TrashIcon } from "@phosphor-icons/react";
 import { deleteAccountSecure } from "@/actions/security-action";
 import {
   DS_LABEL,
-  DS_MONO,
   DS_MICRO,
   DS_INPUT,
   DS_BUTTON,
@@ -51,7 +50,7 @@ export function DangerZoneCard({ userEmail, className }: DangerZoneCardProps) {
 
   return (
     <>
-      <div className={cn("rounded-md border border-rose-200 bg-rose-50/30 p-2", className)}>
+      <div className={cn("rounded-md border border-rose-200 bg-rose-50/30 p-4", className)}>
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
@@ -59,8 +58,8 @@ export function DangerZoneCard({ userEmail, className }: DangerZoneCardProps) {
                 <WarningIcon size={DS_ICON_XS} className="text-rose-500" weight="bold" />
               </div>
               <div className="flex flex-col gap-0.5">
-                <span className={cn(DS_MICRO, "text-rose-600")}>Zone de Danger</span>
-                <span className="text-[9px] text-rose-500 leading-tight">
+                <span className="text-xs font-semibold text-rose-600">Zone de Danger</span>
+                <span className="text-xs text-rose-500 leading-tight">
                   Supprime définitivement votre compte et toutes les données associées.
                 </span>
               </div>
@@ -69,7 +68,7 @@ export function DangerZoneCard({ userEmail, className }: DangerZoneCardProps) {
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className={cn(DS_BUTTON, "bg-rose-600 hover:bg-rose-500 h-6 text-[8px] px-2 shrink-0")}
+            className={cn(DS_BUTTON, "bg-rose-600 hover:bg-rose-500 h-8 text-[10px] px-3 shrink-0")}
           >
             <TrashIcon size={8} weight="bold" />
             Supprimer

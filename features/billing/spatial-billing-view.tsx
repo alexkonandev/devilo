@@ -6,10 +6,8 @@ import { toast } from "sonner";
 import { useKernelStore } from "@/hooks/use-kernel-store";
 import { PlanStatusCard } from "./components/plan-status-card";
 import { AnalyticsCard } from "./components/analytics-card";
-import { UpgradeCard } from "./components/upgrade-card";
-import { ManageCard } from "./components/manage-card";
 import { FinancialLifecycleCard } from "./components/financial-lifecycle-card";
-import { InvoicesCard } from "./components/invoices-card";
+import { BillingManageBlock } from "./components/billing-manage-block";
 import { activateProFromSession } from "@/actions/billing-action";
 import type { BillingProfile } from "@/actions/billing-action";
 import { CreditCardIcon } from "@phosphor-icons/react";
@@ -77,7 +75,6 @@ export function SpatialBillingView({
 
   const isPro =
     billingProfile.plan === "PRO" || billingProfile.plan === "ENTERPRISE";
-  const hasStripe = !!billingProfile.stripeCustomerId;
 
   return (
     <div className="flex flex-col h-full w-full bg-slate-50">
@@ -86,10 +83,10 @@ export function SpatialBillingView({
         <div className="w-6 h-6 rounded-md bg-violet-50 flex items-center justify-center">
           <CreditCardIcon size={12} className="text-violet-600" weight="bold" />
         </div>
-        <span className="text-[10px] font-mono font-bold text-slate-800 tracking-tight">
+        <span className="text-[10px] font-sans font-bold text-slate-800 tracking-tight">
           Facturation
         </span>
-        <span className="text-[8px] font-mono text-slate-400">
+        <span className="text-[8px] font-sans text-slate-500">
           Abonnement · Quota · Factures
         </span>
         <div className="flex-1" />
@@ -100,24 +97,17 @@ export function SpatialBillingView({
 
       {/* === CONTENU === */}
       <div className="flex-1 overflow-y-auto px-6 pb-6 pt-4 space-y-4">
-        {/* 1. Statut abonnement — information prioritaire */}
-        <PlanStatusCard billingProfile={billingProfile} />
+        {/* Ligne 1 : Statut abonnement + Activité mensuelle */}
+        <div className="grid grid-cols-2 gap-4">
+          <PlanStatusCard billingProfile={billingProfile} />
+          <AnalyticsCard billingProfile={billingProfile} />
+        </div>
 
-        {/* 2. Cycle de facturation — prochain prélèvement, comparateur */}
-        <FinancialLifecycleCard billingProfile={billingProfile} isPro={isPro} />
-
-        {/* 3. Action primaire : upgrade (FREE) ou gestion (PRO) */}
-        {isPro ? (
-          <ManageCard hasStripe={hasStripe} />
-        ) : (
-          <UpgradeCard hasStripe={hasStripe} />
-        )}
-
-        {/* 4. Statistiques mensuelles d'utilisation */}
-        <AnalyticsCard billingProfile={billingProfile} />
-
-        {/* 5. Historique des factures */}
-        <InvoicesCard invoices={billingProfile.invoices} />
+        {/* Ligne 2 : Cycle de facturation + Gestion & Paiement + Factures */}
+        <div className="grid grid-cols-2 gap-4">
+          <FinancialLifecycleCard billingProfile={billingProfile} isPro={isPro} />
+          <BillingManageBlock billingProfile={billingProfile} isPro={isPro} />
+        </div>
       </div>
     </div>
   );

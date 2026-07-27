@@ -9,6 +9,7 @@ import React, {
 } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import StudioLoader from "@/components/editor/studio-loader";
 import { useKernelStore } from "@/hooks/use-kernel-store";
 
 // --- UI COMPONENTS ---
@@ -371,13 +372,7 @@ export default function CreateQuoteClient({
   } = useKernelStore();
 
   if (!mounted || !_hasHydrated)
-    return (
-      <div className="h-screen w-full bg-slate-50 flex items-center justify-center">
-        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 animate-pulse">
-          Initialisation...
-        </span>
-      </div>
-    );
+    return <StudioLoader />;
 
   if (!activeQuote) return null;
 

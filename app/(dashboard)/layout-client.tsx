@@ -13,7 +13,7 @@ export default function SoftwareLayoutClient({ children }: SoftwareLayoutProps) 
     <div className="h-screen w-screen bg-slate-50 font-sans text-slate-900">
       <SpatialStatusBar />
       <SpatialDock />
-      <main className="h-full w-full overflow-y-auto pt-12 pl-16">
+      <main className="h-full w-full overflow-y-auto pt-10 pl-16">
         {children}
       </main>
     </div>

@@ -58,7 +58,7 @@ export function FinancialLifecycleCard({ billingProfile, isPro, className }: Fin
                   {nextPayment.amount.toLocaleString("fr-FR")}{" "}
                   {nextPayment.currency}
                 </span>
-                <span className={cn(DS_MONO, "text-violet-400 ml-2")}>
+                <span className="text-[11px] font-sans font-medium text-violet-500 ml-2">
                   le{" "}
                   {new Date(nextPayment.date).toLocaleDateString("fr-FR", {
                     day: "2-digit",
@@ -79,10 +79,10 @@ export function FinancialLifecycleCard({ billingProfile, isPro, className }: Fin
                 </span>
               </div>
               <div className="flex items-center gap-2 mt-1.5">
-                <span className={cn(DS_MONO, "text-slate-800 font-bold")}>
+                <span className="text-[11px] font-sans font-bold text-slate-800 uppercase">
                   {(nextPayment.cardBrand ?? "carte").toUpperCase()}
                 </span>
-                <span className={cn(DS_MONO, "text-slate-500")}>
+                <span className="text-[11px] font-sans font-medium text-slate-500">
                   •••• {nextPayment.cardLast4}
                 </span>
               </div>

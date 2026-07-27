@@ -73,7 +73,7 @@ export function AnalyticsCard({ billingProfile, className }: AnalyticsCardProps)
           </span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className={cn(DS_MONO, "text-[9px] text-slate-400")}>
+          <span className="text-[9px] font-sans text-slate-500">
             {new Date().toLocaleDateString("fr-FR", {
               month: "long",
               year: "numeric",
@@ -92,10 +92,10 @@ export function AnalyticsCard({ billingProfile, className }: AnalyticsCardProps)
                 Revenu HT ce mois
               </span>
               <div className="flex items-baseline gap-1 mt-1">
-                  <span className="text-xl font-black text-emerald-700 font-mono tabular-nums">
+                  <span className="text-xl font-black text-emerald-700 tabular-nums">
                     {monthlyStats.revenueThisMonth.toLocaleString("fr-FR")}
                   </span>
-                <span className={cn(DS_MONO, "text-emerald-500")}>
+                <span className="text-[11px] font-sans font-semibold text-emerald-500">
                   {billingProfile.nextPayment?.currency ?? "XOF"}
                 </span>
               </div>
@@ -120,7 +120,7 @@ export function AnalyticsCard({ billingProfile, className }: AnalyticsCardProps)
                     {s.label}
                   </span>
                 </div>
-                <span className={cn(DS_MONO, "text-slate-800 font-bold")}>
+                <span className="text-[11px] font-sans font-bold text-slate-800 tabular-nums">
                   {s.value}
                 </span>
               </div>

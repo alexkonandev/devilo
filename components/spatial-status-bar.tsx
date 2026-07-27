@@ -251,7 +251,7 @@ export function SpatialStatusBar() {
 
   return (
     <motion.header
-      className="fixed top-0 left-0 right-0 z-50 h-12 bg-white/80 backdrop-blur-md border-b border-slate-200 grid grid-cols-3 items-center select-none"
+      className="fixed top-0 left-0 right-0 z-50 h-10 bg-white/80 backdrop-blur-md border-b border-slate-200 grid grid-cols-3 items-center select-none"
       initial={{ y: -64, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
@@ -265,9 +265,6 @@ export function SpatialStatusBar() {
         >
           <Logo variant="icon" className="h-4 w-4 text-slate-700" />
         </Link>
-
-
-        
       </div>
 
       {/* ═══ CENTRE : Barre de recherche (ouvre la palette) ═══ */}
@@ -277,7 +274,11 @@ export function SpatialStatusBar() {
           onClick={openPalette}
           className="flex items-center gap-2 px-2.5 py-1 w-full text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-md border border-slate-200 hover:border-slate-400 transition-all"
         >
-          <MagnifyingGlassIcon size={DS_ICON_SM} weight="bold" className="shrink-0" />
+          <MagnifyingGlassIcon
+            size={DS_ICON_SM}
+            weight="bold"
+            className="shrink-0"
+          />
           <span className="text-[10px] truncate flex-1 text-left font-medium">
             Rechercher client, devis...
           </span>
@@ -288,16 +289,16 @@ export function SpatialStatusBar() {
       </div>
 
       {/* ═══ DROITE : Boutons notifications ═══ */}
-      <div className="flex justify-end pr-1">
+      <div className="flex justify-end items-center gap-x-2 pr-1">
         {/* Bouton Rappels */}
         <div className="relative">
           <button
             onClick={toggleRappels}
             className={cn(
-              "relative flex items-center gap-1 px-2 h-7 rounded-md transition-all",
+              "relative flex items-center justify-between px-3 h-7 w-24 rounded-md transition-all",
               isRappelsOpen
                 ? "text-indigo-700 bg-indigo-50 border border-indigo-300"
-                : "text-slate-500 hover:text-slate-700 hover:bg-slate-100 border border-transparent"
+                : "text-slate-500 hover:text-slate-700 hover:bg-slate-100 border border-slate-200"
             )}
             title="Rappels"
           >
@@ -307,7 +308,7 @@ export function SpatialStatusBar() {
                 weight={isRappelsOpen || reminderCount > 0 ? "fill" : "regular"}
               />
               {reminderCount > 0 && (
-                <span className="absolute -top-1 -right-1.5 min-w-[14px] h-3.5 px-1 bg-rose-500 text-white text-[6px] font-bold rounded-full flex items-center justify-center leading-none">
+                <span className="absolute -top-2 -right-2 w-3 h-3 px-1 bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
                   {reminderCount > 9 ? "9+" : reminderCount}
                 </span>
               )}
@@ -328,10 +329,10 @@ export function SpatialStatusBar() {
           <button
             onClick={toggleAlertes}
             className={cn(
-              "relative flex items-center gap-1 px-2 h-7 rounded-md transition-all",
+              "relative flex items-center justify-between px-3 h-7 w-24 rounded-md transition-all",
               isAlertesOpen
                 ? "text-amber-700 bg-amber-50 border border-amber-300"
-                : "text-slate-500 hover:text-slate-700 hover:bg-slate-100 border border-transparent"
+                : "text-slate-500 hover:text-slate-700 hover:bg-slate-100 border border-slate-200"
             )}
             title="Alertes"
           >
@@ -341,7 +342,7 @@ export function SpatialStatusBar() {
                 weight={isAlertesOpen || totalAlerts > 0 ? "fill" : "regular"}
               />
               {totalAlerts > 0 && (
-                <span className="absolute -top-1 -right-1.5 min-w-[14px] h-3.5 px-1 bg-rose-500 text-white text-[6px] font-bold rounded-full flex items-center justify-center leading-none">
+                <span className="absolute -top-2 -right-2 w-3 h-3 px-1 bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
                   {totalAlerts > 9 ? "9+" : totalAlerts}
                 </span>
               )}
@@ -362,10 +363,10 @@ export function SpatialStatusBar() {
           <button
             onClick={toggleActivite}
             className={cn(
-              "relative flex items-center gap-1 px-2 h-7 rounded-md transition-all",
+              "relative flex items-center justify-between px-3 h-7 w-24 rounded-md transition-all",
               isActiviteOpen
                 ? "text-emerald-700 bg-emerald-50 border border-emerald-300"
-                : "text-slate-500 hover:text-slate-700 hover:bg-slate-100 border border-transparent"
+                : "text-slate-500 hover:text-slate-700 hover:bg-slate-100 border border-slate-200"
             )}
             title="Activité"
           >

@@ -63,15 +63,13 @@ export default async function EditorPage({ searchParams }: PageProps) {
   const selectedTheme = themes?.find((t) => t.id === themeId) || null;
 
   return (
-    <div className="h-screen w-full overflow-hidden">
-      <CreateQuoteClient
-        suggestions={suggestions || []}
-        initialThemes={themes || []}
-        initialClients={clients || []}
-        user={user}
-        preSelectedTheme={selectedTheme}
-        billing={billing}
-      />
-    </div>
+    <CreateQuoteClient
+      suggestions={suggestions || []}
+      initialThemes={themes || []}
+      initialClients={clients || []}
+      user={user}
+      preSelectedTheme={selectedTheme}
+      billing={billing}
+    />
   );
 }

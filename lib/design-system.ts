@@ -5,23 +5,25 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ─── Typographie ─────────────────────────────────────────────────────────────
+// Règle : font-mono réservé aux chiffres (montants, numéros, codes).
+// Les labels, titres, descriptions et textes courants sont en font-sans.
 export const DS_LABEL =
-  "font-mono text-[9px] uppercase tracking-wide text-slate-600";
+  "font-sans text-[9px] uppercase tracking-wide text-slate-600";
 export const DS_MICRO = DS_LABEL; // alias — sera supprimé progressivement
 export const DS_MONO = "font-mono text-[11px] tabular-nums leading-snug";
-export const DS_TITLE = "font-mono text-normal uppercase tracking-tight text-slate-900";
-export const DS_H2 = "font-mono text-base uppercase tracking-tight text-slate-900";
+export const DS_TITLE = "font-sans text-normal uppercase tracking-tight text-slate-900";
+export const DS_H2 = "font-sans text-base uppercase tracking-tight text-slate-900";
 export const DS_BODY = "font-sans text-sm text-slate-600 leading-relaxed";
 
 // ─── Surfaces ────────────────────────────────────────────────────────────────
 export const DS_CARD = "bg-white border border-slate-200 rounded-md";
 export const DS_INPUT =
-  "bg-white border border-slate-200 px-3 py-2 font-mono text-sm text-slate-900 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 transition-all";
+  "bg-white border border-slate-200 px-3 py-2 font-sans text-sm text-slate-900 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 transition-all";
 export const DS_BUTTON =
-  "flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-md font-mono text-[10px] uppercase tracking-wide transition-all";
+  "flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-md font-sans text-[10px] uppercase tracking-wide transition-all";
 
 export const DS_BUTTON_SECONDARY =
-  "flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-md font-mono text-[10px] uppercase tracking-wide transition-all";
+  "flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-md font-sans text-[10px] uppercase tracking-wide transition-all";
 
 // ─── BentoCard wrapper — Swift-Bento style ──────────────────────────────────
 // Padding constant 1rem (16px), bordure 1px gris clair, pas d'ombres
@@ -193,9 +195,9 @@ export const STUDIO_TAB_ACTIVE =
 export const STUDIO_TAB_INACTIVE =
   "text-slate-500 hover:text-slate-800";
 export const STUDIO_INPUT =
-  "w-full bg-white border border-slate-200 px-2.5 py-1.5 font-mono text-[10px] text-slate-900 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 transition-all";
+  "w-full bg-white border border-slate-200 px-2.5 py-1.5 font-sans text-[10px] text-slate-900 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400 transition-all";
 export const STUDIO_LABEL =
-  "text-[8px] font-mono uppercase tracking-wider text-slate-600 mb-1 block";
+  "text-[8px] font-sans uppercase tracking-wider text-slate-600 mb-1 block";
 export const STUDIO_MONO =
   "text-[10px] font-mono tabular-nums leading-snug";
 export const STUDIO_ICON_SM = 12;
@@ -204,7 +206,7 @@ export const STUDIO_ICON_XS = 10;
 // ─── Étiquette ultra-compacte dans les headers / topbars ───────────────────
 // Usage: dans les boutons de l'éditeur où l'espace est critique (7px)
 export const STUDIO_HEADER_LABEL =
-  "text-[7px] font-mono uppercase tracking-wider font-semibold leading-none";
+  "text-[7px] font-sans uppercase tracking-wider font-semibold leading-none";
 export const STUDIO_HEADER_BTN =
   "inline-flex items-center justify-center gap-1 h-7 px-2.5 rounded-md transition-all";
 export const STUDIO_HEADER_BTN_SM =
@@ -222,13 +224,13 @@ export const STUDIO_V2_CARD_SELECTED =
 export const STUDIO_V2_HEADER =
   "flex items-center h-12 px-3 border-b border-slate-200 bg-white shrink-0 gap-2";
 export const STUDIO_V2_HEADER_TITLE =
-  "text-[10px] font-mono font-bold text-slate-800 tracking-tight";
+  "text-[10px] font-sans font-bold text-slate-800 tracking-tight";
 export const STUDIO_V2_BTN =
-  "flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[9px] font-mono font-bold text-slate-600 hover:bg-slate-100 border border-slate-200 transition-all";
+  "flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[9px] font-sans font-bold text-slate-600 hover:bg-slate-100 border border-slate-200 transition-all";
 export const STUDIO_V2_BTN_PRIMARY =
-  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-mono font-bold bg-indigo-600 text-white border border-indigo-600 hover:bg-indigo-700 transition-all";
+  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-sans font-bold bg-indigo-600 text-white border border-indigo-600 hover:bg-indigo-700 transition-all";
 export const STUDIO_V2_BADGE =
-  "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[6px] font-mono font-bold uppercase tracking-wider";
+  "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[6px] font-sans font-bold uppercase tracking-wider";
 export const STUDIO_V2_KPI_CARD =
   "bg-white border-2 border-slate-200 rounded-xl p-3 hover:border-slate-300 transition-all duration-200";
 export const STUDIO_V2_ICON_WRAP =

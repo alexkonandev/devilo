@@ -2,7 +2,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
-import { DS_LABEL, DS_MONO } from "@/lib/design-system";
+import { DS_LABEL } from "@/lib/design-system";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -68,8 +68,7 @@ export function PlanComparator({
             </span>
             <span
               className={cn(
-                DS_MONO,
-                "text-center",
+                "font-sans text-[11px] text-center",
                 isPro ? "text-slate-300 line-through" : "text-slate-500",
               )}
             >
@@ -77,8 +76,7 @@ export function PlanComparator({
             </span>
             <span
               className={cn(
-                DS_MONO,
-                "text-center font-bold",
+                "font-sans text-[11px] text-center font-bold",
                 isPro ? "text-emerald-600" : "text-indigo-600",
               )}
             >

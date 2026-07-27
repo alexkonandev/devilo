@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import { useQuotes } from "./quote-context";
 import { cn } from "@/lib/utils";
 import { DS_MONO, DS_LABEL, STUDIO_V2_BTN } from "@/lib/design-system";
 import {
   FunnelSimple,
   XCircle,
-  Copy,
   CalendarBlank,
   CurrencyCircleDollar,
 } from "@phosphor-icons/react";
@@ -33,16 +32,9 @@ export function FiltersDropdown() {
     customEndDate, setCustomEndDate,
     amountMin, setAmountMin,
     amountMax, setAmountMax,
-    highlightThreshold, setHighlightThreshold,
     resetFilters,
     hasActiveFilters,
   } = useQuotes();
-
-  // Copier le lien filtré dans le presse-papier (Phase 3.3)
-  const handleCopyFilteredLink = useCallback(() => {
-    navigator.clipboard.writeText(window.location.href);
-    setIsOpen(false);
-  }, []);
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -164,35 +156,7 @@ export function FiltersDropdown() {
               </div>
             </div>
 
-            {/* Coloration conditionnelle */}
-            <div className="space-y-2">
-              <span className={cn(DS_LABEL, "text-[9px] text-slate-400 uppercase tracking-wider")}>
-                <span className="inline-block w-2 h-2 rounded-full bg-rose-400 mr-1" />
-                Seuil alerte
-              </span>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  value={highlightThreshold ?? ""}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setHighlightThreshold(val === "" ? null : parseFloat(val));
-                  }}
-                  placeholder="Montant seuil"
-                  className={cn(DS_MONO, "w-full px-2 py-1 text-[10px] rounded-md border-slate-200 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400")}
-                />
-                {highlightThreshold !== null && (
-                  <button
-                    onClick={() => setHighlightThreshold(null)}
-                    className="text-slate-400 hover:text-rose-500 transition-colors"
-                  >
-                    <XCircle size={10} weight="bold" />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Actions : Reset + Copier le lien */}
+            {/* Actions : Reset */}
             <div className="space-y-2 flex flex-col justify-end">
               {hasActiveFilters && (
                 <button
@@ -206,13 +170,6 @@ export function FiltersDropdown() {
                   Réinitialiser les filtres
                 </button>
               )}
-              <button
-                onClick={handleCopyFilteredLink}
-                className="flex items-center justify-center gap-1 px-2 py-1 rounded text-[10px] font-semibold text-indigo-600 hover:bg-indigo-50 transition-all"
-              >
-                <Copy size={10} weight="bold" />
-                Copier le lien filtré
-              </button>
             </div>
           </div>
         </div>

@@ -9,12 +9,12 @@ import {
 } from "@/lib/validations/settings";
 import { updateSettings } from "@/actions/settings-action";
 import { type SecurityProfile } from "@/actions/security-action";
-import { BentoIdentityCard } from "@/features/settings/components/IdentitySection";
-import { BentoFiscalCard } from "@/features/settings/components/FiscalSection";
+import { CompanyInfoCard } from "@/features/settings/components/CompanyInfoCard";
+import { FiscalConfigCard } from "@/features/settings/components/FiscalConfigCard";
 import {
-  BentoSecurityCard,
+  PasswordSecurityCard,
+  SessionDangerCard,
 } from "@/features/settings/components/SecuritySection";
-import { DangerZoneCard } from "@/features/settings/components/DangerZoneSection";
 import { toast } from "sonner";
 import { useKernelStore } from "@/hooks/use-kernel-store";
 import { cn } from "@/lib/utils";
@@ -30,7 +30,7 @@ interface SpatialSettingsViewProps {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// MAIN COMPONENT — Layout vertical centré, bento cards empilées
+// MAIN COMPONENT — Layout 2 rows × 2 colonnes, bento cards denses
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export function SpatialSettingsView({
@@ -86,14 +86,14 @@ export function SpatialSettingsView({
     <div className="flex flex-col h-full w-full bg-slate-50">
       {/* === HEADER === */}
       <header className="flex items-center h-12 px-3 border-b border-slate-200 bg-white shrink-0 gap-2">
-        <div className="w-6 h-6 rounded-md bg-indigo-50 flex items-center justify-center">
+        <div className="w-6 h-6 rounded-md bg-indigo-50 flex items-center justify-center shrink-0">
           <SlidersIcon size={12} className="text-indigo-600" weight="bold" />
         </div>
-        <span className="text-[10px] font-mono font-bold text-slate-800 tracking-tight">
+        <span className="text-[10px] font-sans font-bold text-slate-800 tracking-tight">
           Paramètres
         </span>
-        <span className="text-[8px] font-mono text-slate-400">
-          Identité · Fiscalité · Sécurité
+        <span className="text-[8px] font-sans text-slate-500">
+          Entreprise · Fiscalité · Sécurité
         </span>
         <div className="flex-1" />
         {isDirty && (
@@ -125,30 +125,37 @@ export function SpatialSettingsView({
         </button>
       </header>
 
-      {/* === CONTENU === */}
+      {/* === CONTENU — 2 rows × 2 colonnes === */}
       <div className="flex-1 overflow-y-auto px-6 pb-6 pt-4">
         <form onSubmit={handleSave} className="space-y-4">
-          <BentoIdentityCard
-            register={register}
-            errors={errors}
-            watchedValues={watchedValues}
-            setValue={setValue}
-          />
+          {/* Row 1 — Informations Entreprise + Configuration Fiscale */}
+          <div className="grid grid-cols-2 gap-4">
+            <CompanyInfoCard
+              register={register}
+              errors={errors}
+              watchedValues={watchedValues}
+              setValue={setValue}
+            />
+            <FiscalConfigCard
+              register={register}
+              errors={errors}
+              watchedValues={watchedValues}
+              setValue={setValue}
+            />
+          </div>
 
-          <BentoFiscalCard
-            register={register}
-            errors={errors}
-            watchedValues={watchedValues}
-            setValue={setValue}
-          />
+          {/* Row 2 — Mot de passe + Sessions & Danger */}
+          <div className="grid grid-cols-2 gap-4">
+            <PasswordSecurityCard
+              securityProfile={securityProfile}
+              userEmail={watchedValues.companyEmail || ""}
+            />
+            <SessionDangerCard
+              securityProfile={securityProfile}
+              userEmail={watchedValues.companyEmail || ""}
+            />
+          </div>
 
-          <BentoSecurityCard
-            securityProfile={securityProfile}
-          />
-
-          <DangerZoneCard
-            userEmail={watchedValues.companyEmail || ""}
-          />
         </form>
       </div>
     </div>
