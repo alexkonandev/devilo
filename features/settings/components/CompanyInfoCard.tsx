@@ -164,7 +164,7 @@ export function CompanyInfoCard({
         </div>
 
         {/* Row 3-4 colonne gauche — Logo (2 lignes) */}
-        <div className="col-start-1 row-span-2 self-start">
+        <div className="col-start-1 row-span-2 self-stretch">
           <LogoUploadField
             value={watchedValues.companyLogo ?? ""}
             setValue={setValue}

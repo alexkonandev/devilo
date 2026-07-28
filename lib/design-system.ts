@@ -8,7 +8,7 @@
 // Règle : font-mono réservé aux chiffres (montants, numéros, codes).
 // Les labels, titres, descriptions et textes courants sont en font-sans.
 export const DS_LABEL =
-  "font-sans text-[9px] uppercase tracking-wide text-slate-600";
+  "font-sans text-[9px] uppercase tracking-wide text-slate-600 font-semibold";
 export const DS_MICRO = DS_LABEL; // alias — sera supprimé progressivement
 export const DS_MONO = "font-mono text-[11px] tabular-nums leading-snug";
 export const DS_TITLE = "font-sans text-normal uppercase tracking-tight text-slate-900";
