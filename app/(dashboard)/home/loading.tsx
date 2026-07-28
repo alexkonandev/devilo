@@ -53,7 +53,7 @@ export default function HomeLoading() {
             <SkeletonBlock className="h-2 w-12" />
           </div>
           <div className="space-y-1.5">
-            {Array.from({ length: 5 }).map((_, i) => (
+            {Array.from({ length: 7 }).map((_, i) => (
               <div
                 key={i}
                 className="flex items-center gap-3 bg-white border border-slate-200 rounded-lg py-2.5 px-3 animate-pulse"

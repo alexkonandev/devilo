@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { NewQuoteButton } from "@/components/shared/new-quote-button";
 import {
   FileTextIcon,
   UsersThreeIcon,
@@ -87,13 +88,12 @@ export function HomeView({ firstName, recentQuotes, stats }: HomeViewProps) {
             </h1>
             <p className="text-[11px] font-mono text-slate-500 capitalize">{today}</p>
           </div>
-          <Link
-            href="/quotes/new"
+          <NewQuoteButton
             className="inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-600 text-white text-[11px] font-bold rounded-xl hover:bg-indigo-700 transition-all border border-indigo-600"
           >
             <PlusIcon size={14} weight="bold" />
             Nouveau Devis
-          </Link>
+          </NewQuoteButton>
         </div>
       </div>
 
@@ -182,13 +182,12 @@ export function HomeView({ firstName, recentQuotes, stats }: HomeViewProps) {
               <FileTextIcon size={28} className="text-slate-300 mb-2" />
               <p className="text-[11px] font-mono font-bold text-slate-400">Aucun devis pour le moment</p>
               <p className="text-[9px] font-mono text-slate-400 mt-1 mb-3">Créez votre premier devis pour démarrer</p>
-              <Link
-                href="/quotes/new"
+              <NewQuoteButton
                 className="inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-600 text-white text-[10px] font-bold rounded-xl hover:bg-indigo-700 transition-all"
               >
                 <PlusIcon size={12} weight="bold" />
                 Créer un devis
-              </Link>
+              </NewQuoteButton>
             </div>
           )}
         </div>

@@ -91,15 +91,29 @@ export function QuoteCreationSheet({
   const handleCreate = async () => {
     setIsLoading(true);
     try {
-      // Rediriger vers l'éditeur avec le client pré-sélectionné si choisi
-      const params = selectedClientId
+      // 1. Vérifier si un brouillon existe déjà → navigation directe,
+      //    évite le flash blanc quotes/new → quotes/[id]
+      const res = await fetch("/api/quotes/last-draft");
+      const { quoteId } = await res.json();
+
+      // 2. Construire les paramètres client si sélectionné
+      const clientParam = selectedClientId
         ? `?clientId=${selectedClientId}`
         : "";
+
       onOpenChange(false);
-      router.push(`/quotes/new${params}`);
-      notify.success("Nouveau devis", "Editeur pret - completez les lignes et envoyez.");
+
+      if (quoteId) {
+        // Navigation directe vers le brouillon existant (pas de redirection serveur)
+        router.push(`/quotes/${quoteId}${clientParam}`);
+      } else {
+        // Pas de brouillon → création d'un nouveau devis
+        router.push(`/quotes/new${clientParam}`);
+      }
     } catch {
-      notify.error("Erreur", "Impossible de créer le devis");
+      // Fallback silencieux : on tente quotes/new en cas d'erreur API
+      onOpenChange(false);
+      router.push("/quotes/new");
     } finally {
       setIsLoading(false);
     }

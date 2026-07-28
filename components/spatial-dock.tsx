@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { NewQuoteButton } from "@/components/shared/new-quote-button";
 import {
   HouseIcon,
   FileTextIcon,
@@ -36,9 +37,7 @@ const NAV_ITEMS: Record<string, NavItem[]> = {
     { label: "Clients", href: "/clients", icon: UsersThreeIcon },
     { label: "Facturation", href: "/billing", icon: CreditCardIcon },
   ],
-  action: [
-    { label: "Nouveau Devis", href: "/quotes/new", icon: PlusIcon, variant: "primary" },
-  ],
+  action: [],
   config: [
     { label: "Paramètres", href: "/settings", icon: GearSixIcon },
   ],
@@ -75,9 +74,7 @@ export function SpatialDock() {
         <Separator />
 
         {/* Niveau 3 — Action primaire (CTA) */}
-        {NAV_ITEMS.action.map((item) => (
-          <RailIcon key={item.href} {...item} />
-        ))}
+        <NewQuoteDockIcon />
 
         <Separator className="my-2" />
 
@@ -87,6 +84,38 @@ export function SpatialDock() {
         ))}
       </TooltipProvider>
     </aside>
+  );
+}
+
+function NewQuoteDockIcon() {
+  const pathname = usePathname();
+  const isActive = pathname.startsWith("/quotes/");
+
+  return (
+    <Tooltip>
+      <TooltipTrigger>
+        <NewQuoteButton
+          className={cn(
+            "relative flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-200 ease-out",
+            !isActive &&
+              "bg-indigo-600 text-white hover:bg-indigo-700 hover:scale-105",
+            isActive &&
+              "bg-indigo-700 text-white ring-2 ring-indigo-300",
+          )}
+        >
+          <PlusIcon
+            size={20}
+            weight={isActive ? "fill" : "regular"}
+          />
+        </NewQuoteButton>
+      </TooltipTrigger>
+      <TooltipContent
+        side="right"
+        className="ml-2 bg-slate-800 text-white text-[10px] font-mono font-semibold px-2.5 py-1.5 rounded-lg border border-slate-700"
+      >
+        Nouveau Devis
+      </TooltipContent>
+    </Tooltip>
   );
 }
 

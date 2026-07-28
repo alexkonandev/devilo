@@ -5,8 +5,9 @@ import {
 } from "@/components/shared/ui/skeleton";
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// QUOTES LOADING — Skeleton screen inspiré Figma
-// Imite la structure de SpatialQuotesView (header + tableau + sidebar).
+// QUOTES LOADING — Skeleton screen pixel-perfect
+// Miroir exact de SpatialQuotesView (header + completion alert + tableau 6 cols
+// + sidebar flex-1 + pagination).
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export default function QuotesLoading() {
@@ -16,18 +17,22 @@ export default function QuotesLoading() {
       {/* ═══ HEADER SKELETON ═══ */}
       <header className="flex items-center h-12 px-3 border-b border-slate-200 bg-white shrink-0 gap-2">
         {/* Icône + titre */}
-        <SkeletonBlock className="w-6 h-6 rounded-md" />
-        <SkeletonBlock className="h-2.5 w-12" />
-        <SkeletonBlock className="h-2 w-10" />
+        <div className="w-6 h-6 rounded-md bg-indigo-50 flex items-center justify-center">
+          <SkeletonBlock className="w-3 h-3 rounded-sm" />
+        </div>
+        <SkeletonBlock className="h-2.5 w-10" />
+        <SkeletonBlock className="h-2 w-12" />
 
         <div className="flex-1" />
 
         {/* Search bar */}
         <SkeletonBlock className="h-7 w-44 rounded-md" />
         {/* Filtres */}
-        <SkeletonBlock className="h-7 w-20 rounded-md" />
-        {/* Export */}
-        <SkeletonBlock className="h-7 w-20 rounded-md" />
+        <SkeletonBlock className="h-7 w-16 rounded-md" />
+        {/* Import CSV */}
+        <SkeletonBlock className="h-7 w-7 rounded-md" />
+        {/* Export CSV */}
+        <SkeletonBlock className="h-7 w-7 rounded-md" />
         {/* CTA nouveau devis */}
         <SkeletonBlock className="h-7 w-7 rounded-md" />
       </header>
@@ -40,63 +45,67 @@ export default function QuotesLoading() {
       {/* ═══ CONTENU PRINCIPAL ═══ */}
       <div className="flex w-full flex-1 min-h-0 px-4 pb-4 pt-3 overflow-hidden gap-4">
 
-        {/* ═══ TABLEAU SKELETON ═══ */}
-        <div className="flex-1 min-w-0 flex flex-col">
-          <div className="flex-1 min-h-0 overflow-auto">
-            <div className="bg-white border border-slate-200 rounded-md overflow-hidden">
-              {/* En-tête de tableau (5 colonnes) */}
-              <div className="flex items-center gap-4 px-4 py-3 border-b border-slate-200 bg-slate-50/50">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <SkeletonBlock
-                    key={i}
-                    className={cn(
-                      "h-2.5",
-                      i === 0 ? "w-1/4" : "w-1/6",
-                    )}
-                  />
-                ))}
-              </div>
+        {/* ═══ PANNEAU TABLEAU (wrapper blanc) ═══ */}
+        <div className="flex-1 min-w-0 flex flex-col bg-white border border-slate-200 rounded-xl overflow-hidden">
+          {/* Bulk selection bar (optionnelle, visible quand sélection) */}
+          <div className="shrink-0 px-3 py-2 flex items-center justify-between border-b border-slate-100">
+            <SkeletonBlock className="h-2.5 w-28" />
+            <SkeletonBlock className="h-5 w-16 rounded-md" />
+          </div>
 
-              {/* Lignes de données */}
-              {Array.from({ length: 8 }).map((_, rowIdx) => (
-                <div
-                  key={rowIdx}
-                  className={cn(
-                    "flex items-center gap-4 px-4 py-3.5",
-                    rowIdx < 7 && "border-b border-slate-100",
-                  )}
-                >
-                  {Array.from({ length: 5 }).map((_, colIdx) => (
-                    <SkeletonBlock
-                      key={colIdx}
-                      className={cn(
-                        "h-3",
-                        colIdx === 0 ? "w-1/4" : "w-1/6",
-                      )}
-                    />
-                  ))}
-                </div>
-              ))}
+          <div className="flex-1 min-h-0 overflow-auto">
+            {/* En-tête de tableau (6 colonnes : checkbox + client + N° + date + statut + montant) */}
+            <div className="flex items-center gap-0 px-3 py-3 border-b border-slate-100 bg-white">
+              <SkeletonBlock className="w-[36px] h-3 shrink-0" />
+              <SkeletonBlock className="h-2.5 min-w-[160px]" />
+              <SkeletonBlock className="h-2.5 w-[110px]" />
+              <SkeletonBlock className="h-2.5 w-[80px]" />
+              <SkeletonBlock className="h-2.5 w-[90px]" />
+              <SkeletonBlock className="h-2.5 w-[100px]" />
             </div>
+
+            {/* Lignes de données */}
+            {Array.from({ length: 8 }).map((_, rowIdx) => (
+              <div
+                key={rowIdx}
+                className={cn(
+                  "flex items-center gap-0 px-3 py-3",
+                  rowIdx < 7 && "border-b border-slate-100",
+                )}
+              >
+                {/* Checkbox */}
+                <SkeletonBlock className="w-[36px] h-3 shrink-0" />
+                {/* Client */}
+                <SkeletonBlock className="h-3 min-w-[160px]" />
+                {/* N° Devis */}
+                <SkeletonBlock className="h-3 w-[110px]" />
+                {/* Date */}
+                <SkeletonBlock className="h-3 w-[80px]" />
+                {/* Statut */}
+                <SkeletonBlock className="h-3 w-[90px]" />
+                {/* Montant */}
+                <SkeletonBlock className="h-3 w-[100px]" />
+              </div>
+            ))}
           </div>
 
           {/* Pagination skeleton */}
-          <div className="flex items-center justify-between mt-4">
+          <div className="shrink-0 flex items-center justify-between px-3 py-3 border-t border-slate-100">
             <SkeletonBlock className="h-2.5 w-36" />
-            <div className="flex items-center gap-2">
-              <SkeletonBlock className="h-7 w-7 rounded-md" />
+            <div className="flex items-center gap-1">
+              <SkeletonBlock className="h-7 w-7 rounded-lg" />
               {Array.from({ length: 3 }).map((_, i) => (
-                <SkeletonBlock key={i} className="h-7 w-7 rounded-md" />
+                <SkeletonBlock key={i} className="h-7 w-7 rounded-lg" />
               ))}
-              <SkeletonBlock className="h-7 w-7 rounded-md" />
+              <SkeletonBlock className="h-7 w-7 rounded-lg" />
             </div>
           </div>
         </div>
 
-        {/* ═══ SIDEBAR SKELETON ═══ */}
-        <aside className="w-80 flex flex-col gap-3 min-h-0 overflow-hidden shrink-0">
+        {/* ═══ PANNEAU SIDEBAR (wrapper blanc) ═══ */}
+        <aside className="flex-1 flex flex-col gap-3 min-h-0 overflow-hidden bg-white border border-slate-200 rounded-xl p-4">
           {/* Carte client */}
-          <div className="bg-white border border-slate-200 rounded-md p-4 animate-pulse">
+          <div className="animate-pulse">
             <div className="flex items-center gap-3 mb-4">
               <SkeletonCircle className="w-10 h-10" />
               <div className="space-y-2 flex-1">
@@ -112,7 +121,7 @@ export default function QuotesLoading() {
           </div>
 
           {/* Timeline skeleton */}
-          <div className="bg-white border border-slate-200 rounded-md p-4 animate-pulse">
+          <div className="animate-pulse">
             <SkeletonBlock className="h-3 w-20 mb-4" />
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="flex items-start gap-3 mb-3">
