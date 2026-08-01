@@ -38,7 +38,7 @@ const sections = [
     icon: Envelope,
     title: "Contact",
     content:
-      "Pour toute question relative \u00e0 vos donn\u00e9es personnelles, \u00e9crivez-nous \u00e0 privacy@devilo.com. Nous nous engageons \u00e0 vous r\u00e9pondre personnellement sous 24 heures.",
+      "Pour toute question relative \u00e0 vos donn\u00e9es personnelles, \u00e9crivez-nous \u00e0 privacy@factouro.com. Nous nous engageons \u00e0 vous r\u00e9pondre personnellement sous 24 heures.",
   },
 ];
 

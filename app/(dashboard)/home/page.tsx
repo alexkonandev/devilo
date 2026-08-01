@@ -4,7 +4,7 @@ import db from "@/lib/prisma";
 import { HomeView } from "@/features/home/home-view";
 
 export const metadata = {
-  title: "Accueil | DevisExpress",
+  title: "Accueil | Factouro",
 };
 
 export default async function HomePage() {

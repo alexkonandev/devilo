@@ -3,7 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import db from "@/lib/prisma";
 
 export const metadata = {
-  title: "Bienvenue | DevisExpress",
+  title: "Bienvenue | Factouro",
 };
 
 export default async function OnboardingPage() {

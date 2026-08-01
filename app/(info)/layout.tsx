@@ -14,7 +14,7 @@ export default function InfoLayout({ children }: { children: ReactNode }) {
             <div className="w-7 h-7 rounded-lg bg-indigo-500 flex items-center justify-center">
               <RocketLaunch size={14} weight="fill" className="text-white" />
             </div>
-            <span className="text-sm font-semibold text-white">Devilo</span>
+            <span className="text-sm font-semibold text-white">Factouro</span>
           </Link>
 
           <Link
@@ -41,7 +41,7 @@ export default function InfoLayout({ children }: { children: ReactNode }) {
             <div className="w-7 h-7 rounded-lg bg-indigo-500 flex items-center justify-center">
               <RocketLaunch size={14} weight="fill" className="text-white" />
             </div>
-            <span className="text-sm font-semibold text-white">Devilo</span>
+            <span className="text-sm font-semibold text-white">Factouro</span>
           </div>
 
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/60 border border-zinc-800">

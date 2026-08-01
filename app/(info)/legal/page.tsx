@@ -14,13 +14,13 @@ const sections = [
     icon: Building,
     title: "Identité de l'éditeur",
     content:
-      "Devilo est édité par la société Devilo SAS, au capital de 1 000 €, immatriculée au RCS d'Abidjan sous le numéro CI-ABJ-2026-B-00001.",
+      "Factouro est édité par la société Factouro SAS, au capital de 1 000 €, immatriculée au RCS d'Abidjan sous le numéro CI-ABJ-2026-B-00001.",
   },
   {
     icon: Envelope,
     title: "Coordonnées",
     content:
-      "Siège social : Abidjan, Côte d'Ivoire. Email : contact@devilo.com. Directeur de la publication : Alexandre K.",
+      "Siège social : Abidjan, Côte d'Ivoire. Email : contact@factouro.com. Directeur de la publication : Alexandre K.",
   },
   {
     icon: Globe,
@@ -32,19 +32,19 @@ const sections = [
     icon: FileText,
     title: "Propriété intellectuelle",
     content:
-      "L'ensemble du contenu du site (design, code, textes, logos) est la propriété exclusive de Devilo SAS. Toute reproduction ou utilisation sans autorisation est interdite.",
+      "L'ensemble du contenu du site (design, code, textes, logos) est la propriété exclusive de Factouro SAS. Toute reproduction ou utilisation sans autorisation est interdite.",
   },
   {
     icon: Shield,
     title: "Données personnelles",
     content:
-      "Devilo accorde une importance particulière à la protection de vos données. Conformément à la réglementation en vigueur, vous disposez d'un droit d'accès, de rectification et de suppression de vos données. Pour en savoir plus, consultez notre page Confidentialité.",
+      "Factouro accorde une importance particulière à la protection de vos données. Conformément à la réglementation en vigueur, vous disposez d'un droit d'accès, de rectification et de suppression de vos données. Pour en savoir plus, consultez notre page Confidentialité.",
   },
 ];
 
 const TAG = "Mentions légales";
 const TITLE = "Mentions légales";
-const DESC = "Conformément à la loi, voici les informations relatives à l'édition et à l'hébergement du site Devilo.";
+const DESC = "Conformément à la loi, voici les informations relatives à l'édition et à l'hébergement du site Factouro.";
 const FOOTER = "Dernière mise à jour : juillet 2026.";
 
 export default function LegalPage() {

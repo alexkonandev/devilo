@@ -68,8 +68,8 @@ export default function ContactPage() {
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pb-5 mb-5 border-b border-zinc-800/60">
               <div className="flex items-center gap-2 text-sm text-zinc-400">
                 <Envelope size={15} className="text-indigo-400 shrink-0" />
-                <a href="mailto:contact@devilo.com" className="hover:text-white transition-colors">
-                  contact@devilo.com
+                <a href="mailto:contact@factouro.com" className="hover:text-white transition-colors">
+                  contact@factouro.com
                 </a>
               </div>
               <div className="flex items-center gap-2 text-sm text-zinc-400">

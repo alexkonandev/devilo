@@ -18,7 +18,7 @@ export default function AuthLayout({
             <div className="w-7 h-7 rounded-lg bg-[var(--lp-accent)] flex items-center justify-center">
               <RocketLaunch size={14} weight="fill" className="text-white" />
             </div>
-            <span className="text-sm font-semibold text-[var(--lp-text)]">Devilo</span>
+            <span className="text-sm font-semibold text-[var(--lp-text)]">Factouro</span>
           </Link>
         </div>
         <div className="flex-1 flex items-center justify-center px-6 pb-16">

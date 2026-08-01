@@ -25,7 +25,7 @@ export default function LandingNav({ userId }: LandingNavProps) {
           <div className="w-7 h-7 rounded-lg bg-(--lp-accent) flex items-center justify-center">
             <RocketLaunch size={14} weight="fill" className="text-white" />
           </div>
-          <span className="text-sm font-semibold text-white">Devilo</span>
+          <span className="text-sm font-semibold text-white">Factouro</span>
         </Link>
         <div className="hidden sm:flex items-center gap-6">
           <Link href="#features" className={DS_LP_NAV_LINK}>

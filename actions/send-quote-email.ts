@@ -126,7 +126,7 @@ export async function sendQuoteEmailAction({
     // 7. Envoyer l'email via Resend
     const emailResult = await sendQuoteEmail({
       to: client.email,
-      subject: `Votre devis ${quote.number} — ${user?.companyName || "Devilo"}`,
+      subject: `Votre devis ${quote.number} — ${user?.companyName || "Factouro"}`,
       quoteNumber: quote.number,
       clientName: quote.clientName || client.name,
       pdfBuffer,

@@ -27,7 +27,7 @@ export default function LandingHero({ userId }: LandingHeroProps) {
           <h1 className={DS_LP_HERO_TITLE}>
             La facturation, enfin devenue belle grâce à <br />
             <span className="font-artistic italic tracking-wide bg-gradient-to-r from-indigo-200 to-purple-300 bg-clip-text text-transparent">
-              Devilo
+              Factouro
             </span>
           </h1>
           <p className={DS_LP_HERO_DESC}>

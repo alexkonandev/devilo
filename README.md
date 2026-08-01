@@ -1,6 +1,8 @@
-# 📋 Devis Express — Application de Devis Professionnelle
+# 📋 Factouro — Application de Devis Professionnelle
 
-**Devis Express** est une application web professionnelle de création, gestion et envoi de devis, conçue pour les freelances et les TPE/PME. Elle offre une interface moderne de type **Spatial UI** avec un éditeur de devis temps réel, la génération de PDF, l'envoi par email, et la gestion complète des clients et du catalogue.
+**Factouro** est un SaaS web professionnel de création, gestion et envoi de devis, conçu pour les freelances et les TPE/PME. L'application offre une interface moderne de type **Spatial UI**, un éditeur de devis temps réel, la génération de PDF A4 avec 15 templates, l'envoi par email, et la gestion complète des clients, du catalogue et de l'abonnement.
+
+> 📚 **Documentation technique complète** : voir le [portail de documentation](./docs/README.md)
 
 ---
 
@@ -15,12 +17,15 @@
 | **Authentification** | Clerk |
 | **Paiement** | Stripe |
 | **Email** | Resend |
-| **PDF** | Puppeteer (Chromium via @sparticuz/chromium) |
-| **UI** | Tailwind CSS 4 avec Design System Brutalist/Bento |
+| **PDF** | Puppeteer / Playwright (Chromium via @sparticuz/chromium) |
+| **UI** | Tailwind CSS 4, Radix UI, shadcn/ui, Framer Motion |
+| **Icons** | Phosphor Icons, Lucide, Heroicons |
 | **State Management** | Zustand (useKernelStore) |
 | **Validation** | Zod |
 | **Upload** | UploadThing |
 | **Charts** | Recharts |
+| **Tableaux** | TanStack Table |
+| **Tests** | Vitest + Testing Library |
 
 ---
 
@@ -30,75 +35,66 @@
 my-app/
 ├── actions/                    # Server Actions Next.js
 │   ├── billing-action.ts       # Abonnement Stripe, quotas
-│   ├── catalog-action.ts       # Catalogue services
 │   ├── client-action.ts        # CRUD clients (paginated, search)
+│   ├── client-activity-action.ts # Timeline d'activités clients
+│   ├── client-export-action.ts # Export CSV clients
 │   ├── client-import-action.ts # Import CSV clients
 │   ├── dashboard-actions.ts    # KPIs, analytics
 │   ├── quote-editor-action.ts  # Sauvegarde devis
+│   ├── quote-registry-action.ts # Registre des devis
 │   ├── send-quote-email.ts     # Envoi email + PDF
-│   └── settings-action.ts      # Paramètres utilisateur
+│   ├── security-action.ts      # Sécurité, sessions, mot de passe
+│   └── ... (19 fichiers au total)
 │
 ├── app/
 │   ├── (auth)/                 # Pages connexion/inscription
-│   ├── (dashboard)/            # Dashboard, clients, devis, catalogue
-│   │   ├── clients/            # Gestion des clients
-│   │   ├── quotes/             # Liste des devis
-│   │   ├── catalog/            # Catalogue de services
-│   │   ├── dashboard/          # Tableau de bord
-│   │   └── settings/           # Paramètres
-│   ├── (editor)/               # Éditeur de devis
-│   │   └── quotes/[id]/        # Studio d'édition
-│   ├── api/
-│   │   ├── print/              # Route de génération PDF
-│   │   ├── webhooks/stripe/    # Webhooks Stripe
-│   │   └── uploadthing/        # Upload fichiers
+│   ├── (dashboard)/            # home, quotes, clients, billing, settings
+│   ├── (editor)/               # Éditeur de devis (new, [id], export)
+│   ├── (info)/                 # Pages légales (contact, privacy, terms)
+│   ├── api/                    # print, pdf, webhooks, cron, uploadthing...
+│   ├── generated/prisma/       # Client Prisma généré
 │   └── onboarding/             # Onboarding nouveau user
 │
 ├── components/
-│   ├── editor/                 # Éditeur de devis
-│   │   ├── quote-editor-layout.tsx
-│   │   ├── studio-sidebar-left.tsx   # Sidebar client/catalogue
-│   │   ├── studio-sidebar-right.tsx  # Sidebar finance/légal
-│   │   ├── QuoteVisualizer.tsx      # Visualisation A4
-│   │   └── floating-toolbar.tsx     # Barre d'outils flottante
-│   ├── layout/                 # Layout global
-│   │   ├── spatial-dock.tsx    # Dock spatial
-│   │   └── spatial-status-bar.tsx
-│   ├── pdf/                    # Template PDF
-│   │   └── printable-quote.tsx
-│   └── ui/                     # Composants UI (shadcn/ui)
+│   ├── editor/                 # Éditeur de devis (layout, sidebars, visualizer)
+│   ├── landing/                # Landing page (hero, features, pricing, FAQ)
+│   ├── pdf/                    # Rendus PDF (printable-quote)
+│   ├── shared/                 # Composants partagés
+│   ├── spatial-dock.tsx        # Dock de navigation
+│   ├── spatial-status-bar.tsx  # Barre de statut
+│   └── ui/                     # Composants shadcn/ui
 │
 ├── features/                   # Vues métier (Spatial UI)
-│   ├── clients/
-│   │   └── spatial-clients-view.tsx  # Vue complète clients
-│   ├── quotes/
-│   │   └── spatial-quotes-view.tsx   # Liste devis
-│   ├── catalog/
-│   │   └── spatial-catalog-view.tsx  # Catalogue
-│   ├── dashboard/
-│   │   └── dashboard-view.tsx        # KPIs
-│   └── billing/
-│       └── spatial-billing-view.tsx  # Abonnement
+│   ├── clients/                # Répertoire clients
+│   ├── quotes/                 # Liste des devis
+│   ├── billing/                # Abonnement
+│   ├── settings/               # Paramètres
+│   ├── auth/                   # Formulaires
+│   ├── dashboard/              # KPIs
+│   ├── home/                   # Accueil
+│   └── reminders/              # Rappels
+│
+├── hooks/
+│   ├── use-kernel-store.ts     # Store Zustand global
+│   └── use-debounce.ts         # Debounce
 │
 ├── lib/
-│   ├── prisma.ts               # Client Prisma
 │   ├── auth.ts                 # Wrapper auth Clerk
 │   ├── pdf-engine.ts           # Moteur PDF (serveur)
 │   ├── print-template.ts       # Template HTML devis
+│   ├── template-system.ts      # Définition des templates A4
 │   ├── email.ts                # Envoi email (Resend)
 │   ├── stripe.ts               # Client Stripe
-│   ├── api-limit.ts            # Quotas API
 │   ├── design-system.ts        # Tokens Design System
-│   └── validations/            # Schémas Zod
-│       ├── client.ts
-│       ├── catalog.ts
-│       └── settings.ts
+│   ├── validations/            # Schémas Zod (client, quote, settings)
+│   └── templates/              # 15 templates HTML de devis
 │
 ├── prisma/
-│   ├── schema.prisma           # Modèle de données
-│   └── migrations/             # Migrations Prisma
+│   ├── schema.prisma           # Modèle de données (10 modèles, 5 enums)
+│   └── migrations/             # Migrations
 │
-└── middleware.ts               # Clerk middleware
+├── types/                      # Types TypeScript (client, editor, dashboard...)
+└── middleware.ts               # Clerk middleware (auth renforcée)
 ```
 
 ---
@@ -107,14 +103,13 @@ my-app/
 
 ### Spatial UI
 L'interface utilise un concept de **Spatial UI** avec :
-- Un dock latéral gauche (navigation)
-- Une barre de statut en haut
-- Un fond animé (AnimatedBackground)
+- Un dock latéral gauche de navigation (`spatial-dock.tsx`)
+- Une barre de statut supérieure avec recherche ⌘K (`spatial-status-bar.tsx`)
 - Des cartes "Bento" pour les contenus
 - Un design system tokenisé via `design-system.ts`
 
 ### Modèle de Données (Prisma)
-9 modèles interconnectés :
+10 modèles interconnectés (voir `docs/BASE_DE_DONNEES.md`) :
 
 ```
 User ───┐
@@ -123,13 +118,18 @@ User ───┐
    ├── Client ─── Quote ─── QuoteLine
    ├── ClientActivity    (Timeline)
    ├── Subscription      (Stripe)
-   └── UserApiLimit      (Quotas)
+   ├── UserApiLimit      (Quotas)
+   └── QuoteEvent        (Cycle de vie)
 ```
 
-**Snapshots** : Chaque Quote stocke des snapshots figés (company, client, bank) pour que le PDF reste intact même si les données source changent.
+**Snapshots** : Chaque Quote stocke des snapshots figés (company, client) pour que le PDF reste intact même si les données source changent.
+
+### Authentification (middleware)
+Le middleware Clerk protège les routes, bloque les API non publiques, et redirige les utilisateurs connectés vers `/home` (voir `docs/AUTHENTIFICATION.md`).
 
 ### Server Actions
-Toutes les mutations sont des **Next.js Server Actions** (`"use server"`) avec un pattern `ActionResponse<T>` :
+Toutes les mutations sont des **Next.js Server Actions** (`"use server"`) avec un pattern `ActionResponse<T>` (voir `docs/SERVER_ACTIONS.md`) :
+
 ```typescript
 type ActionResponse<T> = {
   success: boolean;
@@ -199,72 +199,78 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 
 ---
 
-## 🎯 Fonctionnalités V1
+## 🎯 Fonctionnalités
 
 ### ✅ Clients
 - Liste paginée avec recherche plein texte 🔍
 - Filtres intelligents (À relancer, Inactifs, Tous)
 - Smart Tips : indicateurs contextuels (concentration CA, relance prioritaire, rétention)
-- Vue détail : KPIs, historique devis, contact
+- Vue détail : KPIs, historique devis, contact, timeline d'activités
 - Sélection multiple + suppression groupée
-- Copie email rapide
-- Import CSV avec preview et validation
-- Formulaire complet (Contact, Adresse, Légal, Notes/Tags)
+- Import/Export CSV
+- Formulaire complet (Contact, Adresse, Légal, Notes)
 
 ### ✅ Devis
 - Éditeur temps réel avec 3 panneaux (client, lignes, catalogue)
 - Sidebar finance : TVA, remise, devise, synthèse TTC
 - Sidebar légal : échéance, validité, référence
 - Gestion des statuts (Brouillon → Envoyé → Accepté/Refusé → Payé)
-- Snapshots company/client/banque (données figées)
+- Snapshots company/client (données figées)
 - Calcul de marge brute (baseCost)
+- Timeline d'événements (QuoteEvent)
 
-### ✅ PDF & Email
+### ✅ Templates & PDF
+- **15 templates** A4 (2 gratuits : Minimal Invoice, Modern Obsidian — 13 premium)
+- Visualisation A4 temps réel dans l'éditeur
 - Génération PDF via Puppeteer/Chromium
-- Template A4 design Brutalist/Bento
-- Coordonnées bancaires géo-spécifiques (USA/EUR/AFRI)
-- Envoi email via Resend avec pièce jointe PDF
+- Pagination multi-pages (printable-quote)
+
+### ✅ Email
+- Envoi devis par email avec PDF en pièce jointe
 - Passage automatique du statut en SENT après envoi
 - Log dans ClientActivity
-
-### ✅ Catalogue
-- Services personnels (UserService) et plateforme (CatalogOffer)
-- Création, modification, suppression
-- Import depuis le catalogue plateforme
 
 ### ✅ Dashboard
 - KPIs : CA total, CA en attente, taux de conversion, devis actifs
 - Top clients avec health score et vélocité de paiement
-- Activité récente (5 derniers devis)
-- Services suggérés
+- Activité récente, services suggérés
 
 ### ✅ Facturation
 - Plans FREE (5 devis) et PRO (illimité)
-- Checkout Stripe
-- Portail client Stripe
-- Quotas API
+- Checkout Stripe + portail client
+- Quotas API (UserApiLimit)
+- Webhooks Stripe (sync abonnement)
+
+### ✅ Sécurité
+- Gestion des sessions (révocation)
+- Mots de passe robustes (zxcvbn-ts)
+- Suppression sécurisée du compte
+
+### ✅ Rappels
+- Relances automatiques pour devis en attente
+- Notifications dans la barre de statut
 
 ---
 
 ## 📚 Guide d'Utilisation
 
 ### Créer un devis
-1. Cliquez sur **Nouveau Devis** dans la barre latérale ou la page devis
+1. Cliquez sur **Nouveau Devis** (bouton dans le dock ou page devis)
 2. Sélectionnez un client (ou créez-en un)
 3. Ajoutez des lignes de prestation (prix vente, coût de base)
-4. Configurez TVA, remise, devise, échéance
+4. Configurez TVA, remise, devise, échéance, template
 5. Visualisez le rendu A4 en temps réel
-6. Enregistrez (brouillon) ou envoyez par email
+6. Enregistrez (brouillon), exportez en PDF ou envoyez par email
 
 ### Importer des clients (CSV)
 1. Allez dans **Clients** → bouton **Importer**
-2. Déposez un fichier CSV (format : nom, email, téléphone, adresse...)
+2. Déposez un fichier CSV (nom, email, téléphone, adresse...)
 3. Prévisualisez les données
 4. Validez l'import (avec détection des doublons)
 
 ### Gérer l'abonnement
 1. Allez dans **Facturation**
-2. Consultez votre plan actuel, votre quota utilisé
+2. Consultez votre plan actuel et votre quota utilisé
 3. Cliquez sur **Passer à PRO** pour souscrire via Stripe
 
 ---
@@ -279,7 +285,7 @@ pnpm test
 pnpm test:watch
 ```
 
-Les tests sont dans `actions/__test__/` (catalog, client, design, quote, user).
+Les tests sont dans `actions/__test__/` et `features/` (clients, quotes).
 
 ---
 
@@ -294,23 +300,29 @@ pnpm add -g vercel
 vercel
 ```
 
-La base de données Neon est automatiquement gérée via Prisma.
-Assurez-vous d'avoir configuré toutes les variables d'environnement dans le dashboard Vercel.
+La base de données Neon est automatiquement gérée via Prisma. Configurez toutes les variables d'environnement dans le dashboard Vercel.
 
 ---
 
-## 🗺️ Feuille de route V1
+## 📚 Documentation
 
-Voir le fichier [`TODO_V1.md`](./TODO_V1.md) pour le suivi détaillé.
+Le portail de documentation complet se trouve dans [`docs/`](./docs/README.md) :
 
-| Phase | Statut |
-|-------|--------|
-| Phase 0 — Hotfix Bloquants | ✅ Terminée |
-| Phase 1 — Fondations & Sécurité | ✅ Terminée |
-| Phase 2 — Moteur Devis | ✅ Terminée |
-| Phase 3 — Vues & UX | ✅ Terminée |
-| Phase 4 — Monétisation | ✅ Terminée |
-| Phase 5 — Recette & Livraison | ✅ Terminée |
+| Document | Contenu |
+|----------|---------|
+| [ARCHITECTURE.md](./docs/ARCHITECTURE.md) | Vue d'ensemble, stack, structure |
+| [BASE_DE_DONNEES.md](./docs/BASE_DE_DONNEES.md) | Modèle de données |
+| [AUTHENTIFICATION.md](./docs/AUTHENTIFICATION.md) | Auth & sécurité |
+| [SERVER_ACTIONS.md](./docs/SERVER_ACTIONS.md) | Server Actions |
+| [API_ROUTES.md](./docs/API_ROUTES.md) | Routes API |
+| [COMPOSANTS_ET_FEATURES.md](./docs/COMPOSANTS_ET_FEATURES.md) | UI & features |
+| [TEMPLATES_DEVIS.md](./docs/TEMPLATES_DEVIS.md) | Templates & PDF |
+
+---
+
+## 🗺️ Feuille de route
+
+Voir les fichiers TODO du projet (`TODO_V1.md`, `TODO_MASTER_QUOTES.md`, etc.) pour le suivi détaillé.
 
 ---
 

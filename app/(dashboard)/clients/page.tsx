@@ -5,7 +5,7 @@ import { getClients } from "@/actions/client-action";
 import { getClerkUserId } from "@/lib/auth";
 
 export const metadata: Metadata = {
-  title: "Gestion Clients | DevisExpress",
+  title: "Gestion Clients | Factouro",
   description: "Gérez votre carnet d'adresses clients et entreprises.",
 };
 

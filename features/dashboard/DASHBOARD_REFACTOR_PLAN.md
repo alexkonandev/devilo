@@ -1,6 +1,6 @@
 # Refonte Dashboard → Alignement Design System (Source: Quotes)
 
-> **Projet** : DevisExpress — Refonte UI de la page Dashboard  
+> **Projet** : Factouro — Refonte UI de la page Dashboard  
 > **Source de vérité** : `features/quotes/spatial-quotes-view.tsx`  
 > **Design System** : `lib/design-system.ts` + `docs/DESIGN_SYSTEM.md`  
 > **Statut** : ✅ Terminé

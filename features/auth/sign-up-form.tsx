@@ -85,7 +85,7 @@ export default function SignUpForm() {
             <div className="w-7 h-7 rounded-lg bg-[var(--lp-accent)] flex items-center justify-center">
               <RocketLaunch size={14} weight="fill" className="text-white" />
             </div>
-            <span className="text-sm font-semibold text-[var(--lp-text)]">Devilo</span>
+            <span className="text-sm font-semibold text-[var(--lp-text)]">Factouro</span>
           </div>
           <div className="space-y-1">
             <h1 className="text-2xl font-bold tracking-tight text-[var(--lp-text)]">

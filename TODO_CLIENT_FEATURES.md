@@ -1,4 +1,4 @@
-# TODO — Features Page Clients (Devis Express)
+# TODO — Features Page Clients (Factouro)
 
 > Priorisation par valeur utilisateur / complexité technique
 > Mettre à jour après chaque sprint terminé

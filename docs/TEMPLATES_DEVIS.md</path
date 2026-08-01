@@ -1,0 +1,177 @@
+# 🖼️ Système de Templates — Devis Express
+
+## 1. Vue d'ensemble
+
+Le système de templates contrôle le **rendu A4** des devis (couleurs, typographie, espacement, options). Le fichier central est `lib/template-system.ts`. Chaque template possède un rendu HTML spécifique dans `lib/templates/`.
+
+---
+
+## 2. Interface `TemplateDefinition`
+
+### 2.1 Types de base
+
+```typescript
+export type LabelCase = "uppercase" | "normal";
+export type TemplateTier = "free" | "premium";
+```
+
+### 2.2 Interfaces
+
+```typescript
+export interface TemplateColors {
+  primary: string;      // Couleur principale
+  accent: string;       // Couleur secondaire / accent
+  background: string;   // Fond de page
+  surface: string;      // Fond des cartes / sections
+  text: string;         // Texte principal
+  textMuted: string;    // Texte secondaire
+  border: string;       // Bordures
+  highlight: string;    // Surlignage
+}
+
+export interface TemplateTypography {
+  fontFamily: string;   // "Inter", "Georgia", etc.
+  fontScale: number;    // 1.0 = normal
+  labelCase: LabelCase;
+}
+
+export interface TemplateSpacing {
+  paddingX: number;
+  paddingY: number;
+  gap: number;
+}
+
+export interface TemplateOptions {
+  showHeaderBar: boolean;
+  showBadges: boolean;
+  showSummaryCard: boolean;
+  showLegalFooter: boolean;
+  showBlurDecoration: boolean;
+  headerBorderStyle: "bar" | "shadow" | "none";
+}
+
+export interface TemplateDefinition {
+  id: string;
+  name: string;
+  description: string;
+  preview: string;       // Emoji
+  tier: TemplateTier;    // "free" | "premium"
+  colors: TemplateColors;
+  typography: TemplateTypography;
+  spacing: TemplateSpacing;
+  options: TemplateOptions;
+}
+```
+
+---
+
+## 3. Fonctions utilitaires
+
+```typescript
+// Résout un template par ID (fallback sur le premier)
+export function resolveTemplate(templateId: string): TemplateDefinition;
+
+// Liste tous les templates
+export function getAvailableTemplates(): TemplateDefinition[];
+
+// Style inline du header (bar, shadow, none)
+export function computeHeaderStyle(tpl): string;
+
+// Style du décorateur "blur" sur la carte total
+export function computeBlurStyle(tpl): string;
+```
+
+---
+
+## 4. Les 15 Templates
+
+| # | ID | Nom | Tier | Palette | Typographie |
+|---|----|-----|------|---------|-------------|
+| 1 | `minimal-invoice` | Minimal Invoice | free | Slate / Blanc | Inter |
+| 2 | `modern-obsidian` | Modern Obsidian | free | Slate-900 / Ambre | Inter |
+| 3 | `executive-gold` | Executive Gold | premium | Doré / Crème | Inter |
+| 4 | `nordic-clean` | Nordic Clean | premium | Vert sauge | Inter |
+| 5 | `dark-premium` | Dark Premium | premium | Bleu nuit / Corail | Inter |
+| 6 | `vintage-elegance` | Vintage Elegance | premium | Brun / Doré / Ivoire | Playfair Display |
+| 7 | `tech-blueprint` | Tech Blueprint | premium | Orange / Bleu technique | JetBrains Mono |
+| 8 | `luxe-minimal` | Luxe Minimal | premium | Noir / Champagne | Cormorant Garamond |
+| 9 | `creative-studio` | Creative Studio | premium | Corail / Teal | Inter |
+| 10 | `midnight-sapphire` | Midnight Sapphire | premium | Bleu profond / Or | Playfair Display |
+| 11 | `art-deco` | Art Déco | premium | Noir / Or | Playfair Display |
+| 12 | `washi-zen` | Washi Zen | premium | Papier japonais | Cormorant Garamond |
+| 13 | `cyber-neon` | Cyber Neon | premium | Cyan / Magenta | JetBrains Mono |
+| 14 | `botanical` | Botanical | premium | Sage / Kraft | Cormorant Garamond |
+| 15 | `crimson-velvet` | Crimson Velvet | premium | Pourpre / Or | Playfair Display |
+
+### Templates en détail
+
+| Template | Description | Options clés |
+|----------|-------------|--------------|
+| **Minimal Invoice** | Layout épuré sans cartes, lignes fines | headerBorder: none, pas de badges, pas de blur |
+| **Modern Obsidian** | Épuré avec accents ambre, carte récap | headerBorder: shadow, showSummaryCard: true |
+| **Executive Gold** | Standing haut de gamme, cartes crème | showHeaderBar: true, showBadges: true |
+| **Nordic Clean** | Design scandinave, mini-cartes | labelCase: normal, gap 24 |
+| **Dark Premium** | Sombre, accents corail, blur decoration | showBlurDecoration: true, headerBorder: bar |
+| **Vintage Elegance** | Classique, Playfair Display, double filet | labelCase: normal, showBadges: true |
+| **Tech Blueprint** | Fond quadrillé, JetBrains Mono | showHeaderBar: true, showBadges: true |
+| **Luxe Minimal** | Gris minimal, vide comme luxe | paddingX 64, showSummaryCard: false |
+| **Creative Studio** | Asymétrique, multicolore, vibe agence | showHeaderBar: true, showBadges: true |
+| **Midnight Sapphire** | Glassmorphisme deep blue & or | showBadges: true, labelCase: uppercase |
+| **Art Déco** | Gatsby géométrique, triple filet | fontScale 1.08, labelCase: uppercase |
+| **Washi Zen** | Papier japonais, sceau hanko | showSummaryCard: false, gap 36 |
+| **Cyber Neon** | Terminal CRT, scanlines | JetBrains Mono, labelCase: uppercase |
+| **Botanical** | Nature & kraft, filigrane feuillage | showBadges: true, labelCase: normal |
+| **Crimson Velvet** | Pourpre royal & baroque | fontScale 1.06, showBadges: true |
+
+---
+
+## 5. Gating des templates (free vs premium)
+
+- **`tier: "free"`** : `minimal-invoice`, `modern-obsidian` — accessibles à tous les plans.
+- **`tier: "premium"`** : les 13 autres — réservés aux utilisateurs du plan **PRO** (vérification côté UI et côté serveur).
+
+---
+
+## 6. Pipeline de rendu PDF
+
+```mermaid
+flowchart LR
+    A[Définition template<br/>lib/template-system.ts] --> B[Rendu HTML<br/>lib/templates/*.ts]
+    B --> C[Composant React<br/>components/pdf/printable-quote.tsx]
+    C --> D[Template HTML A4<br/>lib/print-template.ts]
+    D --> E[Moteur PDF<br/>lib/pdf-engine.ts]
+    E --> F[Puppeteer / Chromium]
+    F --> G[PDF final]
+```
+
+### Étapes
+
+1. **Définition** : `lib/template-system.ts` définit les caractéristiques de chaque template (couleurs, typo, espacement).
+2. **Rendu** : chaque fichier de `lib/templates/` (ex : `minimal-invoice.ts`, `dark-premium.ts`) contient le rendu HTML spécifique.
+3. **Prévisualisation** : `components/editor/QuoteVisualizer.tsx` montre un aperçu A4 temps réel.
+4. **Export** : `components/editor/export/` gère la page d'export et l'aperçu du template choisi.
+5. **PDF** : `lib/print-template.ts` génère le HTML d'impression, `lib/pdf-engine.ts` orchestre Puppeteer.
+
+---
+
+## 7. Utilitaire de pagination
+
+Le fichier `lib/templates/pagination-utils.ts` gère la **pagination** des devis multi-pages A4 (répartition des lignes sur plusieurs pages, gestion des blocs header/footer répétés).
+
+---
+
+## 8. Variables d'environnement (PDF)
+
+```env
+# Utilisé par la génération PDF
+DATABASE_URL=...
+# (le rendu HTML est généré côté serveur)
+```
+
+---
+
+## 9. Fichiers de templates (`lib/templates/`)
+
+- `index.ts` : export central de tous les templates
+- `pagination-utils.ts` : utilitaires de pagination
+- `minimal-invoice.ts`, `modern-obsidian.ts`, `executive-gold.ts`, `nordic-clean.ts`, `dark-premium.ts`, `vintage-elegance.ts`, `tech-blueprint.ts`, `luxe-minimal.ts`, `creative-studio.ts`, `midnight-sapphire.ts`, `art-deco.ts`, `washi-zen.ts`, `cyber-neon.ts`, `botanical.ts`, `crimson-velvet.ts`

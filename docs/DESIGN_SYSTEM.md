@@ -1,4 +1,4 @@
-# DevisExpress — Design System Manifest
+# Factouro — Design System Manifest
 
 > **Version**: 2.1 — Fintech Command Center  
 > **Date**: Avril 2026  

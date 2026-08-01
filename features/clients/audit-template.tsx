@@ -89,7 +89,7 @@ export function generateAuditHtml(client: ClientListItem): string {
 
       <!-- Footer -->
       <div style="margin-top: 80px; padding-top: 20px; border-top: 1px solid #f1f5f9; text-align: center;">
-        <div style="font-size: 10px; font-weight: 700; color: #cbd5e1; letter-spacing: 0.3em; text-transform: uppercase;">Document Confidentiel — DevisExpress Performance Console</div>
+        <div style="font-size: 10px; font-weight: 700; color: #cbd5e1; letter-spacing: 0.3em; text-transform: uppercase;">Document Confidentiel — Factouro Performance Console</div>
       </div>
     </div>
   `;

@@ -29,7 +29,7 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "Devilo",
+  title: "Factouro",
   description: "Générez vos devis professionnels en quelques secondes.",
 };
 

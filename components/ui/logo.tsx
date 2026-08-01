@@ -16,7 +16,7 @@ export const Logo = ({ className, variant = "full" }: LogoProps) => {
     <div className={cn("flex items-center justify-center", className)}>
       <Image
         src={variant === "full" ? "/logo.svg" : "/logo-icon.svg"}
-        alt="DevisExpress"
+        alt="Factouro"
         width={width}
         height={height}
         className="h-full w-auto object-contain" // Permet au Logo de s'adapter à la hauteur du parent (h-6, h-10, etc.)

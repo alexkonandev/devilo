@@ -30,7 +30,7 @@ export default function LandingFooter() {
               <div className={DS_LP_FOOTER_LOGO}>
                 <RocketLaunch size={14} weight="fill" className="text-white" />
               </div>
-              <span className={DS_LP_FOOTER_NAME}>Devilo</span>
+              <span className={DS_LP_FOOTER_NAME}>Factouro</span>
             </div>
             <p className={DS_LP_FOOTER_DESC}>
               La facturation &eacute;l&eacute;gante pour les freelances modernes.
@@ -79,7 +79,7 @@ export default function LandingFooter() {
 
         <div className={DS_LP_FOOTER_BASE}>
           <span className={DS_LP_FOOTER_COPY}>
-            &copy; 2026 Devilo. Tous droits r&eacute;serv&eacute;s.
+            &copy; 2026 Factouro. Tous droits r&eacute;serv&eacute;s.
           </span>
           
         </div>

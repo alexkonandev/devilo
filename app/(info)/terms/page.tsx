@@ -14,13 +14,13 @@ const clauses = [
     icon: FileText,
     title: "Acceptation des conditions",
     content:
-      "En cr\u00e9ant un compte et en utilisant Devilo, vous acceptez les pr\u00e9sentes conditions g\u00e9n\u00e9rales. Si vous n\u2019acceptez pas ces conditions, veuillez ne pas utiliser le service.",
+      "En cr\u00e9ant un compte et en utilisant Factouro, vous acceptez les pr\u00e9sentes conditions g\u00e9n\u00e9rales. Si vous n\u2019acceptez pas ces conditions, veuillez ne pas utiliser le service.",
   },
   {
     icon: Shield,
     title: "Description du service",
     content:
-      "Devilo est un outil SaaS de cr\u00e9ation et de gestion de devis professionnels. Nous nous engageons \u00e0 maintenir le service accessible et fonctionnel, sans garantie absolue de disponibilit\u00e9 continue.",
+      "Factouro est un outil SaaS de cr\u00e9ation et de gestion de devis professionnels. Nous nous engageons \u00e0 maintenir le service accessible et fonctionnel, sans garantie absolue de disponibilit\u00e9 continue.",
   },
   {
     icon: CreditCard,
@@ -32,19 +32,19 @@ const clauses = [
     icon: Scales,
     title: "Responsabilit\u00e9s",
     content:
-      "Vous \u00eates seul responsable de la conformit\u00e9 l\u00e9gale et fiscale des documents que vous g\u00e9n\u00e9rez. Devilo agit comme un outil technique et ne saurait \u00eatre tenu responsable d\u2019une mauvaise utilisation.",
+      "Vous \u00eates seul responsable de la conformit\u00e9 l\u00e9gale et fiscale des documents que vous g\u00e9n\u00e9rez. Factouro agit comme un outil technique et ne saurait \u00eatre tenu responsable d\u2019une mauvaise utilisation.",
   },
   {
     icon: Gavel,
     title: "Propri\u00e9t\u00e9 intellectuelle",
     content:
-      "Le code, le design et l\u2019infrastructure de Devilo sont notre propri\u00e9t\u00e9 exclusive. Vous conservez l\u2019int\u00e9gralit\u00e9 des droits sur les documents que vous cr\u00e9ez via la plateforme.",
+      "Le code, le design et l\u2019infrastructure de Factouro sont notre propri\u00e9t\u00e9 exclusive. Vous conservez l\u2019int\u00e9gralit\u00e9 des droits sur les documents que vous cr\u00e9ez via la plateforme.",
   },
 ];
 
 const TAG = "Conditions";
 const TITLE = "Conditions g\u00e9n\u00e9rales d\u2019utilisation";
-const DESC = "En utilisant Devilo, vous acceptez les pr\u00e9sentes conditions. Nous faisons de notre mieux pour les rendre claires et \u00e9quitables.";
+const DESC = "En utilisant Factouro, vous acceptez les pr\u00e9sentes conditions. Nous faisons de notre mieux pour les rendre claires et \u00e9quitables.";
 const FOOTER = "Derni\u00e8re mise \u00e0 jour : juillet 2026. Ces conditions peuvent \u00e9voluer. Vous serez inform\u00e9 de tout changement majeur par email.";
 
 export default function TermsPage() {
