@@ -527,13 +527,13 @@ export function SessionDangerCard({
           </div>
           <span className="text-[9px] font-sans font-semibold uppercase tracking-wide text-slate-700">Sessions & Sécurité</span>
         </div>
-        <span className={DS_BADGE_NEUTRAL}>{sessions.length} session{sessions.length > 1 ? "s" : ""}</span>
+        <span className={DS_BADGE_NEUTRAL}>{sessions.length}/2 session{sessions.length > 1 ? "s" : ""}</span>
       </div>
 
       <div className="space-y-3">
         {/* Sessions */}
         <div>
-          <span className={cn(DS_LABEL, "mb-1.5 block")}>Sessions actives</span>
+          <span className={cn(DS_LABEL, "mb-1.5 block")}>Sessions actives <span className="text-slate-400">(max 2)</span></span>
           {sessions.length === 0 && (
             <p className="text-[9px] font-sans font-medium text-slate-600">Aucune session active</p>
           )}

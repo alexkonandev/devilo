@@ -3,6 +3,7 @@ import puppeteer from "puppeteer-core";
 import chromium from "@sparticuz/chromium";
 import { generateQuoteHTML } from "@/lib/print-template";
 import { resolveTemplate } from "@/lib/template-system";
+import { resolveExecutablePath } from "@/lib/pdf-engine";
 
 export async function POST(req: NextRequest) {
   try {
@@ -30,9 +31,10 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. INITIALISATION DE CHROMIUM
-    const executablePath = await chromium.executablePath();
+    const executablePath = await resolveExecutablePath();
+    const isProd = process.env.NODE_ENV === "production" || !!process.env.VERCEL;
     const browser = await puppeteer.launch({
-      args: chromium.args,
+      args: isProd ? chromium.args : ["--no-sandbox", "--disable-setuid-sandbox"],
       defaultViewport: { width: 1200, height: 900 },
       executablePath,
       headless: true,

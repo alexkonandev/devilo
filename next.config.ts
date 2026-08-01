@@ -2,6 +2,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: [
+    "@sparticuz/chromium",
+    "playwright-core",
+    "puppeteer-core",
+  ],
   experimental: {
     // Optimisation pour les icônes (Phosphor, Lucide, etc.)
     optimizePackageImports: ["@phosphor-icons/react", "lucide-react"],

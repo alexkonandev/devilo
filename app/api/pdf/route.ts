@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { chromium } from "playwright-core";
 import chromiumPack from "@sparticuz/chromium";
+import { resolveExecutablePath } from "@/lib/pdf-engine";
 
 export async function POST(req: NextRequest) {
   let browser = null;
@@ -9,10 +10,11 @@ export async function POST(req: NextRequest) {
     const { html, fileName } = await req.json();
 
     // 1. Configuration du binaire Chromium (compatible Local & Vercel/Cloud)
-    const executablePath = await chromiumPack.executablePath();
+    const executablePath = await resolveExecutablePath();
+    const isProd = process.env.NODE_ENV === "production" || !!process.env.VERCEL;
 
     browser = await chromium.launch({
-      args: chromiumPack.args,
+      args: isProd ? chromiumPack.args : ["--no-sandbox", "--disable-setuid-sandbox"],
       executablePath: executablePath,
       headless: true,
     });

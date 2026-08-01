@@ -6,6 +6,10 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import db from "@/lib/prisma";
 
+// ─── Constante de limite de sessions ─────────────────────────────────────────
+
+const MAX_ACTIVE_SESSIONS = 2;
+
 // ─── Types exportés vers le client ───────────────────────────────────────────
 
 export interface ParsedSession {
@@ -42,24 +46,50 @@ export async function getSecurityProfile(): Promise<SecurityProfile> {
     status: "active",
   });
 
-  const parsedSessions: ParsedSession[] = sessionsResponse.data.map((s) => {
-    const browserName = s.latestActivity?.browserName || "Navigateur inconnu";
-    const osName = s.latestActivity?.deviceType || "OS inconnu";
-    const ip = s.latestActivity?.ipAddress || "—";
-    const city = s.latestActivity?.city || "—";
-    const country = s.latestActivity?.country || "—";
+  const rawSessions = sessionsResponse.data;
 
-    return {
-      id: s.id,
-      browser: browserName,
-      os: osName,
-      ip,
-      city,
-      country,
-      lastActiveAt: new Date(s.lastActiveAt).toISOString(),
-      isCurrent: s.id === sessionId,
-    };
-  });
+  // Filet de sécurité : si plus de 2 sessions actives, révoquer les plus anciennes
+  let revokeList: { id: string }[] = [];
+  if (rawSessions.length > MAX_ACTIVE_SESSIONS) {
+    const sorted = [...rawSessions].sort(
+      (a, b) =>
+        new Date(a.lastActiveAt).getTime() -
+        new Date(b.lastActiveAt).getTime(),
+    );
+
+    const toRevokeCount = sorted.length - MAX_ACTIVE_SESSIONS;
+    revokeList = sorted.slice(0, toRevokeCount).filter(
+      (s) => s.id !== sessionId,
+    );
+
+    for (const s of revokeList) {
+      await client.sessions.revokeSession(s.id);
+      console.log(
+        `[SESSION_LIMIT_GUARD]: Session ${s.id} révoquée (user ${userId})`,
+      );
+    }
+  }
+
+  const parsedSessions: ParsedSession[] = rawSessions
+    .filter((s) => !revokeList.some((r) => r.id === s.id))
+    .map((s) => {
+      const browserName = s.latestActivity?.browserName || "Navigateur inconnu";
+      const osName = s.latestActivity?.deviceType || "OS inconnu";
+      const ip = s.latestActivity?.ipAddress || "—";
+      const city = s.latestActivity?.city || "—";
+      const country = s.latestActivity?.country || "—";
+
+      return {
+        id: s.id,
+        browser: browserName,
+        os: osName,
+        ip,
+        city,
+        country,
+        lastActiveAt: new Date(s.lastActiveAt).toISOString(),
+        isCurrent: s.id === sessionId,
+      };
+    });
 
   const clerkUser = await client.users.getUser(userId);
   const emailVerified =
