@@ -7,6 +7,7 @@
 
 import React, { forwardRef, useState, type ReactNode, type ButtonHTMLAttributes } from "react";
 import { useRouter } from "next/navigation";
+import { CircleNotch } from "@phosphor-icons/react";
 
 interface NewQuoteButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
@@ -56,7 +57,11 @@ export const NewQuoteButton = forwardRef<HTMLButtonElement, NewQuoteButtonProps>
         className={className}
         {...props}
       >
-        {children}
+        {loading ? (
+          <CircleNotch size={20} className="animate-spin" />
+        ) : (
+          children
+        )}
       </button>
     );
   }

@@ -496,7 +496,7 @@ export const StudioSidebarLeft = ({
         >
           <CaretLeftIcon size={DS_ICON_SM} />
         </button>
-        <div className="flex flex-col min-w-0">
+        <div className="flex flex-col w-full pr-1">
           <span className="text-[7px] font-mono uppercase tracking-widest text-slate-500">Workspace</span>
           <input
             value={activeQuote.title}

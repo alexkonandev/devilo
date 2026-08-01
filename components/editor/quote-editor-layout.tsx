@@ -68,8 +68,8 @@ export const QuoteEditorLayout = ({
 
   const isPreview = viewMode === "preview";
 
-  // Soft-occlusion : on cache les panneaux latéraux si zoom > 90%
-  const isZoomed = zoom > 1.1;
+  // Soft-occlusion : on cache les panneaux latéraux si zoom > 100%
+  const isZoomed = zoom > 1;
 
   return (
     <FocusContext.Provider value={{ focusMode, setFocusMode, toggleFocus }}>

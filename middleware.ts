@@ -20,6 +20,9 @@ const isPublicRoute = createRouteMatcher([
 // ─── Routes API protégées ─────────────────────────────────────────────────────
 const isApiRoute = createRouteMatcher(["/api/(.*)"]);
 
+// ─── Routes d'authentification (uniquement pour les invités) ──────────────────
+const isAuthRoute = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)", "/sso-callback(.*)"]);
+
 export default clerkMiddleware(async (auth, req) => {
   // 1. Routes API protégées : bloquer si non authentifié
   if (isApiRoute(req) && !isPublicRoute(req)) {
@@ -32,7 +35,15 @@ export default clerkMiddleware(async (auth, req) => {
     }
   }
 
-  // 2. Routes non-publiques : protéger
+  // 2. Routes d'authentification : rediriger vers /home si déjà connecté
+  if (isAuthRoute(req)) {
+    const { userId } = await auth();
+    if (userId) {
+      return NextResponse.redirect(new URL("/home", req.url));
+    }
+  }
+
+  // 3. Routes non-publiques : protéger
   if (!isPublicRoute(req)) {
     const { userId, redirectToSignIn } = await auth();
 

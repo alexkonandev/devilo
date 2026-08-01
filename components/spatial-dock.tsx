@@ -93,21 +93,23 @@ function NewQuoteDockIcon() {
 
   return (
     <Tooltip>
-      <TooltipTrigger>
-        <NewQuoteButton
-          className={cn(
-            "relative flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-200 ease-out",
-            !isActive &&
-              "bg-indigo-600 text-white hover:bg-indigo-700 hover:scale-105",
-            isActive &&
-              "bg-indigo-700 text-white ring-2 ring-indigo-300",
-          )}
-        >
-          <PlusIcon
-            size={20}
-            weight={isActive ? "fill" : "regular"}
-          />
-        </NewQuoteButton>
+      <TooltipTrigger asChild>
+        <span>
+          <NewQuoteButton
+            className={cn(
+              "relative flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-200 ease-out cursor-pointer",
+              !isActive &&
+                "bg-indigo-600 text-white hover:bg-indigo-700 hover:scale-105",
+              isActive &&
+                "bg-indigo-700 text-white ring-2 ring-indigo-300",
+            )}
+          >
+            <PlusIcon
+              size={20}
+              weight={isActive ? "fill" : "regular"}
+            />
+          </NewQuoteButton>
+        </span>
       </TooltipTrigger>
       <TooltipContent
         side="right"
