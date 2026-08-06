@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   PlusIcon,
@@ -89,10 +89,14 @@ export const EditorHeader = ({
 
   // ─── QUOTA ───
   const isFreePlan = billing?.plan === "FREE";
+  // Le quota est limité si le plan est FREE, ou si le plan PRO a un quota non-infini (cas démo)
+  const isQuotaLimited =
+    billing &&
+    billing.quotaLimit !== Infinity;
   const quotaExceeded =
-    isFreePlan && billing && billing.quotaUsed >= billing.quotaLimit;
+    isQuotaLimited && billing && billing.quotaUsed >= billing.quotaLimit;
   const quotaWarning =
-    isFreePlan &&
+    isQuotaLimited &&
     billing &&
     billing.quotaUsed >= billing.quotaLimit - 1 &&
     !quotaExceeded;
@@ -108,6 +112,8 @@ export const EditorHeader = ({
 
   // ─── ÉTAT : sélecteur de devis ───
   const router = useRouter();
+  const pathname = usePathname();
+  const isDemo = pathname.startsWith("/demo");
   const [showQuoteSelector, setShowQuoteSelector] = useState(false);
   const [draftQuotes, setDraftQuotes] = useState<DraftQuoteItem[]>([]);
   const [loadingDrafts, setLoadingDrafts] = useState(false);
@@ -145,7 +151,7 @@ export const EditorHeader = ({
 
   const handleSelectQuote = (quoteId: string) => {
     setShowQuoteSelector(false);
-    router.push(`/quotes/${quoteId}`);
+    router.push(isDemo ? `/demo/quotes/${quoteId}` : `/quotes/${quoteId}`);
   };
 
   // --- HANDLERS LOCAUX ---
@@ -385,9 +391,9 @@ export const EditorHeader = ({
       </div>
 
       {/* ─── INDICATEUR DE QUOTA ─── */}
-      {isFreePlan && quotaExceeded && (
+      {isQuotaLimited && quotaExceeded && (
         <a
-          href="/billing"
+          href={isDemo ? "/demo/billing" : "/billing"}
           className={cn(
             STUDIO_HEADER_BTN,
             "px-2 gap-1 border border-red-200 bg-red-50 hover:bg-red-100 text-red-700"
@@ -409,14 +415,14 @@ export const EditorHeader = ({
           </span>
         </a>
       )}
-      {isFreePlan && quotaWarning && !quotaExceeded && (
+      {isQuotaLimited && quotaWarning && !quotaExceeded && (
         <a
-          href="/billing"
+          href={isDemo ? "/demo/billing" : "/billing"}
           className={cn(
             STUDIO_HEADER_BTN,
             "px-2 gap-1 border border-amber-200 bg-amber-50 hover:bg-amber-100 text-amber-800"
           )}
-          title="Plus que {remainingQuota} devis restant{remainingQuota > 1 ? 's' : ''}"
+          title={`Plus que ${remainingQuota} devis restant${remainingQuota > 1 ? "s" : ""}`}
         >
           <WarningCircleIcon
             size={11}
@@ -436,7 +442,7 @@ export const EditorHeader = ({
 
       {/* ─── BLOC DROITE : Continuer vers l'export ─── */}
       <button
-        onClick={() => router.push("/quotes/new/export")}
+        onClick={() => router.push(isDemo ? "/demo/quotes/new/export" : "/quotes/new/export")}
         className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[9px] font-mono font-bold text-slate-600 hover:bg-slate-100 border border-slate-200 transition-all"
         title="Personnaliser le template et exporter le devis"
       >

@@ -1,13 +1,13 @@
 import { Suspense } from "react";
-import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import { getAuthOrDemoUser } from "@/lib/auth";
 import { getQuotesAction } from "@/actions/quote-registry-action";
 import { QuoteProvider } from "@/features/quotes/components/quote-context";
 import { SpatialQuotesView } from "@/features/quotes/spatial-quotes-view";
 import QuotesLoading from "./loading";
 
 async function QuotesDataWrapper() {
-  const { userId } = await auth();
+  const userId = await getAuthOrDemoUser();
   if (!userId) redirect("/sign-in");
 
   const response = await getQuotesAction();
@@ -21,7 +21,7 @@ async function QuotesDataWrapper() {
 }
 
 export default async function QuotesPage() {
-  const { userId } = await auth();
+  const userId = await getAuthOrDemoUser();
   if (!userId) redirect("/sign-in");
 
   return (

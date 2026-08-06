@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { auth } from "@clerk/nextjs/server";
+import { getAuthOrDemoUser } from "@/lib/auth";
 import db from "@/lib/prisma";
 
 export const metadata = {
@@ -7,7 +7,7 @@ export const metadata = {
 };
 
 export default async function OnboardingPage() {
-  const { userId } = await auth();
+  const userId = await getAuthOrDemoUser();
   if (!userId) redirect("/sign-in");
 
   // Vérifier si l'utilisateur a déjà un profil

@@ -47,12 +47,14 @@ interface BillingManageBlockProps {
   billingProfile: BillingProfile;
   isPro: boolean;
   className?: string;
+  isDemoMode?: boolean;
 }
 
 export function BillingManageBlock({
   billingProfile,
   isPro,
   className,
+  isDemoMode = false,
 }: BillingManageBlockProps) {
   const hasStripe = !!billingProfile.stripeCustomerId;
   const [isPending, startTransition] = useTransition();
@@ -81,6 +83,15 @@ export function BillingManageBlock({
 
   return (
     <div className={cn(STUDIO_V2_CARD, className)}>
+      {/* ── Bannière Démo ── */}
+      {isDemoMode && (
+        <div className="rounded-md border border-amber-200 bg-amber-50/60 px-3 py-2.5 mb-4">
+          <p className="text-[9px] font-sans font-medium text-amber-700 leading-tight">
+            {"Ces paramètres sont désactivés en mode Démo. Créez un compte pour souscrire."}
+          </p>
+        </div>
+      )}
+
       {/* ── Gestion & Paiement ── */}
       {isPro ? (
         <>
@@ -116,7 +127,7 @@ export function BillingManageBlock({
           </span>
           </div>
 
-          {hasStripe && (
+          {hasStripe && !isDemoMode && (
             <button
               onClick={handlePortal}
               disabled={isPending}
@@ -131,6 +142,20 @@ export function BillingManageBlock({
                 <ArrowSquareOutIcon size={DS_ICON_SM} />
               )}
               {isPending ? "Ouverture..." : "Gérer mon abonnement"}
+            </button>
+          )}
+
+          {isDemoMode && (
+            <button
+              type="button"
+              disabled
+              className={cn(
+                DS_BUTTON,
+                "w-full justify-center bg-slate-100 text-slate-400 cursor-not-allowed",
+              )}
+            >
+              <LockKeyIcon size={DS_ICON_SM} />
+              {"Gestion désactivée en Démo"}
             </button>
           )}
         </>
@@ -186,15 +211,19 @@ export function BillingManageBlock({
 
           <button
             onClick={handleCheckout}
-            disabled={isPending}
-            className={cn(DS_BUTTON, "w-full justify-center")}
+            disabled={isPending || isDemoMode}
+            className={cn(
+              DS_BUTTON,
+              "w-full justify-center",
+              isDemoMode && "bg-slate-100 text-slate-400 cursor-not-allowed hover:bg-slate-100",
+            )}
           >
             {isPending ? (
               <SpinnerIcon size={DS_ICON_SM} className="animate-spin" />
             ) : (
               <CrownSimpleIcon size={DS_ICON_SM} />
             )}
-            {isPending ? "Redirection..." : "Passer en PRO — 12 500 FCFA/mois"}
+            {isPending ? "Redirection..." : isDemoMode ? "Souscription désactivée en Démo" : "Passer en PRO — 12 500 FCFA/mois"}
           </button>
           <div className="flex items-center justify-center gap-1.5 mt-2 text-slate-400">
             <LockKeyIcon size={10} />

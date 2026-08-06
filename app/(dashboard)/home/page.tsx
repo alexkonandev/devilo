@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { auth, currentUser } from "@clerk/nextjs/server";
 import db from "@/lib/prisma";
+import { getAuthOrDemoUser } from "@/lib/auth";
 import { HomeView } from "@/features/home/home-view";
 
 export const metadata = {
@@ -8,11 +8,10 @@ export const metadata = {
 };
 
 export default async function HomePage() {
-  const { userId } = await auth();
+  const userId = await getAuthOrDemoUser();
   if (!userId) redirect("/sign-in");
 
-  const user = await currentUser();
-  const firstName = user?.firstName ?? "";
+  const firstName = "";
 
   // Stats légères
   const [quotesCount, clientsCount] = await Promise.all([

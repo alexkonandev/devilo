@@ -19,10 +19,12 @@ import { DS_BADGE_ACTIVE, DS_BADGE_WARNING } from "@/lib/design-system";
 
 interface SpatialBillingViewProps {
   billingProfile: BillingProfile;
+  isDemoMode?: boolean;
 }
 
 export function SpatialBillingView({
   billingProfile,
+  isDemoMode = false,
 }: SpatialBillingViewProps) {
   const setBilling = useKernelStore((s) => s.setBilling);
   const searchParams = useSearchParams();
@@ -106,7 +108,7 @@ export function SpatialBillingView({
         {/* Ligne 2 : Cycle de facturation + Gestion & Paiement + Factures */}
         <div className="grid grid-cols-2 gap-4">
           <FinancialLifecycleCard billingProfile={billingProfile} isPro={isPro} />
-          <BillingManageBlock billingProfile={billingProfile} isPro={isPro} />
+          <BillingManageBlock billingProfile={billingProfile} isPro={isPro} isDemoMode={isDemoMode} />
         </div>
       </div>
     </div>

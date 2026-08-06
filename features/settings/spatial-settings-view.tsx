@@ -27,6 +27,7 @@ import { SlidersIcon, FloppyDiskIcon, XIcon, SpinnerIcon } from "@phosphor-icons
 interface SpatialSettingsViewProps {
   initialData: SettingsFormValues;
   securityProfile: SecurityProfile;
+  isDemoMode?: boolean;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -36,6 +37,7 @@ interface SpatialSettingsViewProps {
 export function SpatialSettingsView({
   initialData,
   securityProfile,
+  isDemoMode = false,
 }: SpatialSettingsViewProps) {
   const [isPending, startTransition] = useTransition();
   const setSettings = useKernelStore((s) => s.setSettings);
@@ -149,10 +151,12 @@ export function SpatialSettingsView({
             <PasswordSecurityCard
               securityProfile={securityProfile}
               userEmail={watchedValues.companyEmail || ""}
+              isDemoMode={isDemoMode}
             />
             <SessionDangerCard
               securityProfile={securityProfile}
               userEmail={watchedValues.companyEmail || ""}
+              isDemoMode={isDemoMode}
             />
           </div>
 

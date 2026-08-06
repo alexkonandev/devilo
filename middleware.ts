@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 // ─── Routes Publiques (accessibles sans authentification) ─────────────────────
 const isPublicRoute = createRouteMatcher([
   "/",
+  "/demo(.*)",
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/sso-callback(.*)",
@@ -11,6 +12,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/webhooks/clerk(.*)",
   "/api/uploadthing(.*)",
   "/api/print(.*)",
+  "/api/demo(.*)",
   "/contact(.*)",
   "/privacy(.*)",
   "/legal(.*)",
@@ -24,7 +26,21 @@ const isApiRoute = createRouteMatcher(["/api/(.*)"]);
 // ─── Routes d'authentification (uniquement pour les invités) ──────────────────
 const isAuthRoute = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)", "/sso-callback(.*)"]);
 
+// ─── Routes du mode Démo (Sandbox) ────────────────────────────────────────────
+const isDemoRoute = createRouteMatcher(["/demo(.*)"]);
+
 export default clerkMiddleware(async (auth, req) => {
+  // 0. Mode Démo : bypass Clerk, injecter le header et réécrire vers la route interne
+  if (isDemoRoute(req)) {
+    const url = req.nextUrl.clone();
+    // Réécrire /demo/quotes → /quotes (l'URL reste /demo/quotes côté navigateur)
+    url.pathname = url.pathname.replace(/^\/demo/, "") || "/";
+    const response = NextResponse.rewrite(url);
+    // Header pour que les Server Components/Server Actions détectent le mode démo
+    response.headers.set("x-demo-mode", "true");
+    return response;
+  }
+
   // 1. Routes API protégées : bloquer si non authentifié
   if (isApiRoute(req) && !isPublicRoute(req)) {
     const { userId } = await auth();

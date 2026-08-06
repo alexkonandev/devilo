@@ -1,6 +1,6 @@
 // @/app/(editor)/quotes/[id]/page.tsx
 import { redirect } from "next/navigation";
-import { getClerkUserId } from "@/lib/auth";
+import { getClerkUserId, isDemoMode } from "@/lib/auth";
 import db from "@/lib/prisma";
 import { getSuggestionsAction } from "@/actions/suggestion-action";
 import { getAvailableThemes } from "@/actions/design-action";
@@ -29,11 +29,15 @@ export default async function EditorQuotePage({ params }: PageProps) {
     }),
   ]);
 
-  if (!existingQuote) redirect("/quotes/new");
+  if (!existingQuote) {
+    if (await isDemoMode()) redirect("/demo/quotes/new");
+    redirect("/quotes/new");
+  }
 
   const user = await db.user.findUnique({ where: { id: userId } });
 
   if (!user) {
+    if (await isDemoMode()) redirect("/demo/settings");
     redirect("/settings");
   }
 

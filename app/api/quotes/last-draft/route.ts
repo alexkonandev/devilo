@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { getAuthOrDemoUser } from "@/lib/auth";
 import db from "@/lib/prisma";
 
 /**
@@ -9,7 +9,7 @@ import db from "@/lib/prisma";
  */
 export async function GET() {
   try {
-    const { userId } = await auth();
+    const userId = await getAuthOrDemoUser();
     if (!userId) {
       return NextResponse.json({ quoteId: null }, { status: 200 });
     }

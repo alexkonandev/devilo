@@ -21,6 +21,10 @@ import {
   TooltipContent,
 } from "@/components/ui/tooltip";
 
+interface SpatialDockProps {
+  isDemoMode?: boolean;
+}
+
 interface NavItem {
   label: string;
   href: string;
@@ -47,9 +51,12 @@ function Separator({ className }: { className?: string }) {
   return <div className={cn("w-5 border-t border-slate-100", className)} />;
 }
 
-export function SpatialDock() {
+export function SpatialDock({ isDemoMode = false }: SpatialDockProps) {
   return (
-    <aside className="fixed left-0 top-10 bottom-0 z-40 w-16 bg-white border-r border-slate-200 flex flex-col items-center pt-6 pb-3">
+    <aside className={cn(
+      "fixed left-0 bottom-0 z-40 w-16 bg-white border-r border-slate-200 flex flex-col items-center pt-6 pb-3",
+      isDemoMode ? "top-[68px]" : "top-10",
+    )}>
       <TooltipProvider delayDuration={0}>
         {/* Niveau 1 — Accueil */}
         {NAV_ITEMS.primary.map((item) => (

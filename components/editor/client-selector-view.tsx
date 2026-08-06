@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   UserIcon,
@@ -35,6 +35,8 @@ export const ClientSelectorView = ({
   userId,
 }: ClientSelectorViewProps) => {
   const router = useRouter();
+  const pathname = usePathname();
+  const isDemo = pathname.startsWith("/demo");
   const { activeQuote, updateField, editorOnboardingDone, setEditorOnboardingDone } = useKernelStore();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
@@ -80,7 +82,7 @@ export const ClientSelectorView = ({
       const result = await listDraftQuotesAction(1, client.name);
       if (result.success && result.data.length > 0) {
         const latestQuote = result.data[0];
-        router.push(`/quotes/${latestQuote.id}`);
+        router.push(isDemo ? `/demo/quotes/${latestQuote.id}` : `/quotes/${latestQuote.id}`);
       } else {
         // Pas de devis existant → on reste sur l'éditeur avec le client pré-rempli
         // Le store a déjà été mis à jour, le composant CreateQuoteClient détectera

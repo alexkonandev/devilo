@@ -10,7 +10,7 @@ import {
   StarIcon,
   PaletteIcon,
 } from "@phosphor-icons/react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useKernelStore } from "@/hooks/use-kernel-store";
 
 // ═══════════════════════════════════════════════════════════════
@@ -33,6 +33,8 @@ export const TemplateSelectorModal = ({
   billingPlan = "FREE",
 }: TemplateSelectorModalProps) => {
   const router = useRouter();
+  const pathname = usePathname();
+  const isDemo = pathname.startsWith("/demo");
   const activeTemplateId = useKernelStore((s) => s.activeTemplateId);
   const setActiveTemplateId = useKernelStore((s) => s.setActiveTemplateId);
   const templates = getAvailableTemplates();
@@ -42,7 +44,7 @@ export const TemplateSelectorModal = ({
 
   const handleSelect = (tpl: TemplateDefinition) => {
     if (tpl.tier === "premium" && isFreePlan) {
-      router.push("/billing");
+      router.push(isDemo ? "/demo/billing" : "/billing");
       return;
     }
     setSelectedId(tpl.id);
@@ -79,7 +81,7 @@ export const TemplateSelectorModal = ({
                 Choisissez votre template
               </h2>
               <p className="text-[10px] font-mono text-slate-500 mt-0.5">
-                Le template sera appliqué au moment de l'export PDF
+                {"Le template sera appliqué au moment de l'export PDF"}
               </p>
             </div>
           </div>

@@ -1,5 +1,5 @@
-import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import { getAuthOrDemoUser, isDemoMode } from "@/lib/auth";
 import { getBillingProfile } from "@/actions/billing-action";
 import { SpatialBillingView } from "@/features/billing/spatial-billing-view";
 
@@ -9,8 +9,10 @@ export const metadata = {
 };
 
 export default async function BillingPage() {
-  const { userId } = await auth();
+  const userId = await getAuthOrDemoUser();
   if (!userId) redirect("/sign-in");
+
+  const demoMode = await isDemoMode();
 
   const billingProfile = await getBillingProfile();
 
@@ -21,7 +23,7 @@ export default async function BillingPage() {
 
   return (
     <div className="h-full w-full">
-      <SpatialBillingView billingProfile={billingProfile} />
+      <SpatialBillingView billingProfile={billingProfile} isDemoMode={demoMode} />
     </div>
   );
 }

@@ -400,12 +400,14 @@ function SessionItem({
   revoking,
   renderTime,
   onRevoke,
+  isDemoMode = false,
 }: {
   session: ParsedSession;
   isCurrent: boolean;
   revoking: string | null;
   renderTime: number;
   onRevoke: (id: string) => void;
+  isDemoMode?: boolean;
 }) {
   const ago = new Date(session.lastActiveAt);
   const diffMin = Math.floor((renderTime - ago.getTime()) / 60000);
@@ -433,6 +435,8 @@ function SessionItem({
         </span>
         {isCurrent ? (
           <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-wide whitespace-nowrap">Active</span>
+        ) : isDemoMode ? (
+          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wide whitespace-nowrap">—</span>
         ) : (
           <button type="button" onClick={() => onRevoke(session.id)} disabled={revoking === session.id}
             className="text-[9px] font-bold text-rose-500 hover:text-rose-700 uppercase tracking-wide disabled:opacity-40 whitespace-nowrap">
@@ -452,12 +456,14 @@ interface PasswordSecurityCardProps {
   securityProfile: SecurityProfile;
   userEmail: string;
   className?: string;
+  isDemoMode?: boolean;
 }
 
 export function PasswordSecurityCard({
   securityProfile,
   userEmail,
   className,
+  isDemoMode = false,
 }: PasswordSecurityCardProps) {
   return (
     <div className={cn(STUDIO_V2_CARD, className)}>
@@ -477,9 +483,17 @@ export function PasswordSecurityCard({
       <div className="space-y-3">
         <StatutEmail verified={securityProfile.emailVerified} email={userEmail} passwordEnabled={securityProfile.passwordEnabled} />
 
-        <div className="rounded-md border border-slate-200 bg-slate-50/60 px-2 py-2">
-          <ChangePasswordForm passwordEnabled={securityProfile.passwordEnabled} />
-        </div>
+        {isDemoMode ? (
+          <div className="rounded-md border border-amber-200 bg-amber-50/60 px-3 py-2.5">
+            <p className="text-[9px] font-sans font-medium text-amber-700 leading-tight">
+              Ces paramètres sont désactivés en mode Démo.
+            </p>
+          </div>
+        ) : (
+          <div className="rounded-md border border-slate-200 bg-slate-50/60 px-2 py-2">
+            <ChangePasswordForm passwordEnabled={securityProfile.passwordEnabled} />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -493,12 +507,14 @@ interface SessionDangerCardProps {
   securityProfile: SecurityProfile;
   userEmail: string;
   className?: string;
+  isDemoMode?: boolean;
 }
 
 export function SessionDangerCard({
   securityProfile,
   userEmail,
   className,
+  isDemoMode = false,
 }: SessionDangerCardProps) {
   const sp = securityProfile;
   const [sessions, setSessions] = useState<ParsedSession[]>(sp.sessions);
@@ -546,13 +562,22 @@ export function SessionDangerCard({
                 revoking={revoking}
                 renderTime={renderTime}
                 onRevoke={handleRevoke}
+                isDemoMode={isDemoMode}
               />
             ))}
           </div>
         </div>
 
         {/* Zone de Danger */}
-        <DangerZoneCard userEmail={userEmail} />
+        {isDemoMode ? (
+          <div className="rounded-md border border-amber-200 bg-amber-50/60 px-3 py-2.5">
+            <p className="text-[9px] font-sans font-medium text-amber-700 leading-tight">
+              Ces paramètres sont désactivés en mode Démo.
+            </p>
+          </div>
+        ) : (
+          <DangerZoneCard userEmail={userEmail} />
+        )}
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { auth } from "@clerk/nextjs/server";
 import db from "@/lib/prisma";
+import { getAuthOrDemoUser, isDemoMode } from "@/lib/auth";
 import SoftwareLayoutClient from "./layout-client";
 
 export default async function DashboardLayout({
@@ -8,8 +8,10 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { userId } = await auth();
+  const userId = await getAuthOrDemoUser();
   if (!userId) redirect("/sign-in");
+
+  const demoMode = await isDemoMode();
 
   // Vérification : nouvel utilisateur sans aucun devis ni client
   // => rediriger vers la page d'onboarding (layout minimal sans dock)
@@ -29,5 +31,5 @@ export default async function DashboardLayout({
     redirect("/onboarding");
   }
 
-  return <SoftwareLayoutClient>{children}</SoftwareLayoutClient>;
+  return <SoftwareLayoutClient isDemoMode={demoMode}>{children}</SoftwareLayoutClient>;
 }

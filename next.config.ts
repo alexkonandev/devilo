@@ -1,4 +1,3 @@
-// next.config.ts
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -7,6 +6,10 @@ const nextConfig: NextConfig = {
     "playwright-core",
     "puppeteer-core",
   ],
+  // Force l'inclusion des binaires brotli de Chromium dans le déploiement Serverless
+  outputFileTracingIncludes: {
+    "/**": ["./node_modules/@sparticuz/chromium/bin/**/*"],
+  },
   experimental: {
     // Optimisation pour les icônes (Phosphor, Lucide, etc.)
     optimizePackageImports: ["@phosphor-icons/react", "lucide-react"],
@@ -27,7 +30,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  /* config options here */
 };
 
 export default nextConfig;

@@ -5,6 +5,7 @@ import { stripe } from "@/lib/stripe";
 import db from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { QuoteStatus } from "@/app/generated/prisma/enums";
+import { getUserSubscriptionPlan } from "@/lib/subscription";
 
 // ─── Types exportés ─────────────────────────────────────────────────────────
 
@@ -125,6 +126,10 @@ export async function getBillingProfile(): Promise<BillingProfile | null> {
 
     const isPro = user.plan === "PRO" || user.plan === "ENTERPRISE";
 
+    // Récupérer le quota applicable (la démo PRO conserve un quota limité)
+    const plan = await getUserSubscriptionPlan();
+    const quotaLimit = plan?.quotaLimit ?? (isPro ? PRO_QUOTA : FREE_QUOTA);
+
     const revenueThisMonth = acceptedThisMonth.reduce((sum, q) => {
       const quoteTotal = q.lines.reduce(
         (s, l) => s + l.unitPrice * l.quantity,
@@ -184,7 +189,7 @@ export async function getBillingProfile(): Promise<BillingProfile | null> {
     return {
       plan: user.plan,
       quotaUsed: user._count.quotes,
-      quotaLimit: isPro ? PRO_QUOTA : FREE_QUOTA,
+      quotaLimit,
       stripeCustomerId: customerId ?? null,
       stripeSubscriptionId: subscriptionId ?? null,
       subscriptionEndsAt: user.subscription?.endsAt?.toISOString() ?? null,

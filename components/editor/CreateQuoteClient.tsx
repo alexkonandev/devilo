@@ -8,7 +8,7 @@ import React, {
   useCallback,
 } from "react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import StudioLoader from "@/components/editor/studio-loader";
 import { useKernelStore } from "@/hooks/use-kernel-store";
 
@@ -57,6 +57,8 @@ export default function CreateQuoteClient({
   billing,
 }: CreateQuoteClientProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const isDemo = pathname.startsWith("/demo");
   const printRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -261,6 +263,14 @@ export default function CreateQuoteClient({
    * puis recharge la page pour obtenir les données fraîches du serveur.
    */
   const handleNewQuote = async () => {
+    // Vérification du quota avant création d'un nouveau devis
+    if (billing && billing.quotaLimit !== Infinity && billing.quotaUsed >= billing.quotaLimit) {
+      toast.error("Quota de devis atteint", {
+        description: `Vous avez atteint la limite de ${billing.quotaLimit} devis. Supprimez un devis existant ou réinitialisez les données de test.`,
+      });
+      return;
+    }
+
     if (isDirty && activeQuote?.client.name) {
       const saved = await handleSave(false);
       if (!saved) {
@@ -277,7 +287,7 @@ export default function CreateQuoteClient({
 
     // On force un rechargement complet pour obtenir les données utilisateur à jour
     // (activeQuote n'étant plus persisté, le store sera vide au reload)
-    window.location.href = "/quotes/new";
+    window.location.href = isDemo ? "/demo/quotes/new" : "/quotes/new";
     toast.info("Nouveau devis initialisé");
   };
 
@@ -291,7 +301,7 @@ export default function CreateQuoteClient({
     if (!quoteId) {
       setActiveQuote(null);
       setIsDirty(false);
-      router.push("/quotes");
+      router.push(isDemo ? "/demo/quotes" : "/quotes");
       return;
     }
 
@@ -303,7 +313,7 @@ export default function CreateQuoteClient({
         toast.success("Devis supprimé avec succès");
         setActiveQuote(null);
         setIsDirty(false);
-        router.push("/quotes");
+        router.push(isDemo ? "/demo/quotes" : "/quotes");
       } else {
         toast.error("Erreur", { description: res.error });
       }
@@ -420,7 +430,7 @@ export default function CreateQuoteClient({
             suggestions={suggestions}
             initialClients={initialClients}
             userId={user.id}
-            onBack={() => router.push('/home')}
+            onBack={() => router.push(isDemo ? "/demo/home" : "/home")}
           />
         )
       }

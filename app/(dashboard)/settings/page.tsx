@@ -1,7 +1,7 @@
 // @/app/dashboard/settings/page.tsx
-import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import db from "@/lib/prisma";
+import { getAuthOrDemoUser, isDemoMode } from "@/lib/auth";
 import { SpatialSettingsView } from "@/features/settings/spatial-settings-view";
 import { SettingsFormValues } from "@/lib/validations/settings";
 import {
@@ -17,8 +17,10 @@ export const metadata = {
 
 export default async function SettingsPage() {
   // 1. Authentification & Sécurité (Priorité Mission)
-  const { userId } = await auth();
+  const userId = await getAuthOrDemoUser();
   if (!userId) redirect("/sign-in");
+
+  const demoMode = await isDemoMode();
 
   // 2. Data Fetching parallèle (settings DB + profil sécurité Clerk)
   const [userSettings, securityProfile] = await Promise.all([
@@ -67,6 +69,7 @@ export default async function SettingsPage() {
       <SpatialSettingsView
         initialData={initialData as SettingsFormValues}
         securityProfile={securityProfile}
+        isDemoMode={demoMode}
       />
     </div>
   );

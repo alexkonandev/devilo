@@ -1,6 +1,6 @@
 // @/app/dashboard/quotes/create/page.tsx
 import { redirect } from "next/navigation";
-import { getClerkUserId, getCurrentUser } from "@/lib/auth";
+import { getClerkUserId, getCurrentUser, isDemoMode } from "@/lib/auth";
 import db from "@/lib/prisma";
 import { getSuggestionsAction } from "@/actions/suggestion-action";
 import { getAvailableThemes } from "@/actions/design-action";
@@ -30,6 +30,9 @@ export default async function EditorPage({ searchParams }: PageProps) {
   });
 
   if (lastDraftQuote) {
+    if (await isDemoMode()) {
+      redirect(`/demo/quotes/${lastDraftQuote.id}`);
+    }
     redirect(`/quotes/${lastDraftQuote.id}`);
   }
 
@@ -45,10 +48,15 @@ export default async function EditorPage({ searchParams }: PageProps) {
 
   if (!user) {
     // Création automatique du profil utilisateur s'il n'existe pas en BDD
-    const clerkUser = await getCurrentUser();
-    const email = clerkUser?.emailAddresses?.[0]?.emailAddress;
-    if (!email) {
-      redirect("/settings");
+    let email = "demo@factouro.ci";
+    if (!(await isDemoMode())) {
+      const clerkUser = await getCurrentUser();
+      const clerkEmail = clerkUser?.emailAddresses?.[0]?.emailAddress;
+      if (clerkEmail) {
+        email = clerkEmail;
+      } else {
+        redirect("/settings");
+      }
     }
 
     user = await db.user.create({

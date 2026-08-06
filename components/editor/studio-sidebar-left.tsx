@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import {
   UserIcon,
   PlusIcon,
@@ -304,6 +304,8 @@ export const StudioSidebarLeft = ({
     useKernelStore();
 
   const router = useRouter();
+  const pathname = usePathname();
+  const isDemo = pathname.startsWith("/demo");
   const [activeTab, setActiveTab] = useState<ActiveTab>("client");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [clientSearch, setClientSearch] = useState("");
@@ -633,7 +635,7 @@ export const StudioSidebarLeft = ({
                             const result = await listDraftQuotesAction(1, c.name);
                             if (result.success && result.data.length > 0) {
                               const latestQuote = result.data[0];
-                              router.push(`/quotes/${latestQuote.id}`);
+                              router.push(isDemo ? `/demo/quotes/${latestQuote.id}` : `/quotes/${latestQuote.id}`);
                             } else {
                               // Aucun devis existant → on met juste à jour le client
                               updateField("client", "name", c.name);

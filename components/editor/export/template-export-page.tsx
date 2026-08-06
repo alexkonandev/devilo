@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { getAvailableTemplates, resolveTemplate } from "@/lib/template-system";
 import { useKernelStore } from "@/hooks/use-kernel-store";
@@ -18,6 +18,8 @@ import {
 
 export function TemplateExportPage() {
   const router = useRouter();
+  const pathname = usePathname();
+  const isDemo = pathname.startsWith("/demo");
 
   // --- STORE ---
   const activeQuote = useKernelStore((s) => s.activeQuote);
@@ -51,7 +53,7 @@ export function TemplateExportPage() {
     if (!activeQuote || !selectedId) return;
 
     if (isSelectedPremiumLocked) {
-      router.push("/billing");
+      router.push(isDemo ? "/demo/billing" : "/billing");
       return;
     }
 
@@ -101,7 +103,7 @@ export function TemplateExportPage() {
           </span>
           <div className="mt-4">
             <button
-              onClick={() => router.push("/quotes/new")}
+              onClick={() => router.push(isDemo ? "/demo/quotes/new" : "/quotes/new")}
               className="px-4 py-2 rounded-lg text-[9px] font-mono font-bold bg-indigo-600 text-white hover:bg-indigo-700 transition-all"
             >
               {txtEdition}

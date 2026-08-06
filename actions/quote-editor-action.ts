@@ -13,6 +13,7 @@ import { ActiveQuote, ActionResponse } from "@/types/quote-editor";
 import { upsertQuoteSchema, updateQuoteInlineSchema } from "@/lib/validations/quote";
 import { MAX_QUOTE_LINES } from "@/lib/constants";
 import { logQuoteEventAction } from "./quote-event-action";
+import { canCreateQuote } from "@/lib/subscription";
 
 export async function upsertQuoteAction(
   data: ActiveQuote,
@@ -37,6 +38,18 @@ export async function upsertQuoteAction(
         success: false,
         error: `Le devis ne peut pas contenir plus de ${MAX_QUOTE_LINES} lignes. Veuillez réduire le nombre de prestations.`,
       };
+    }
+
+    // ─── VÉRIFICATION DU QUOTA DE CRÉATION ───
+    const isCreation = !id;
+    if (isCreation) {
+      const quota = await canCreateQuote();
+      if (!quota.allowed) {
+        return {
+          success: false,
+          error: `Quota de devis atteint (${quota.quotaUsed}/${quota.quotaLimit}). Supprimez un devis existant ou réinitialisez les données de test en mode démo.`,
+        };
+      }
     }
 
     // 1. Gestion du Client (Idempotent)

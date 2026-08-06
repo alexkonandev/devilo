@@ -18,6 +18,7 @@ import {
   PlusIcon,
   UsersThreeIcon,
   SignOutIcon,
+  UserCircleIcon,
 } from "@phosphor-icons/react";
 import { Logo } from "@/components/ui/logo";
 import { cn } from "@/lib/utils";
@@ -129,7 +130,11 @@ const STATUS_BADGE: Record<string, { label: string; color: string; bg: string }>
 // COMPOSANT PRINCIPAL
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export function SpatialStatusBar() {
+interface SpatialStatusBarProps {
+  isDemoMode?: boolean;
+}
+
+export function SpatialStatusBar({ isDemoMode = false }: SpatialStatusBarProps) {
   const { stats } = useSafeQuotes();
 
   // Search / Command palette state
@@ -384,23 +389,41 @@ export function SpatialStatusBar() {
         {/* Séparateur vertical */}
         <div className="w-px h-5 bg-slate-200 mx-1.5" />
 
-        {/* Profil utilisateur / Déconnexion */}
-        <button
-          onClick={() => signOut()}
-          className="flex items-center justify-center w-7 h-7 rounded-md text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-all"
-          title="Déconnexion"
-        >
-          <div className="w-5 h-5 rounded-full overflow-hidden border border-slate-200">
-            <Avatar className="w-full h-full">
-              <AvatarImage src={user?.imageUrl} className="object-cover" />
-              <AvatarFallback className="bg-slate-100 text-slate-500 text-[7px] font-bold">
-                {user?.firstName?.charAt(0) ||
-                  user?.emailAddresses[0]?.emailAddress?.charAt(0) ||
-                  "?"}
-              </AvatarFallback>
-            </Avatar>
-          </div>
-        </button>
+        {isDemoMode ? (
+          /* ── MODE DÉMO : badge Invité + CTA S'inscrire ── */
+          <>
+            <span className="flex items-center gap-1 px-2 h-7 rounded-md bg-indigo-50 border border-indigo-200 text-indigo-700">
+              <UserCircleIcon size={12} weight="fill" />
+              <span className="text-[9px] font-mono font-bold uppercase tracking-wider">
+                Invité / Démo
+              </span>
+            </span>
+            <Link
+              href="/sign-up"
+              className="flex items-center justify-center px-2.5 h-7 rounded-md bg-slate-900 text-white hover:bg-slate-800 text-[9px] font-mono font-bold uppercase tracking-wider transition-all"
+            >
+              {"S'inscrire"}
+            </Link>
+          </>
+        ) : (
+          /* ── MODE NORMAL : Profil utilisateur / Déconnexion ── */
+          <button
+            onClick={() => signOut()}
+            className="flex items-center justify-center w-7 h-7 rounded-md text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-all"
+            title="Déconnexion"
+          >
+            <div className="w-5 h-5 rounded-full overflow-hidden border border-slate-200">
+              <Avatar className="w-full h-full">
+                <AvatarImage src={user?.imageUrl} className="object-cover" />
+                <AvatarFallback className="bg-slate-100 text-slate-500 text-[7px] font-bold">
+                  {user?.firstName?.charAt(0) ||
+                    user?.emailAddresses[0]?.emailAddress?.charAt(0) ||
+                    "?"}
+                </AvatarFallback>
+              </Avatar>
+            </div>
+          </button>
+        )}
       </div>
 
       {/* ═══ COMMAND PALETTE ═══ */}

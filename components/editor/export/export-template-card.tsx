@@ -8,7 +8,7 @@ import {
   LockSimpleIcon,
   StarIcon,
 } from "@phosphor-icons/react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 interface ExportTemplateCardProps {
   template: TemplateDefinition;
@@ -24,10 +24,12 @@ export function ExportTemplateCard({
   onSelect,
 }: ExportTemplateCardProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const isDemo = pathname.startsWith("/demo");
 
   const handleClick = () => {
     if (isPremiumLocked) {
-      router.push("/billing");
+      router.push(isDemo ? "/demo/billing" : "/billing");
       return;
     }
     onSelect();

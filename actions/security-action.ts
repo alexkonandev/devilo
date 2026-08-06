@@ -1,7 +1,7 @@
 "use server";
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import { getClerkUserId } from "@/lib/auth";
+import { getClerkUserId, isDemoMode } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import db from "@/lib/prisma";
@@ -36,8 +36,22 @@ export interface SecurityProfile {
 
 export async function getSecurityProfile(): Promise<SecurityProfile> {
   const userId = await getClerkUserId();
-  const { sessionId } = await auth();
   if (!userId) redirect("/sign-in");
+
+  // En mode démo, retourner un profil de sécurité par défaut
+  // (pas de session Clerk, pas de compte Clerk pour user_demo_sandbox)
+  if (await isDemoMode()) {
+    return {
+      sessions: [],
+      score: 100,
+      emailVerified: true,
+      twoFactorEnabled: false,
+      currentSessionId: "",
+      passwordEnabled: false,
+    };
+  }
+
+  const { sessionId } = await auth();
 
   const client = await clerkClient();
 
