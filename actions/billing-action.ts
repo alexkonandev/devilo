@@ -1,11 +1,11 @@
 "use server";
 
-import { getClerkUserId, getCurrentUser } from "@/lib/auth";
+import { getClerkUserId, getCurrentUser, DEMO_USER_ID } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
 import db from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { QuoteStatus } from "@/app/generated/prisma/enums";
-import { getUserSubscriptionPlan } from "@/lib/subscription";
+import { getUserSubscriptionPlan, DEMO_QUOTA } from "@/lib/subscription";
 
 // ─── Types exportés ─────────────────────────────────────────────────────────
 
@@ -84,6 +84,27 @@ async function ensureUserExists(userId: string) {
 export async function getBillingProfile(): Promise<BillingProfile | null> {
   const userId = await getClerkUserId();
   if (!userId) return null;
+
+  // Mode démo : court-circuit global — PRO débloqué sans dépendre de la DB/Stripe
+  if (userId === DEMO_USER_ID) {
+    const quotaUsed = await db.quote.count({ where: { userId } });
+    return {
+      plan: "PRO",
+      quotaUsed,
+      quotaLimit: DEMO_QUOTA,
+      stripeCustomerId: null,
+      stripeSubscriptionId: null,
+      subscriptionEndsAt: null,
+      invoices: [],
+      monthlyStats: {
+        quotesThisMonth: quotaUsed,
+        quotesTotal: quotaUsed,
+        quotesAccepted: 0,
+        revenueThisMonth: 0,
+      },
+      nextPayment: null,
+    };
+  }
 
   // Assurer que l'utilisateur existe en base (création auto si nouveau compte)
   await ensureUserExists(userId);

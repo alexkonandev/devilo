@@ -1,4 +1,4 @@
-import { getAuthOrDemoUser, DEMO_USER_ID } from "@/lib/auth";
+import { getAuthOrDemoUser, DEMO_USER_ID, isDemoMode } from "@/lib/auth";
 import db from "@/lib/prisma";
 
 const DAY_IN_MS = 86_400_000;
@@ -25,7 +25,7 @@ export const checkSubscription = async (): Promise<boolean> => {
   if (!userId) return false;
 
   // Mode démo : l'utilisateur sandbox bénéficie toujours des privilèges PRO
-  if (userId === DEMO_USER_ID) return true;
+  if (userId === DEMO_USER_ID || (await isDemoMode())) return true;
 
   try {
     const subscription = await db.subscription.findUnique({
@@ -63,7 +63,7 @@ export async function getUserSubscriptionPlan(): Promise<SubscriptionPlan | null
   if (!userId) return null;
 
   // Mode démo : PRO débloqué mais quota de création restreint
-  if (userId === DEMO_USER_ID) {
+  if (userId === DEMO_USER_ID || (await isDemoMode())) {
     return { isPro: true, plan: "PRO", quotaLimit: DEMO_QUOTA };
   }
 
