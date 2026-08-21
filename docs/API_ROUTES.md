@@ -27,7 +27,7 @@ Les routes API se trouvent dans le dossier `app/api/`. Elles sont protégées pa
 
 - **Méthode** : `POST`
 - **Protection** : Publique (liste blanche middleware)
-- **Rôle** : Génère le PDF d'un devis en utilisant **Puppeteer** / Chromium (@sparticuz/chromium). Sert le HTML du template A4 et convertit en PDF.
+- **Rôle** : Génère le PDF d'un devis en utilisant **Puppeteer** / Chromium (@sparticuz/chromium-min). Sert le HTML du template A4 et convertit en PDF.
 - **Usage** : appelé par le client pour générer le PDF téléchargeable.
 
 ---

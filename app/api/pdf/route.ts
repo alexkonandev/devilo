@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { chromium } from "playwright-core";
-import chromiumPack from "@sparticuz/chromium";
+import chromiumPack from "@sparticuz/chromium-min";
 import { resolveExecutablePath } from "@/lib/pdf-engine";
 
 export async function POST(req: NextRequest) {

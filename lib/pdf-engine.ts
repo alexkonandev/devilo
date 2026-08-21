@@ -1,4 +1,4 @@
-import chromium from "@sparticuz/chromium";
+import chromium from "@sparticuz/chromium-min";
 import puppeteer, { Browser } from "puppeteer-core";
 import { existsSync } from "fs";
 
@@ -12,7 +12,16 @@ export async function resolveExecutablePath(): Promise<string> {
   const isProd = process.env.NODE_ENV === "production" || !!process.env.VERCEL;
 
   if (isProd) {
-    return await chromium.executablePath();
+    // chromium-min ne contient pas les binaires dans le bundle : il télécharge et
+    // décompresse le pack (.tar) hébergé, puis l'extrait dans /tmp.
+    // CHROMIUM_PACK_URL = URL publique du `chromium-v141.0.0-pack.tar` (S3/R2/Vercel Blob).
+    const packUrl = process.env.CHROMIUM_PACK_URL;
+    if (!packUrl) {
+      throw new Error(
+        "CHROMIUM_PACK_URL manquant : fournir l'URL HTTPS du chromium-v141.0.0-pack.tar",
+      );
+    }
+    return await chromium.executablePath(packUrl);
   }
 
   // Windows : détecter Edge ou Chrome

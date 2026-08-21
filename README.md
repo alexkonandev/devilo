@@ -17,7 +17,7 @@
 | **Authentification** | Clerk |
 | **Paiement** | Stripe |
 | **Email** | Resend |
-| **PDF** | Puppeteer / Playwright (Chromium via @sparticuz/chromium) |
+| **PDF** | Puppeteer / Playwright (Chromium via @sparticuz/chromium-min) |
 | **UI** | Tailwind CSS 4, Radix UI, shadcn/ui, Framer Motion |
 | **Icons** | Phosphor Icons, Lucide, Heroicons |
 | **State Management** | Zustand (useKernelStore) |

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import puppeteer from "puppeteer-core";
-import chromium from "@sparticuz/chromium";
+import chromium from "@sparticuz/chromium-min";
 import { generateQuoteHTML } from "@/lib/print-template";
 import { resolveTemplate } from "@/lib/template-system";
 import { resolveExecutablePath } from "@/lib/pdf-engine";
