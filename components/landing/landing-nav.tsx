@@ -22,20 +22,15 @@ export default function LandingNav({ userId }: LandingNavProps) {
     <nav className={DS_LP_NAV}>
       <div className={DS_LP_NAV_INNER}>
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-(--lp-accent) flex items-center justify-center">
+          <div className="w-7 h-7 rounded-lg bg-[var(--lp-accent)] flex items-center justify-center">
             <RocketLaunch size={14} weight="fill" className="text-white" />
           </div>
-          <span className="text-sm font-semibold text-white">Factouro</span>
+          <span className="text-sm font-semibold text-[var(--lp-text)]">Factouro</span>
         </Link>
-        <div className="hidden sm:flex items-center gap-6">
+        <div className="hidden sm:flex flex-1 items-center justify-center gap-6">
           <Link href="#features" className={DS_LP_NAV_LINK}>
             Fonctionnalités
           </Link>
-          {!userId && (
-            <Link href="#pricing" className={DS_LP_NAV_LINK}>
-              Tarifs
-            </Link>
-          )}
           <Link href="/contact" className={DS_LP_NAV_LINK}>
             Contact
           </Link>
@@ -45,13 +40,13 @@ export default function LandingNav({ userId }: LandingNavProps) {
             <>
               <Link
                 href="/onboarding"
-                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg border border-zinc-700 text-zinc-300 text-sm font-medium hover:border-zinc-500 hover:text-white transition-all"
+                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg border border-zinc-300 text-zinc-700 text-sm font-medium hover:border-zinc-400 hover:text-zinc-900 transition-all"
               >
                 Mon espace
               </Link>
               <button
                 onClick={() => signOut()}
-                className="flex items-center justify-center w-7 h-7 rounded-lg border border-red-500/40 bg-red-500/10 text-red-500 hover:bg-red-500/20 hover:border-red-500/60 transition-colors cursor-pointer"
+                className="flex items-center justify-center w-7 h-7 rounded-lg border border-red-300 bg-red-50 text-red-600 hover:bg-red-100 hover:border-red-400 transition-colors cursor-pointer"
                 title="Déconnexion"
               >
                 <SignOut size={14} />

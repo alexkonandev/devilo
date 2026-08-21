@@ -27,9 +27,9 @@ export default function AuthLayout({
       </div>
 
       {/* Colonne droite : branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-[#111113] relative flex-col justify-center p-16 overflow-hidden border-l border-[var(--lp-border)]">
+      <div className="hidden lg:flex lg:w-1/2 bg-zinc-50 relative flex-col justify-center p-16 overflow-hidden border-l border-[var(--lp-border)]">
         {/* Grille de fond subtile */}
-        <div className="absolute inset-0 opacity-[0.15] bg-[linear-gradient(to_right,#27272a_1px,transparent_1px),linear-gradient(to_bottom,#27272a_1px,transparent_1px)] [background-size:40px_40px]" />
+        <div className="absolute inset-0 opacity-[0.08] bg-[linear-gradient(to_right,#e4e4e7_1px,transparent_1px),linear-gradient(to_bottom,#e4e4e7_1px,transparent_1px)] [background-size:40px_40px]" />
 
         <div className="relative z-10 space-y-12">
           <div className="space-y-4">
@@ -39,7 +39,7 @@ export default function AuthLayout({
               <br />
               <span className="text-[var(--lp-accent)]">enfin devenue belle</span>
             </h2>
-            <p className="text-base text-zinc-400 leading-relaxed max-w-md">
+            <p className="text-base text-zinc-600 leading-relaxed max-w-md">
               Créez des devis élégants en quelques secondes. Suivez vos
               paiements. Concentrez-vous sur votre vrai métier.
             </p>
@@ -60,7 +60,7 @@ export default function AuthLayout({
                 </div>
                 <div>
                   <div className="text-sm font-semibold text-[var(--lp-text)]">{item.label}</div>
-                  <p className="text-xs text-zinc-500 mt-0.5">{item.desc}</p>
+                  <p className="text-xs text-zinc-600 mt-0.5">{item.desc}</p>
                 </div>
               </div>
             ))}
@@ -69,7 +69,7 @@ export default function AuthLayout({
 
         <div className="absolute bottom-8 left-16 right-16 flex items-center gap-4 opacity-20">
           <div className="h-px flex-1 bg-[var(--lp-border)]" />
-          <span className="text-[9px] font-mono font-semibold uppercase tracking-widest text-zinc-500 whitespace-nowrap">
+          <span className="text-[9px] font-mono font-semibold uppercase tracking-widest text-zinc-600 whitespace-nowrap">
             Infrastructure_Abidjan_2026
           </span>
         </div>

@@ -91,7 +91,7 @@ export default function SignUpForm() {
             <h1 className="text-2xl font-bold tracking-tight text-[var(--lp-text)]">
               Vérification
             </h1>
-            <p className="text-sm text-zinc-400">
+            <p className="text-sm text-zinc-600">
               Un code a été envoyé à {email}
             </p>
           </div>
@@ -99,7 +99,7 @@ export default function SignUpForm() {
 
         <form className="space-y-5" onSubmit={handleVerification}>
           <div className="space-y-1.5">
-            <label className="block text-[11px] font-mono font-semibold uppercase tracking-widest text-zinc-500">
+            <label className="block text-[11px] font-mono font-semibold uppercase tracking-widest text-zinc-600">
               Code de vérification
             </label>
             <input
@@ -112,8 +112,8 @@ export default function SignUpForm() {
           </div>
 
           {error && (
-            <div className="rounded-md border border-red-800 bg-red-900/20 px-4 py-3">
-              <p className="text-xs font-medium text-red-400">{error}</p>
+            <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3">
+              <p className="text-xs font-medium text-red-600">{error}</p>
             </div>
           )}
 
@@ -142,7 +142,7 @@ export default function SignUpForm() {
           <h1 className="text-2xl font-bold tracking-tight text-[var(--lp-text)]">
             Créer un compte
           </h1>
-          <p className="text-sm text-zinc-400">
+          <p className="text-sm text-zinc-600">
             Configurez vos identifiants
           </p>
         </div>
@@ -151,7 +151,7 @@ export default function SignUpForm() {
       <form className="space-y-5" onSubmit={handleSubmit}>
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <label className="block text-[11px] font-mono font-semibold uppercase tracking-widest text-zinc-500">
+            <label className="block text-[11px] font-mono font-semibold uppercase tracking-widest text-zinc-600">
               Email
             </label>
             <input
@@ -159,12 +159,12 @@ export default function SignUpForm() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="block w-full bg-[var(--lp-card)] border border-[var(--lp-border)] px-3 py-2 font-mono text-sm text-[var(--lp-text)] placeholder-zinc-500 focus:border-[var(--lp-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--lp-accent)] transition-all rounded-lg"
+              className="block w-full bg-[var(--lp-card)] border border-[var(--lp-border)] px-3 py-2 font-mono text-sm text-[var(--lp-text)] placeholder-zinc-400 focus:border-[var(--lp-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--lp-accent)] transition-all rounded-lg"
               placeholder="vous@exemple.com"
             />
           </div>
           <div className="space-y-1.5">
-            <label className="block text-[11px] font-mono font-semibold uppercase tracking-widest text-zinc-500">
+            <label className="block text-[11px] font-mono font-semibold uppercase tracking-widest text-zinc-600">
               Mot de passe
             </label>
             <input
@@ -172,15 +172,15 @@ export default function SignUpForm() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="block w-full bg-[var(--lp-card)] border border-[var(--lp-border)] px-3 py-2 font-mono text-sm text-[var(--lp-text)] placeholder-zinc-500 focus:border-[var(--lp-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--lp-accent)] transition-all rounded-lg"
+              className="block w-full bg-[var(--lp-card)] border border-[var(--lp-border)] px-3 py-2 font-mono text-sm text-[var(--lp-text)] placeholder-zinc-400 focus:border-[var(--lp-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--lp-accent)] transition-all rounded-lg"
               placeholder="••••••••"
             />
           </div>
         </div>
 
         {error && (
-          <div className="rounded-md border border-red-800 bg-red-900/20 px-4 py-3">
-            <p className="text-xs font-medium text-red-400">{error}</p>
+          <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3">
+            <p className="text-xs font-medium text-red-600">{error}</p>
           </div>
         )}
 
@@ -202,7 +202,7 @@ export default function SignUpForm() {
 
       <div className="relative flex items-center">
         <div className="flex-grow border-t border-[var(--lp-border)]" />
-        <span className="flex-shrink mx-4 text-[10px] font-mono font-semibold uppercase tracking-widest text-zinc-500">
+        <span className="flex-shrink mx-4 text-[10px] font-mono font-semibold uppercase tracking-widest text-zinc-600">
           Ou
         </span>
         <div className="flex-grow border-t border-[var(--lp-border)]" />
@@ -211,7 +211,7 @@ export default function SignUpForm() {
       <button
         onClick={signUpWithGoogle}
         type="button"
-        className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium text-zinc-300 border border-zinc-800 hover:text-white hover:border-zinc-600 transition-all"
+        className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium text-zinc-700 border border-zinc-200 hover:text-zinc-900 hover:border-zinc-300 transition-all"
       >
         <svg className="h-4 w-4" viewBox="0 0 24 24">
           <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -222,7 +222,7 @@ export default function SignUpForm() {
         Continuer avec Google
       </button>
 
-      <p className="text-center text-xs text-zinc-500">
+      <p className="text-center text-xs text-zinc-600">
         Déjà un compte ?{" "}
         <Link
           href="/sign-in"

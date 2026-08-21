@@ -81,7 +81,12 @@ export default function LandingFooter() {
           <span className={DS_LP_FOOTER_COPY}>
             &copy; 2026 Factouro. Tous droits r&eacute;serv&eacute;s.
           </span>
-          
+          <span className={DS_LP_FOOTER_STATUS}>
+            <span className={DS_LP_FOOTER_STATUS_DOT} />
+            <span className={DS_LP_FOOTER_STATUS_TXT}>
+              Factouro - Architecture optimisée à 0€/mois
+            </span>
+          </span>
         </div>
       </div>
     </footer>

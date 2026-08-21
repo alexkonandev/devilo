@@ -210,16 +210,16 @@
   }
 }
 
-/* ─── Landing Page V3 — Obsidian (Dark + Glass Premium) ─────────────── */
+/* ─── Landing Page V3 — Light (Clean + Glass Premium) ─────────────── */
 :root {
-  --lp-bg: #0a0a0b;
-  --lp-card: #18181b;
-  --lp-border: #27272a;
+  --lp-bg: #fafafa;
+  --lp-card: #ffffff;
+  --lp-border: #e4e4e7;
   --lp-accent: #4f46e5;
-  --lp-accent-glow: rgba(79, 70, 229, 0.15);
-  --lp-glass: rgba(255, 255, 255, 0.03);
-  --lp-glass-border: rgba(255, 255, 255, 0.06);
-  --lp-text: #fafafa;
-  --lp-text-secondary: #a1a1aa;
-  --lp-gradient-hero: linear-gradient(135deg, #0a0a0b 0%, #1c1c2e 50%, #0a0a0b 100%);
+  --lp-accent-glow: rgba(79, 70, 229, 0.12);
+  --lp-glass: rgba(255, 255, 255, 0.72);
+  --lp-glass-border: #e4e4e7;
+  --lp-text: #18181b;
+  --lp-text-secondary: #52525b;
+  --lp-gradient-hero: linear-gradient(135deg, #fafafa 0%, #eef0ff 50%, #fafafa 100%);
 }

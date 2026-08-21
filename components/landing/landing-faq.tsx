@@ -20,23 +20,23 @@ import {
 const faqs = [
   {
     ref: "REF-001",
-    q: "Comment fonctionne l'essai gratuit ?",
-    a: "L'essai gratuit de 14 jours vous donne accès à toutes les fonctionnalités de l'offre Pro. Aucune carte bancaire requise.",
+    q: "Factouro est-il vraiment gratuit ?",
+    a: "Oui, Factouro est 100% gratuit. Toutes les fonctionnalités sont accessibles sans abonnement, sans carte bancaire et sans limite cachée.",
   },
   {
     ref: "REF-002",
-    q: "Puis-je exporter mes données ?",
-    a: "Oui, vous pouvez exporter tous vos devis et données clients au format PDF ou CSV à tout moment.",
+    q: "Y a-t-il des limites d'utilisation ?",
+    a: "Non. Devis, factures, export PDF et gestion des clients sont illimités pour tous les utilisateurs.",
   },
   {
     ref: "REF-003",
-    q: "Y a-t-il un engagement ?",
-    a: "Non, vous pouvez résilier votre abonnement à tout moment. Pas de frais cachés, pas de surprise.",
+    q: "Puis-je exporter mes données ?",
+    a: "Oui, vous pouvez exporter tous vos devis, factures et données clients au format PDF à tout moment.",
   },
   {
     ref: "REF-004",
-    q: "Proposez-vous des tarifs pour les étudiants ?",
-    a: "Oui, contactez-nous avec votre carte étudiante pour bénéficier de 50% de réduction la première année.",
+    q: "Y a-t-il un engagement ou des frais cachés ?",
+    a: "Aucun. Pas d'abonnement, pas de frais cachés, pas de surprise. Factouro reste gratuit, aujourd'hui comme demain.",
   },
 ];
 

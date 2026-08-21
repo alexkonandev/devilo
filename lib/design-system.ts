@@ -86,29 +86,30 @@ export const DS_PAGE_GRID = "grid grid-cols-12 gap-4";
 
 // Layout
 export const DS_LP_MAX_W = "max-w-6xl mx-auto";
-export const DS_LP_SECTION = "py-24 px-4 sm:px-6 bg-[var(--lp-bg)]";
-export const DS_LP_SECTION_ALT = "py-24 px-4 sm:px-6 bg-[#111113]";
-export const DS_LP_HEADER = "text-center mb-16";
+export const DS_LP_SECTION = "py-16 px-4 sm:px-6 bg-[var(--lp-bg)]";
+export const DS_LP_SECTION_ALT = "py-16 px-4 sm:px-6 bg-zinc-100";
+export const DS_LP_HEADER = "text-center mb-12";
 export const DS_LP_TITLE = "text-4xl sm:text-5xl font-bold tracking-tight text-[var(--lp-text)]";
 export const DS_LP_ACCENT = "w-12 h-1 bg-[var(--lp-accent)] rounded-full mt-6 mx-auto";
 export const DS_LP_TAG = "inline-block font-mono text-[11px] font-semibold uppercase tracking-widest text-[var(--lp-accent)] mb-4";
 
-// Navigation (glass)
-export const DS_LP_NAV = "fixed top-0 left-0 right-0 z-50 flex justify-center pt-8";
-export const DS_LP_NAV_INNER = "flex items-center justify-between px-3 py-3 w-[calc(100%-4rem)] max-w-6xl rounded-xl bg-black/80 backdrop-blur-md border border-[var(--lp-glass-border)]";
-export const DS_LP_NAV_LINK = "text-sm text-zinc-300 hover:text-white transition-colors";
-export const DS_LP_NAV_CTA = "inline-flex items-center gap-2 px-4 py-1.5 rounded-lg bg-white border border-zinc-700 text-zinc-900 hover:border-zinc-500 hover:text-zinc-700 text-sm font-medium hover:opacity-90 transition-all";
+// Navigation (full-width bar — Notion style)
+export const DS_LP_NAV = "fixed top-0 left-0 right-0 z-50";
+export const DS_LP_NAV_INNER = "flex items-center justify-between px-6 lg:px-8 h-16 bg-white/80 backdrop-blur-md border-b border-[var(--lp-border)]";
+export const DS_LP_NAV_LINK = "text-sm text-zinc-600 hover:text-zinc-900 transition-colors";
+export const DS_LP_NAV_CTA = "inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--lp-accent)] border border-[var(--lp-accent)] text-white hover:opacity-90 text-sm font-medium transition-all";
 
 // Hero
-export const DS_LP_HERO = "relative min-h-screen flex items-center justify-center px-4 pt-20 bg-[var(--lp-gradient-hero)]";
-export const DS_LP_HERO_TITLE = "text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight leading-tight bg-gradient-to-r from-white via-indigo-200 to-white bg-clip-text text-transparent";
-export const DS_LP_HERO_DESC = "mt-4 text-lg text-zinc-400 max-w-2xl mx-auto leading-relaxed";
+export const DS_LP_HERO = "relative flex flex-col items-center justify-center px-4 pt-38 pb-16 bg-white";
+export const DS_LP_HERO_TITLE = "text-5xl sm:text-6xl md:text-8xl font-bold tracking-tight text-[var(--lp-text)]";
+export const DS_LP_HERO_DESC = "mt-4 text-lg text-zinc-600 max-w-4xl mx-auto leading-relaxed";
 export const DS_LP_HERO_CTA = "mt-10 flex flex-col sm:flex-row items-center justify-center gap-4";
+export const DS_LP_HERO_PREVIEW = "mt-16 max-w-7xl mx-auto";
 
 // Stats (KPI cards)
 export const DS_LP_STATS = "mt-16 grid grid-cols-2 md:grid-cols-3 gap-4 max-w-3xl mx-auto";
 export const DS_LP_STAT_CARD = "bg-[var(--lp-card)] border border-[var(--lp-border)] rounded-xl p-5 text-center";
-export const DS_LP_STAT_VAL = "text-3xl font-bold text-white tabular-nums";
+export const DS_LP_STAT_VAL = "text-3xl font-bold text-[var(--lp-text)] tabular-nums";
 export const DS_LP_STAT_LBL = "text-xs text-zinc-500 mt-1";
 
 // Grids
@@ -116,10 +117,10 @@ export const DS_LP_GRID_2 = "grid sm:grid-cols-2 gap-4";
 export const DS_LP_GRID_3 = "grid md:grid-cols-3 gap-4";
 
 // Cards (features, etc.)
-export const DS_LP_CARD = "bg-[var(--lp-card)] border border-[var(--lp-border)] rounded-xl p-6 hover:border-zinc-600 transition-colors";
+export const DS_LP_CARD = "bg-white border border-[var(--lp-border)] rounded-xl p-6 hover:border-zinc-300 transition-colors";
 export const DS_LP_CARD_ICON = "w-10 h-10 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-4";
-export const DS_LP_CARD_TITLE = "text-lg font-semibold text-white mb-1";
-export const DS_LP_CARD_DESC = "text-sm text-zinc-400 leading-relaxed";
+export const DS_LP_CARD_TITLE = "text-lg font-semibold text-[var(--lp-text)] mb-1";
+export const DS_LP_CARD_DESC = "text-sm text-zinc-600 leading-relaxed";
 export const DS_LP_CARD_TAG = "text-[11px] font-mono font-semibold uppercase tracking-widest text-[var(--lp-accent)] mb-2";
 
 // Pipeline / Workflow
@@ -127,60 +128,60 @@ export const DS_LP_PIPELINE = "flex flex-col md:flex-row items-center justify-ce
 export const DS_LP_PIPELINE_STEP = "flex flex-col items-center gap-3 text-center";
 export const DS_LP_PIPELINE_NUM = "flex items-center justify-center w-8 h-8 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-[var(--lp-accent)] text-sm font-bold font-mono";
 export const DS_LP_PIPELINE_ICON = "w-14 h-14 rounded-xl bg-[var(--lp-card)] border border-[var(--lp-border)] flex items-center justify-center";
-export const DS_LP_PIPELINE_TITLE = "text-base font-semibold text-white";
+export const DS_LP_PIPELINE_TITLE = "text-base font-semibold text-[var(--lp-text)]";
 export const DS_LP_PIPELINE_DESC = "text-sm text-zinc-500";
 
 // Showcase (démo produit)
 export const DS_LP_SHOWCASE = "bg-[var(--lp-card)] border border-[var(--lp-border)] rounded-xl overflow-hidden";
-export const DS_LP_SHOWCASE_HEADER = "flex items-center gap-2 px-4 py-3 bg-[#121214] border-b border-[var(--lp-border)]";
-export const DS_LP_SHOWCASE_DOT = "w-2.5 h-2.5 rounded-full bg-zinc-700";
+export const DS_LP_SHOWCASE_HEADER = "flex items-center gap-2 px-4 py-3 bg-zinc-50 border-b border-[var(--lp-border)]";
+export const DS_LP_SHOWCASE_DOT = "w-2.5 h-2.5 rounded-full bg-zinc-300";
 export const DS_LP_SHOWCASE_BADGE = "text-[10px] font-mono font-semibold uppercase tracking-widest text-[var(--lp-accent)] ml-auto";
 
 // Pricing
 export const DS_LP_PRICE_CARD = "bg-[var(--lp-card)] border border-[var(--lp-border)] rounded-xl p-6 flex flex-col relative";
 export const DS_LP_PRICE_POP = "border-[var(--lp-accent)] shadow-[0_0_20px_var(--lp-accent-glow)]";
 export const DS_LP_PRICE_BADGE = "absolute -top-3 right-4 px-3 py-1 rounded-lg bg-[var(--lp-accent)] text-white text-[10px] font-mono font-semibold uppercase tracking-widest";
-export const DS_LP_PRICE_NAME = "text-lg font-semibold text-white";
-export const DS_LP_PRICE_AMT = "text-4xl font-bold text-white mt-2";
+export const DS_LP_PRICE_NAME = "text-lg font-semibold text-[var(--lp-text)]";
+export const DS_LP_PRICE_AMT = "text-4xl font-bold text-[var(--lp-text)] mt-2";
 export const DS_LP_PRICE_PER = "text-sm text-zinc-500 font-normal";
-export const DS_LP_PRICE_DESC = "text-sm text-zinc-400 mt-1";
+export const DS_LP_PRICE_DESC = "text-sm text-zinc-600 mt-1";
 export const DS_LP_PRICE_FEAT = "space-y-3 my-6 flex-1";
-export const DS_LP_PRICE_FEAT_ITEM = "flex items-start gap-2 text-sm text-zinc-400";
+export const DS_LP_PRICE_FEAT_ITEM = "flex items-start gap-2 text-sm text-zinc-600";
 export const DS_LP_PRICE_CHECK = "text-[var(--lp-accent)] mt-0.5 shrink-0";
 export const DS_LP_PRICE_CTA = "w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-sm font-medium transition-all";
 export const DS_LP_PRICE_CTA_PRI = "bg-[var(--lp-accent)] text-white hover:opacity-90";
-export const DS_LP_PRICE_CTA_SEC = "bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white";
+export const DS_LP_PRICE_CTA_SEC = "bg-white text-zinc-700 border border-zinc-200 hover:bg-zinc-50 hover:text-zinc-900";
 
 // FAQ
 export const DS_LP_FAQ_ITEM = "bg-[var(--lp-card)] border border-[var(--lp-border)] rounded-xl overflow-hidden";
-export const DS_LP_FAQ_Q = "flex items-center justify-between gap-4 px-6 py-4 text-sm font-medium text-white list-none cursor-pointer";
-export const DS_LP_FAQ_ARR = "text-zinc-500 group-open:rotate-90 transition-transform shrink-0";
-export const DS_LP_FAQ_A = "px-6 pb-4 text-sm text-zinc-400 leading-relaxed";
+export const DS_LP_FAQ_Q = "flex items-center justify-between gap-4 px-6 py-4 text-sm font-medium text-[var(--lp-text)] list-none cursor-pointer";
+export const DS_LP_FAQ_ARR = "text-zinc-400 group-open:rotate-90 transition-transform shrink-0";
+export const DS_LP_FAQ_A = "px-6 pb-4 text-sm text-zinc-600 leading-relaxed";
 export const DS_LP_FAQ_REF = "text-[10px] font-mono font-semibold tracking-widest text-[var(--lp-accent)]";
 
 // Final CTA
-export const DS_LP_CTA = "py-24 px-4 sm:px-6 bg-gradient-to-b from-[var(--lp-bg)] to-[#111113]";
+export const DS_LP_CTA = "py-16 px-4 sm:px-6 bg-gradient-to-b from-[var(--lp-bg)] to-zinc-100";
 export const DS_LP_FINAL = "max-w-3xl mx-auto text-center space-y-6";
-export const DS_LP_FINAL_TITLE = "text-4xl sm:text-5xl font-bold tracking-tight text-white";
-export const DS_LP_FINAL_DESC = "text-lg text-zinc-400 max-w-xl mx-auto leading-relaxed";
+export const DS_LP_FINAL_TITLE = "text-4xl sm:text-5xl font-bold tracking-tight text-[var(--lp-text)]";
+export const DS_LP_FINAL_DESC = "text-lg text-zinc-600 max-w-xl mx-auto leading-relaxed";
 export const DS_LP_FINAL_BTNS = "flex flex-col sm:flex-row items-center justify-center gap-4";
-export const DS_LP_FINAL_BTN_PRI = "inline-flex items-center gap-2 px-8 py-3 rounded-xl bg-white text-zinc-900 font-medium text-sm hover:bg-zinc-100 transition-all";
-export const DS_LP_FINAL_BTN_SEC = "inline-flex items-center gap-2 px-8 py-3 rounded-xl font-medium text-sm text-zinc-400 border border-zinc-800 hover:text-white transition-all";
+export const DS_LP_FINAL_BTN_PRI = "inline-flex items-center gap-2 px-8 py-3 rounded-xl bg-[var(--lp-accent)] text-white font-medium text-sm hover:opacity-90 transition-all";
+export const DS_LP_FINAL_BTN_SEC = "inline-flex items-center gap-2 px-8 py-3 rounded-xl font-medium text-sm text-zinc-700 border border-zinc-200 hover:border-zinc-300 hover:text-zinc-900 transition-all";
 
 // Footer
 export const DS_LP_FOOTER = "py-16 px-4 sm:px-6 border-t border-[var(--lp-border)] bg-[var(--lp-bg)]";
 export const DS_LP_FOOTER_GRID = "grid grid-cols-2 md:grid-cols-4 gap-8";
 export const DS_LP_FOOTER_BRAND = "flex items-center gap-2.5 mb-4";
 export const DS_LP_FOOTER_LOGO = "w-7 h-7 rounded-lg bg-[var(--lp-accent)] flex items-center justify-center";
-export const DS_LP_FOOTER_NAME = "text-sm font-semibold text-white";
+export const DS_LP_FOOTER_NAME = "text-sm font-semibold text-[var(--lp-text)]";
 export const DS_LP_FOOTER_DESC = "text-xs text-zinc-500 leading-relaxed max-w-xs";
 export const DS_LP_FOOTER_TITRE = "text-[10px] font-mono font-semibold uppercase tracking-widest text-zinc-600 mb-4";
-export const DS_LP_FOOTER_LIEN = "text-xs text-zinc-400 hover:text-white transition-colors";
+export const DS_LP_FOOTER_LIEN = "text-xs text-zinc-600 hover:text-zinc-900 transition-colors";
 export const DS_LP_FOOTER_BASE = "mt-12 pt-8 border-t border-[var(--lp-border)] flex flex-col sm:flex-row items-center justify-center gap-4";
-export const DS_LP_FOOTER_COPY = "text-[10px] font-mono font-semibold uppercase tracking-widest text-zinc-600";
-export const DS_LP_FOOTER_STATUS = "inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--lp-glass)] border border-[var(--lp-glass-border)]";
+export const DS_LP_FOOTER_COPY = "text-[10px] font-mono font-semibold uppercase tracking-widest text-zinc-500";
+export const DS_LP_FOOTER_STATUS = "inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-100 border border-[var(--lp-border)]";
 export const DS_LP_FOOTER_STATUS_DOT = "w-1.5 h-1.5 rounded-full bg-emerald-500";
-export const DS_LP_FOOTER_STATUS_TXT = "text-[9px] font-mono font-semibold uppercase tracking-widest text-zinc-500";
+export const DS_LP_FOOTER_STATUS_TXT = "text-[9px] font-mono font-semibold uppercase tracking-widest text-zinc-600";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // RÉGIME STUDIO — Tokens compacts pour l'éditeur de devis (quotes/new)

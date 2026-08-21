@@ -47,7 +47,7 @@ export default function LandingCta({ userId, hasQuote }: LandingCtaProps) {
             </Link>
           ) : (
             <Link href="/sign-up" className={DS_LP_FINAL_BTN_PRI}>
-              Démarrer gratuitement
+              Commencer gratuitement
               <ArrowRight
                 size={14}
                 className="group-hover:translate-x-1 transition-transform"
